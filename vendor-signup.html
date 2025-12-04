@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Luma Events — Vendor Signup</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <style>
+    :root{
+      --bg:#f3f4f6;
+      --panel:#ffffff;
+      --panel-soft:#f9fafb;
+      --ink:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --accent:#2563eb;
+      --accent-soft:#dbeafe;
+      --accent-strong:#1d4ed8;
+      --radius:16px;
+      --shadow:0 18px 40px rgba(15,23,42,.12);
+      --danger:#ef4444;
+      --ok:#16a34a;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{
+      min-height:100%;
+      font-family:"Montserrat",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:var(--bg);
+      color:var(--ink);
+    }
+
+    .page-shell{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+    }
+
+    .auth-wrapper{
+      width:100%;
+      max-width:520px;
+      background:var(--panel);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      border:1px solid rgba(148,163,184,.3);
+      padding:20px 18px 18px;
+    }
+
+    .auth-header{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-bottom:8px;
+    }
+    .auth-logo{
+      width:40px;height:40px;border-radius:999px;
+      background:linear-gradient(135deg,#2563eb,#a855f7);
+      display:flex;align-items:center;justify-content:center;
+      color:#fff;font-weight:700;font-size:18px;
+      overflow:hidden;
+      background-size:cover;
+      background-position:center;
+    }
+    .auth-title{font-size:17px;font-weight:700;}
+    .auth-subtitle{font-size:11px;color:var(--muted);margin-top:2px;}
+
+    .event-chip{
+      margin-top:4px;
+      font-size:11px;
+      color:var(--muted);
+    }
+
+    .auth-alert{
+      padding:8px 10px;
+      border-radius:10px;
+      font-size:11px;
+      margin-top:10px;
+      margin-bottom:10px;
+    }
+    .auth-alert-error{
+      background:#fef2f2;
+      color:#b91c1c;
+      border:1px solid #fecaca;
+    }
+    .auth-alert-ok{
+      background:#ecfdf3;
+      color:#166534;
+      border:1px solid #bbf7d0;
+    }
+    .auth-alert-info{
+      background:#eff6ff;
+      color:#1d4ed8;
+      border:1px solid #bfdbfe;
+    }
+
+    .field{margin-bottom:10px;}
+    .field-label{
+      font-size:11px;
+      margin-bottom:4px;
+      color:#4b5563;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+    }
+    .field-required{
+      font-size:10px;
+      color:#ef4444;
+    }
+    .field-input,.field-select,textarea.field-input{
+      width:100%;
+      padding:8px;
+      border-radius:9px;
+      border:1px solid var(--border);
+      background:#f9fafb;
+      font-size:12px;
+      resize:vertical;
+    }
+    .field-input:focus,.field-select:focus,textarea.field-input:focus{
+      outline:none;
+      border-color:var(--accent);
+      box-shadow:0 0 0 1px var(--accent-soft);
+      background:#fff;
+    }
+    .field-hint{
+      font-size:10px;
+      color:var(--muted);
+      margin-top:3px;
+    }
+
+    .checkbox-row{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      font-size:12px;
+      margin-bottom:8px;
+    }
+
+    .btn{
+      border:none;border-radius:999px;
+      padding:9px 12px;
+      font-size:12px;font-weight:600;
+      cursor:pointer;display:inline-flex;
+      align-items:center;justify-content:center;
+      gap:6px;
+    }
+    .btn-primary{background:var(--accent);color:#fff;}
+    .btn-primary:hover{background:var(--accent-strong);}
+    .btn-ghost{
+      background:transparent;
+      color:var(--accent-strong);
+      border:1px solid var(--accent-soft);
+    }
+    .btn-ghost:hover{background:var(--accent-soft);}
+
+    .auth-footer{
+      text-align:center;
+      margin-top:10px;
+      font-size:10px;
+      color:var(--muted);
+    }
+
+    .divider{
+      margin:10px 0;
+      border:none;
+      border-top:1px dashed var(--border);
+    }
+  </style>
+</head>
+<body>
+<div class="page-shell">
+  <div class="auth-wrapper">
+    <div class="auth-header">
+      <div class="auth-logo" id="event-logo-circle">E</div>
+      <div>
+        <div class="auth-title">Luma Events — Vendor Signup</div>
+        <div class="auth-subtitle" id="auth-subtitle">
+          Register your brand to participate in this event.
+        </div>
+        <div class="event-chip" id="event-chip">
+          Loading event details…
+        </div>
+      </div>
+    </div>
+
+    <div id="alert-container"></div>
+
+    <form id="vendor-form">
+      <!-- BRAND -->
+      <div class="field">
+        <div class="field-label">
+          <span>Brand name</span>
+          <span class="field-required">Required</span>
+        </div>
+        <input id="brand-name" class="field-input" placeholder="Example: Nizu, Oudies…"/>
+      </div>
+
+      <div class="field">
+        <div class="field-label">
+          <span>Product category</span>
+          <span class="field-required">Required</span>
+        </div>
+        <input id="category" class="field-input" placeholder="Coffee, food, desserts, accessories, clothing…"/>
+      </div>
+
+      <div class="field">
+        <div class="field-label">
+          <span>What will you sell?</span>
+          <span class="field-required">Required</span>
+        </div>
+        <textarea id="products-desc" class="field-input" rows="3"
+          placeholder="Short description of your products, price range, special items…"></textarea>
+      </div>
+
+      <hr class="divider"/>
+
+      <!-- CONTACT -->
+      <div class="field">
+        <div class="field-label">
+          <span>Owner / main contact name</span>
+          <span class="field-required">Required</span>
+        </div>
+        <input id="owner-name" class="field-input" placeholder="Full name"/>
+      </div>
+
+      <div class="field">
+        <div class="field-label">
+          <span>Phone (WhatsApp)</span>
+          <span class="field-required">Required</span>
+        </div>
+        <input id="phone" class="field-input" placeholder="+20…"/>
+      </div>
+
+      <div class="field">
+        <div class="field-label">
+          <span>Email</span>
+          <span class="field-required">Required</span>
+        </div>
+        <input id="email" class="field-input" type="email" placeholder="you@example.com"/>
+      </div>
+
+      <div class="field">
+        <div class="field-label">
+          <span>Create password (for your Brand Portal login)</span>
+          <span class="field-required">Required</span>
+        </div>
+        <input id="password" class="field-input" type="password" placeholder="Minimum 6 characters"/>
+        <div class="field-hint">
+          You’ll use this email + password to access your Luma Store OS dashboard.
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-label">
+          <span>Instagram / social</span>
+          <span style="font-size:10px;color:var(--muted);">Optional</span>
+        </div>
+        <input id="instagram" class="field-input" placeholder="@handle or link"/>
+      </div>
+
+      <hr class="divider"/>
+
+      <!-- EVENT DETAILS -->
+      <div class="field">
+        <div class="field-label">
+          <span>Booth type / size preference</span>
+          <span style="font-size:10px;color:var(--muted);">Optional</span>
+        </div>
+        <input id="booth-type" class="field-input" placeholder="E.g. 3x3m, corner booth, food truck, etc."/>
+      </div>
+
+      <div class="checkbox-row">
+        <input id="need-pos" type="checkbox"/>
+        <label for="need-pos">I need Luma POS for this event</label>
+      </div>
+      <div class="field-hint">
+        If checked, we will create a POS branch for your booth and send you a login link.
+      </div>
+
+      <div class="field">
+        <div class="field-label">
+          <span>Notes to organizer</span>
+          <span style="font-size:10px;color:var(--muted);">Optional</span>
+        </div>
+        <textarea id="notes" class="field-input" rows="2"
+          placeholder="Power requirements, special setup, allergies, anything important…"></textarea>
+      </div>
+
+      <button type="submit" id="btn-submit" class="btn btn-primary" style="width:100%;margin-top:6px;">
+        Submit & open my dashboard
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      After submitting, your brand dashboard will open so you can add products and prepare your POS.
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import {
+    getFirestore, doc, collection, addDoc, setDoc, getDoc, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import {
+    getAuth, createUserWithEmailAndPassword, updateProfile
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+  // 🔐 Your events Firebase config
+  const firebaseConfig = {
+    apiKey:"AIzaSyA80bAAGPuyscnTVS-zwrxE9Jp3tPiS1gM",
+    authDomain:"events-339ce.firebaseapp.com",
+    projectId:"events-339ce",
+    storageBucket:"events-339ce.firebasestorage.app",
+    messagingSenderId:"175601544315",
+    appId:"1:175601544315:web:00c94b4affa972b3a286de"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
+  const auth = getAuth(app);
+
+  // 👉 change this if your brand dashboard file has a different name/path
+  const BRAND_DASHBOARD_URL = "brand.html";
+
+  const qs  = s => document.querySelector(s);
+  const alertContainer = qs("#alert-container");
+  const eventChip      = qs("#event-chip");
+  const eventLogoCircle= qs("#event-logo-circle");
+  const subtitleEl     = qs("#auth-subtitle");
+  const form           = qs("#vendor-form");
+  const submitBtn      = qs("#btn-submit");
+
+  function showAlert(msg, type="error"){
+    const cls =
+      type === "ok" ? "auth-alert-ok" :
+      type === "info" ? "auth-alert-info" :
+      "auth-alert-error";
+
+    alertContainer.innerHTML = `
+      <div class="auth-alert ${cls}">${msg}</div>
+    `;
+  }
+
+  function clearAlert(){
+    alertContainer.innerHTML = "";
+  }
+
+  function getQueryParam(key){
+    return new URLSearchParams(window.location.search).get(key);
+  }
+
+  const eventId = getQueryParam("eventId");
+
+  // Load event name/date to show in header
+  async function loadEventMeta(){
+    if(!eventId){
+      eventChip.textContent = "Missing eventId in URL. Ask the organizer for the correct link.";
+      showAlert("No eventId in URL. This link is not valid.", "error");
+      form.style.display = "none";
+      return;
+    }
+
+    try{
+      const snap = await getDoc(doc(db,"events",eventId));
+      if(!snap.exists()){
+        eventChip.textContent = "Event not found.";
+        showAlert("This event does not exist. Please contact the organizer.", "error");
+        form.style.display = "none";
+        return;
+      }
+      const data = snap.data();
+      const name = data.name || data.title || "Event";
+      const date = data.date || data.startDate || "";
+      const location = data.location || "";
+
+      eventChip.textContent = [
+        name,
+        date ? `• ${date}` : "",
+        location ? `• ${location}` : ""
+      ].filter(Boolean).join(" ");
+
+      subtitleEl.textContent = `Apply to join "${name}" as a vendor.`;
+      eventLogoCircle.textContent = (name[0] || "E").toUpperCase();
+    }catch(err){
+      console.error(err);
+      eventChip.textContent = "Error loading event.";
+      showAlert("Error loading event details. Check console.", "error");
+    }
+  }
+
+  loadEventMeta();
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearAlert();
+
+    if(!eventId){
+      showAlert("Missing eventId. Cannot submit application.", "error");
+      return;
+    }
+
+    const brandName   = qs("#brand-name").value.trim();
+    const category    = qs("#category").value.trim();
+    const products    = qs("#products-desc").value.trim();
+    const ownerName   = qs("#owner-name").value.trim();
+    const phone       = qs("#phone").value.trim();
+    const email       = qs("#email").value.trim();
+    const password    = qs("#password").value;
+    const instagram   = qs("#instagram").value.trim();
+    const boothType   = qs("#booth-type").value.trim();
+    const needPos     = qs("#need-pos").checked;
+    const notes       = qs("#notes").value.trim();
+
+    if(!brandName || !category || !products || !ownerName || !phone || !email || !password){
+      showAlert("Please fill all required fields (brand, category, products, contact, phone, email, password).","error");
+      return;
+    }
+    if(password.length < 6){
+      showAlert("Password must be at least 6 characters.","error");
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Creating your dashboard…";
+
+    try{
+      // 1) Create auth user = brand owner (auto-logged in)
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      const user = cred.user;
+      await updateProfile(user, { displayName: ownerName });
+
+      // 2) Create brand
+      const brandRef = await addDoc(collection(db, "brands"), {
+        name: brandName,
+        country: null,
+        ownerUserId: user.uid,
+        ownerEmail: email,
+        status: "active",
+        vat: 0,
+        serviceFee: 0,
+        sendEmail: false,
+        eventId,                  // link brand to this event
+        createdAt: serverTimestamp()
+      });
+      const brandId = brandRef.id;
+
+      // 3) Link user to brand (userBrands + users)
+      await setDoc(doc(db, "userBrands", user.uid), {
+        primaryBrandId: brandId,
+        brandIds: [brandId]
+      });
+
+      await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        name: ownerName,
+        email,
+        primaryBrandId: brandId,
+        role: "brand_owner",
+        createdAt: serverTimestamp()
+      });
+
+      // 4) Create main branch for this event
+      const mainBranchRef = await addDoc(collection(brandRef, "branches"), {
+        name: "Event Booth",
+        code: "EVENT",
+        isActive: true,
+        eventId,
+        createdAt: serverTimestamp()
+      });
+      const branchId = mainBranchRef.id;
+
+      // 5) Staff record for owner (under brand's staff)
+      await setDoc(doc(brandRef, "staff", user.uid), {
+        userId: user.uid,
+        name: ownerName,
+        email,
+        role: "brand_owner",
+        isActive: true,
+        branchId,
+        createdAt: serverTimestamp()
+      });
+
+      // 6) Vendor doc under this event
+      await addDoc(collection(db, "events", eventId, "vendors"), {
+        brandName,
+        brandNameLower: brandName.toLowerCase(),
+        category,
+        productsDescription: products,
+        ownerName,
+        phone,
+        email,
+        instagram,
+        boothType,
+        needPos,
+        notes,
+        eventId,
+        brandId,
+        branchId,
+        ownerUserId: user.uid,
+        status: "pending",  // can be flipped to 'approved' by event owner dashboard
+        createdAt: serverTimestamp()
+      });
+
+      // 7) Redirect straight to Brand Dashboard
+      // user is already logged in, brand.html will pick up brandId via userBrands
+      const targetUrl = `${BRAND_DASHBOARD_URL}?eventId=${encodeURIComponent(eventId)}`;
+      window.location.href = targetUrl;
+
+    }catch(err){
+      console.error(err);
+      let msg = "Failed to create your brand and dashboard.";
+      if (err.code === "auth/email-already-in-use") {
+        msg = "This email is already in use. Try signing in instead or use a different email.";
+      }
+      showAlert(msg,"error");
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Submit & open my dashboard";
+    }
+  });
+</script>
+</body>
+</html>
