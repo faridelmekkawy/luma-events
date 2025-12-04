@@ -1,0 +1,1149 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Luma Events — Owner Dashboard</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <style>
+    :root{
+      --bg:#f3f4f6;
+      --panel:#ffffff;
+      --panel-soft:#f9fafb;
+      --ink:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --accent:#2563eb;
+      --accent-soft:#dbeafe;
+      --accent-strong:#1d4ed8;
+      --danger:#ef4444;
+      --ok:#16a34a;
+      --radius:16px;
+      --shadow:0 18px 40px rgba(15,23,42,.12);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{
+      height:100%;
+      font-family:"Montserrat",system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+      background:var(--bg);
+      color:var(--ink);
+    }
+    body{
+      padding:16px;
+    }
+    .shell{
+      max-width:1200px;
+      margin:0 auto;
+    }
+    .card{
+      background:var(--panel);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:18px 18px 20px;
+      margin-bottom:16px;
+    }
+
+    .header-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:12px;
+    }
+    .title{
+      font-size:20px;
+      font-weight:600;
+    }
+    .subtitle{
+      font-size:13px;
+      color:var(--muted);
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:4px 10px;
+      border-radius:999px;
+      font-size:11px;
+      border:1px solid rgba(148,163,184,.4);
+      background:rgba(255,255,255,.9);
+      color:var(--muted);
+    }
+    .pill-dot{
+      width:8px;height:8px;border-radius:999px;background:#22c55e;
+    }
+
+    .alert{
+      border-radius:12px;
+      padding:9px 11px;
+      font-size:12px;
+      display:flex;
+      align-items:flex-start;
+      gap:8px;
+      margin-bottom:10px;
+      border:1px solid var(--border);
+      background:var(--panel-soft);
+      color:var(--muted);
+    }
+    .alert.ok{
+      border-color:#bbf7d0;
+      background:#dcfce7;
+      color:#166534;
+    }
+    .alert.error{
+      border-color:#fecaca;
+      background:#fee2e2;
+      color:#b91c1c;
+    }
+    .alert.hidden{
+      display:none;
+    }
+
+    .row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+    }
+    .col{
+      flex:1 1 280px;
+    }
+
+    form{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    .field-row{
+      display:flex;
+      gap:8px;
+    }
+    .field-row>.field{
+      flex:1;
+    }
+    label{
+      font-size:12px;
+      font-weight:500;
+      color:var(--muted);
+    }
+    input,select,textarea{
+      font-family:inherit;
+      font-size:13px;
+      padding:8px 9px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:#f9fafb;
+      outline:none;
+      transition:border-color .15s, box-shadow .15s, background .15s;
+    }
+    textarea{
+      resize:vertical;
+      min-height:60px;
+    }
+    input:focus,select:focus,textarea:focus{
+      border-color:var(--accent);
+      box-shadow:0 0 0 1px rgba(37,99,235,.35);
+      background:#fff;
+    }
+    .helper{
+      font-size:11px;
+      color:var(--muted);
+    }
+
+    .btn{
+      border:none;
+      border-radius:999px;
+      font-size:13px;
+      font-weight:600;
+      padding:8px 13px;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      transition:transform .08s ease, box-shadow .08s ease, background .15s, opacity .12s;
+    }
+    .btn-primary{
+      background:var(--accent);
+      color:#fff;
+      box-shadow:0 10px 24px rgba(37,99,235,.35);
+    }
+    .btn-secondary{
+      background:var(--panel-soft);
+      color:var(--ink);
+      border:1px solid var(--border);
+    }
+    .btn-danger{
+      background:var(--danger);
+      color:#fff;
+    }
+    .btn-sm{
+      font-size:11px;
+      padding:5px 10px;
+    }
+    .btn:active{
+      transform:translateY(1px);
+      box-shadow:0 4px 14px rgba(15,23,42,.18);
+    }
+    .btn[disabled]{
+      opacity:.7;
+      cursor:default;
+      transform:none;
+      box-shadow:none;
+    }
+
+    .auth-toggle{
+      font-size:11px;
+      color:var(--muted);
+      margin-top:6px;
+    }
+    .auth-toggle button{
+      border:none;
+      background:none;
+      color:var(--accent-strong);
+      font-size:11px;
+      font-weight:600;
+      cursor:pointer;
+      padding:0;
+      margin-left:4px;
+    }
+
+    .section-title{
+      font-size:14px;
+      font-weight:600;
+      margin-bottom:4px;
+    }
+    .section-sub{
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:10px;
+    }
+
+    .table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:12px;
+    }
+    .table th,
+    .table td{
+      padding:7px 8px;
+      border-bottom:1px solid var(--border);
+      text-align:left;
+      vertical-align:middle;
+    }
+    .table th{
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:.03em;
+      color:var(--muted);
+    }
+    .badge-status{
+      display:inline-flex;
+      align-items:center;
+      gap:5px;
+      padding:2px 8px;
+      border-radius:999px;
+      font-size:11px;
+    }
+    .badge-status.pending{
+      background:#fef3c7;
+      color:#92400e;
+    }
+    .badge-status.approved{
+      background:#dcfce7;
+      color:#166534;
+    }
+    .badge-status.rejected{
+      background:#fee2e2;
+      color:#b91c1c;
+    }
+
+    .code-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size:11px;
+      padding:3px 8px;
+      border-radius:999px;
+      background:var(--panel-soft);
+      border:1px solid var(--border);
+    }
+    .link{
+      font-size:11px;
+      color:var(--accent-strong);
+      text-decoration:underline;
+      cursor:pointer;
+      word-break:break-all;
+    }
+
+    #dashboardSection{display:none;}
+    #authSection{display:block;}
+
+    @media (max-width:700px){
+      .header-row{
+        flex-direction:column;
+        align-items:flex-start;
+      }
+      .table{
+        font-size:11px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <!-- Auth Card -->
+    <section id="authSection" class="card">
+      <div class="header-row">
+        <div>
+          <div class="title">Luma Events — Owner Access</div>
+          <div class="subtitle">Sign up or log in to manage events, vendors, and POS links.</div>
+        </div>
+        <div class="pill">
+          <div class="pill-dot"></div>
+          <span>Organizer portal</span>
+        </div>
+      </div>
+
+      <div id="authAlert" class="alert hidden">
+        <span id="authAlertIcon">ℹ️</span>
+        <span id="authAlertText"></span>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <div id="loginCard">
+            <div class="section-title">Log in</div>
+            <div class="section-sub">Use your organizer email and password.</div>
+            <form id="loginForm">
+              <div class="field">
+                <label for="loginEmail">Email</label>
+                <input id="loginEmail" type="email" required autocomplete="email"/>
+              </div>
+              <div class="field">
+                <label for="loginPassword">Password</label>
+                <input id="loginPassword" type="password" required autocomplete="current-password"/>
+              </div>
+              <button type="submit" class="btn btn-primary" id="loginBtn">
+                <span id="loginBtnText">Log in</span>
+              </button>
+            </form>
+            <div class="auth-toggle">
+              Don’t have an account?
+              <button type="button" id="goSignup">Create one</button>
+            </div>
+          </div>
+
+          <div id="signupCard" style="display:none;">
+            <div class="section-title">Create organizer account</div>
+            <div class="section-sub">You’ll use this account to manage all your events and vendors.</div>
+            <form id="signupForm">
+              <div class="field">
+                <label for="signupName">Your name</label>
+                <input id="signupName" type="text" required autocomplete="name"/>
+              </div>
+              <div class="field">
+                <label for="signupEmail">Email</label>
+                <input id="signupEmail" type="email" required autocomplete="email"/>
+              </div>
+              <div class="field-row">
+                <div class="field">
+                  <label for="signupPassword">Password</label>
+                  <input id="signupPassword" type="password" required minlength="6" autocomplete="new-password"/>
+                </div>
+                <div class="field">
+                  <label for="signupPassword2">Confirm</label>
+                  <input id="signupPassword2" type="password" required minlength="6" autocomplete="new-password"/>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary" id="signupBtn">
+                <span id="signupBtnText">Create account</span>
+              </button>
+            </form>
+            <div class="auth-toggle">
+              Already have an account?
+              <button type="button" id="goLogin">Log in</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="col">
+          <div class="section-title">How it works</div>
+          <div class="section-sub">
+            1. Create an event<br/>
+            2. Get an auto-generated vendor signup link<br/>
+            3. Approve vendors and auto-generate POS links per brand<br/>
+            All saved directly in Firestore — no manual DB edits.
+          </div>
+          <ul style="font-size:12px;color:var(--muted);padding-left:18px;line-height:1.5;">
+            <li>Events are stored under <code>events/{eventId}</code></li>
+            <li>Vendor applications under <code>events/{eventId}/vendors</code></li>
+            <li>Approved vendors get a branch under <code>brands/{brandId}/branches/{branchId}</code></li>
+            <li>POS URL is saved in the vendor doc for you to share</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Dashboard -->
+    <section id="dashboardSection" class="card">
+      <div class="header-row">
+        <div>
+          <div class="title">Luma Events — Dashboard</div>
+          <div class="subtitle" id="userSubtitle">Signed in as …</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="pill">
+            <div class="pill-dot"></div>
+            <span>Organizer</span>
+          </div>
+          <button id="logoutBtn" class="btn btn-secondary btn-sm">Log out</button>
+        </div>
+      </div>
+
+      <div id="dashAlert" class="alert hidden">
+        <span id="dashAlertIcon">ℹ️</span>
+        <span id="dashAlertText"></span>
+      </div>
+
+      <div class="row">
+        <!-- Create event -->
+        <div class="col">
+          <div class="section-title">Create new event</div>
+          <div class="section-sub">Fill the basic details. Vendor signup & POS links are handled automatically.</div>
+          <form id="eventForm">
+            <div class="field">
+              <label for="eventName">Event name</label>
+              <input id="eventName" type="text" required placeholder="e.g. Lokamania 7"/>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="eventCode">Short code</label>
+                <input id="eventCode" type="text" placeholder="e.g. lok7"/>
+                <div class="helper">Optional, used for internal reference.</div>
+              </div>
+              <div class="field">
+                <label for="currency">Currency</label>
+                <input id="currency" type="text" value="EGP" />
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="startDate">Start date</label>
+                <input id="startDate" type="date" />
+              </div>
+              <div class="field">
+                <label for="endDate">End date</label>
+                <input id="endDate" type="date" />
+              </div>
+            </div>
+            <div class="field">
+              <label for="venue">Venue</label>
+              <input id="venue" type="text" placeholder="Mall / Exhibition name"/>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="city">City</label>
+                <input id="city" type="text" value="Cairo"/>
+              </div>
+              <div class="field">
+                <label for="country">Country</label>
+                <input id="country" type="text" value="Egypt"/>
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="vat">VAT %</label>
+                <input id="vat" type="number" step="0.01" value="14"/>
+              </div>
+              <div class="field">
+                <label for="service">Service fee % (your cut)</label>
+                <input id="service" type="number" step="0.01" value="0"/>
+              </div>
+            </div>
+            <div class="field">
+              <label>
+                <input id="signupEnabled" type="checkbox" checked style="width:auto;margin-right:6px;"/>
+                Enable vendor signup for this event
+              </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="createEventBtn">
+              <span id="createEventBtnText">Create event</span>
+            </button>
+          </form>
+
+          <div id="createdEventInfo" style="margin-top:10px;display:none;">
+            <div class="section-sub" style="margin-bottom:6px;">Latest event created:</div>
+            <div class="code-pill" id="createdEventIdPill"></div>
+            <div class="helper" style="margin-top:5px;">
+              Vendor signup link:<br/>
+              <span class="link" id="createdEventSignupLink"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Events + vendors -->
+        <div class="col">
+          <div class="section-title">Your events</div>
+          <div class="section-sub">Select an event to review vendor applications and get POS links.</div>
+
+          <div id="eventsListContainer" style="max-height:260px;overflow:auto;margin-bottom:8px;border:1px solid var(--border);border-radius:12px;">
+            <table class="table" id="eventsTable">
+              <thead>
+                <tr>
+                  <th>Event</th>
+                  <th>Dates</th>
+                  <th>Vendors</th>
+                  <th>Link</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="eventsTbody">
+                <tr><td colspan="5" style="text-align:center;color:var(--muted);font-size:11px;padding:12px;">No events yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div id="selectedEventInfo" style="margin-top:10px;display:none;">
+            <div class="section-title" id="selectedEventTitle">Vendors</div>
+            <div class="section-sub" id="selectedEventSub">Pending and approved vendors for this event.</div>
+
+            <div style="border:1px solid var(--border);border-radius:12px;max-height:260px;overflow:auto;">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Brand</th>
+                    <th>Contact</th>
+                    <th>Status</th>
+                    <th>POS</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="vendorsTbody">
+                  <tr><td colspan="5" style="text-align:center;color:var(--muted);font-size:11px;padding:12px;">Select an event to load vendors.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script type="module">
+    // ---------- Firebase imports ----------
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getFirestore,
+      doc,
+      getDoc,
+      setDoc,
+      addDoc,
+      collection,
+      query,
+      where,
+      onSnapshot,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import {
+      getAuth,
+      onAuthStateChanged,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    // ---------- Your Firebase config ----------
+    const firebaseConfig = {
+      apiKey:"AIzaSyA80bAAGPuyscnTVS-zwrxE9Jp3tPiS1gM",
+      authDomain:"events-339ce.firebaseapp.com",
+      projectId:"events-339ce",
+      storageBucket:"events-339ce.firebasestorage.app",
+      messagingSenderId:"175601544315",
+      appId:"1:175601544315:web:00c94b4affa972b3a286de"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    const POS_BASE_URL = "https://luma-pos-eight.vercel.app";
+
+    // ---------- UI helpers ----------
+    const authSection = document.getElementById("authSection");
+    const dashboardSection = document.getElementById("dashboardSection");
+
+    const authAlert = document.getElementById("authAlert");
+    const authAlertIcon = document.getElementById("authAlertIcon");
+    const authAlertText = document.getElementById("authAlertText");
+    const dashAlert = document.getElementById("dashAlert");
+    const dashAlertIcon = document.getElementById("dashAlertIcon");
+    const dashAlertText = document.getElementById("dashAlertText");
+
+    function showAuthAlert(msg, type="info"){
+      authAlert.classList.remove("hidden","ok","error");
+      if(type==="ok"){
+        authAlert.classList.add("ok");
+        authAlertIcon.textContent = "✅";
+      }else if(type==="error"){
+        authAlert.classList.add("error");
+        authAlertIcon.textContent = "⚠️";
+      }else{
+        authAlertIcon.textContent = "ℹ️";
+      }
+      authAlertText.textContent = msg;
+    }
+    function hideAuthAlert(){
+      authAlert.classList.add("hidden");
+    }
+    function showDashAlert(msg, type="info"){
+      dashAlert.classList.remove("hidden","ok","error");
+      if(type==="ok"){
+        dashAlert.classList.add("ok");
+        dashAlertIcon.textContent = "✅";
+      }else if(type==="error"){
+        dashAlert.classList.add("error");
+        dashAlertIcon.textContent = "⚠️";
+      }else{
+        dashAlertIcon.textContent = "ℹ️";
+      }
+      dashAlertText.textContent = msg;
+    }
+    function hideDashAlert(){
+      dashAlert.classList.add("hidden");
+    }
+
+    function setBtnLoading(btn, textEl, isLoading, normalText, loadingText){
+      if(isLoading){
+        btn.disabled = true;
+        textEl.textContent = loadingText;
+      }else{
+        btn.disabled = false;
+        textEl.textContent = normalText;
+      }
+    }
+
+    function formatDateRange(startStr, endStr){
+      if(!startStr && !endStr) return "";
+      try{
+        const opts = { day:"2-digit", month:"short" };
+        if(startStr && endStr){
+          const s = new Date(startStr);
+          const e = new Date(endStr);
+          if(!isNaN(s) && !isNaN(e)){
+            return `${s.toLocaleDateString("en-GB",opts)} – ${e.toLocaleDateString("en-GB",opts)}`;
+          }
+        }else if(startStr){
+          const s = new Date(startStr);
+          if(!isNaN(s)){
+            return s.toLocaleDateString("en-GB",{ day:"2-digit", month:"short", year:"numeric" });
+          }
+        }
+      }catch(e){
+        console.warn("Date parse error", e);
+      }
+      return "";
+    }
+
+    // ---------- Auth toggle ----------
+    const loginCard = document.getElementById("loginCard");
+    const signupCard = document.getElementById("signupCard");
+    document.getElementById("goSignup").addEventListener("click", ()=>{
+      loginCard.style.display = "none";
+      signupCard.style.display = "block";
+      hideAuthAlert();
+    });
+    document.getElementById("goLogin").addEventListener("click", ()=>{
+      signupCard.style.display = "none";
+      loginCard.style.display = "block";
+      hideAuthAlert();
+    });
+
+    // ---------- Auth: login/signup/logout ----------
+    const loginForm = document.getElementById("loginForm");
+    const loginBtn = document.getElementById("loginBtn");
+    const loginBtnText = document.getElementById("loginBtnText");
+
+    loginForm.addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      hideAuthAlert();
+
+      const email = document.getElementById("loginEmail").value.trim();
+      const password = document.getElementById("loginPassword").value;
+
+      if(!email || !password){
+        showAuthAlert("Please fill your email and password.","error");
+        return;
+      }
+
+      setBtnLoading(loginBtn, loginBtnText, true, "Log in", "Logging in…");
+      try{
+        await signInWithEmailAndPassword(auth, email, password);
+      }catch(err){
+        console.error("Login error", err);
+        let msg = "Error logging in. Please check your credentials.";
+        if(err.code === "auth/user-not-found"){
+          msg = "No organizer found with this email.";
+        }else if(err.code === "auth/wrong-password"){
+          msg = "Incorrect password. Please try again.";
+        }
+        showAuthAlert(msg, "error");
+      }finally{
+        setBtnLoading(loginBtn, loginBtnText, false, "Log in", "Logging in…");
+      }
+    });
+
+    const signupForm = document.getElementById("signupForm");
+    const signupBtn = document.getElementById("signupBtn");
+    const signupBtnText = document.getElementById("signupBtnText");
+
+    signupForm.addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      hideAuthAlert();
+
+      const name = document.getElementById("signupName").value.trim();
+      const email = document.getElementById("signupEmail").value.trim();
+      const pw1 = document.getElementById("signupPassword").value;
+      const pw2 = document.getElementById("signupPassword2").value;
+
+      if(!name || !email || !pw1 || !pw2){
+        showAuthAlert("Please fill all fields.","error");
+        return;
+      }
+      if(pw1 !== pw2){
+        showAuthAlert("Passwords do not match.","error");
+        return;
+      }
+      if(pw1.length < 6){
+        showAuthAlert("Password must be at least 6 characters.","error");
+        return;
+      }
+
+      setBtnLoading(signupBtn, signupBtnText, true, "Create account", "Creating…");
+
+      try{
+        const cred = await createUserWithEmailAndPassword(auth, email, pw1);
+        const uid = cred.user.uid;
+
+        // Create /users/{uid} with role organizer
+        const userRef = doc(db,"users",uid);
+        await setDoc(userRef, {
+          name,
+          email,
+          role: "event_owner",
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        }, { merge:true });
+
+        showAuthAlert("Account created successfully. You are logged in.","ok");
+      }catch(err){
+        console.error("Signup error", err);
+        let msg = "Error creating account. Please try again.";
+        if(err.code === "auth/email-already-in-use"){
+          msg = "This email is already in use. Try logging in.";
+        }else if(err.code === "auth/invalid-email"){
+          msg = "Invalid email address.";
+        }
+        showAuthAlert(msg,"error");
+      }finally{
+        setBtnLoading(signupBtn, signupBtnText, false, "Create account", "Creating…");
+      }
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", async ()=>{
+      try{
+        await signOut(auth);
+      }catch(e){
+        console.error("Logout error", e);
+      }
+    });
+
+    // ---------- State: user + events + vendors ----------
+    let currentUser = null;
+    let eventsUnsub = null;
+    let vendorsUnsub = null;
+    let selectedEventId = null;
+    let eventsMap = new Map(); // eventId -> data
+
+    const userSubtitle = document.getElementById("userSubtitle");
+    const eventsTbody = document.getElementById("eventsTbody");
+    const selectedEventInfo = document.getElementById("selectedEventInfo");
+    const selectedEventTitle = document.getElementById("selectedEventTitle");
+    const selectedEventSub = document.getElementById("selectedEventSub");
+    const vendorsTbody = document.getElementById("vendorsTbody");
+    const createdEventInfo = document.getElementById("createdEventInfo");
+    const createdEventIdPill = document.getElementById("createdEventIdPill");
+    const createdEventSignupLink = document.getElementById("createdEventSignupLink");
+
+    function clearVendorsTable(message){
+      vendorsTbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--muted);font-size:11px;padding:12px;">${message}</td></tr>`;
+    }
+
+    function renderEventsTable(){
+      if(eventsMap.size === 0){
+        eventsTbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--muted);font-size:11px;padding:12px;">No events yet.</td></tr>`;
+        return;
+      }
+
+      const rows = [];
+      const origin = window.location.origin;
+      const vendorSignupPath = "/vendor-signup.html";
+
+      eventsMap.forEach((data, id)=>{
+        const dateStr = formatDateRange(data.startDate, data.endDate) || "TBA";
+        const vendorsCount = data._vendorCounts?.total ?? "-";
+        const link = `${origin}${vendorSignupPath}?eventId=${encodeURIComponent(id)}`;
+        rows.push(`
+          <tr>
+            <td>${data.name || "Untitled"}</td>
+            <td>${dateStr}</td>
+            <td>${vendorsCount}</td>
+            <td><span class="link" data-signup-link="${id}">Copy link</span></td>
+            <td><button class="btn btn-secondary btn-sm" data-select-event="${id}">Open</button></td>
+          </tr>
+        `);
+      });
+
+      eventsTbody.innerHTML = rows.join("");
+
+      // attach events
+      eventsTbody.querySelectorAll("[data-select-event]").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          const eid = btn.getAttribute("data-select-event");
+          selectEvent(eid);
+        });
+      });
+      eventsTbody.querySelectorAll("[data-signup-link]").forEach(el=>{
+        el.addEventListener("click", ()=>{
+          const id = el.getAttribute("data-signup-link");
+          const signupUrl = `${origin}${vendorSignupPath}?eventId=${encodeURIComponent(id)}`;
+          navigator.clipboard?.writeText(signupUrl).catch(()=>{});
+          showDashAlert("Vendor signup link copied to clipboard.","ok");
+        });
+      });
+    }
+
+    function renderVendorsTable(vendors){
+      if(!vendors || vendors.length === 0){
+        clearVendorsTable("No vendors yet for this event.");
+        return;
+      }
+      const rows = vendors.map(v=>{
+        const statusClass = `badge-status ${v.status || "pending"}`;
+        const statusLabel = (v.status || "pending").replace(/^\w/, c=>c.toUpperCase());
+        const posLinkHtml = v.posUrl
+          ? `<span class="link" data-pos-url="${v.posUrl}">Copy POS</span>`
+          : `<span style="font-size:11px;color:var(--muted);">Not generated</span>`;
+
+        const actionsHtml = v.status === "pending"
+          ? `
+            <button class="btn btn-primary btn-sm" data-approve="${v._id}">Approve</button>
+            <button class="btn btn-danger btn-sm" data-reject="${v._id}">Reject</button>
+          `
+          : `<span style="font-size:11px;color:var(--muted);">—</span>`;
+
+        return `
+          <tr>
+            <td>
+              <div style="font-size:12px;font-weight:600;">${v.brandName || "Brand"}</div>
+              <div style="font-size:11px;color:var(--muted);">
+                Booth: ${v.boothNumber || "-"} | Category: ${v.category || "-"}
+              </div>
+            </td>
+            <td>
+              <div style="font-size:12px;">${v.contactName || "-"}</div>
+              <div style="font-size:11px;color:var(--muted);">
+                ${v.contactPhone || ""}<br/>
+                ${v.contactEmail || ""}
+              </div>
+            </td>
+            <td>
+              <span class="${statusClass}">${statusLabel}</span>
+            </td>
+            <td>${posLinkHtml}</td>
+            <td>${actionsHtml}</td>
+          </tr>
+        `;
+      }).join("");
+
+      vendorsTbody.innerHTML = rows;
+
+      // attach POS copy
+      vendorsTbody.querySelectorAll("[data-pos-url]").forEach(el=>{
+        el.addEventListener("click", ()=>{
+          const url = el.getAttribute("data-pos-url");
+          navigator.clipboard?.writeText(url).catch(()=>{});
+          showDashAlert("POS link copied to clipboard.","ok");
+        });
+      });
+
+      // approve / reject
+      vendorsTbody.querySelectorAll("[data-approve]").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          const vid = btn.getAttribute("data-approve");
+          approveVendor(selectedEventId, vid);
+        });
+      });
+      vendorsTbody.querySelectorAll("[data-reject]").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          const vid = btn.getAttribute("data-reject");
+          rejectVendor(selectedEventId, vid);
+        });
+      });
+    }
+
+    async function selectEvent(eventId){
+      selectedEventId = eventId;
+      if(vendorsUnsub) vendorsUnsub();
+      clearVendorsTable("Loading vendors…");
+      selectedEventInfo.style.display = "block";
+
+      const data = eventsMap.get(eventId);
+      selectedEventTitle.textContent = `Vendors — ${data?.name || "Event"}`;
+      selectedEventSub.textContent = "Review pending vendors and share POS links for approved brands.";
+
+      // listen to vendors in real time
+      const vendorsCol = collection(db,"events",eventId,"vendors");
+      vendorsUnsub = onSnapshot(vendorsCol, (snap)=>{
+        const vendors = [];
+        snap.forEach(docSnap=>{
+          vendors.push({ _id: docSnap.id, ...docSnap.data() });
+        });
+        renderVendorsTable(vendors);
+
+        // also update vendor count in eventsMap
+        const info = eventsMap.get(eventId);
+        if(info){
+          info._vendorCounts = {
+            total: vendors.length,
+            pending: vendors.filter(v=>v.status==="pending" || !v.status).length
+          };
+          eventsMap.set(eventId, info);
+          renderEventsTable();
+        }
+      }, (err)=>{
+        console.error("Vendors snapshot error", err);
+        clearVendorsTable("Error loading vendors.");
+      });
+    }
+
+    // ---------- Approve / Reject Vendor ----------
+    async function approveVendor(eventId, vendorId){
+      if(!eventId || !vendorId) return;
+      hideDashAlert();
+
+      try{
+        showDashAlert("Approving vendor and generating POS link…","info");
+
+        const vendorRef = doc(db,"events",eventId,"vendors",vendorId);
+        const vendorSnap = await getDoc(vendorRef);
+        if(!vendorSnap.exists()){
+          showDashAlert("Vendor not found.","error");
+          return;
+        }
+        const vendor = vendorSnap.data();
+        if(!vendor.brandId){
+          showDashAlert("Vendor is missing brandId. This should not happen.","error");
+          return;
+        }
+
+        const eventRef = doc(db,"events",eventId);
+        const eventSnap = await getDoc(eventRef);
+        if(!eventSnap.exists()){
+          showDashAlert("Event not found.","error");
+          return;
+        }
+        const event = eventSnap.data();
+
+        // 1) Create branch under brands/{brandId}/branches
+        const brandId = vendor.brandId;
+        const branchesCol = collection(db,"brands",brandId,"branches");
+        const branchDocRef = await addDoc(branchesCol, {
+          name: `${event.name || "Event"} Booth`,
+          type: "event",
+          eventId,
+          eventCode: event.code || null,
+          eventName: event.name || null,
+          venue: event.venue || null,
+          city: event.city || null,
+          country: event.country || null,
+          vatPercent: typeof event.vatPercent === "number" ? event.vatPercent : 14,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+        const branchId = branchDocRef.id;
+
+        // 2) POS URL
+        const posUrl = `${POS_BASE_URL}/?brandId=${encodeURIComponent(brandId)}&branchId=${encodeURIComponent(branchId)}&eventId=${encodeURIComponent(eventId)}`;
+
+        // 3) Update branch with POS URL
+        await setDoc(branchDocRef, {
+          posUrl,
+          eventVendorId: vendorId
+        }, { merge:true });
+
+        // 4) Update vendor doc
+        await setDoc(vendorRef, {
+          status: "approved",
+          branchId,
+          posUrl,
+          updatedAt: serverTimestamp()
+        }, { merge:true });
+
+        showDashAlert("Vendor approved and POS link generated.","ok");
+      }catch(err){
+        console.error("Approve vendor error", err);
+        showDashAlert("Error approving vendor. Check console for details.","error");
+      }
+    }
+
+    async function rejectVendor(eventId, vendorId){
+      if(!eventId || !vendorId) return;
+      const reason = prompt("Optional: reason for rejection (will be saved in vendor record).") || null;
+      try{
+        const vendorRef = doc(db,"events",eventId,"vendors",vendorId);
+        await setDoc(vendorRef, {
+          status: "rejected",
+          rejectionReason: reason,
+          updatedAt: serverTimestamp()
+        }, { merge:true });
+        showDashAlert("Vendor marked as rejected.","ok");
+      }catch(err){
+        console.error("Reject vendor error", err);
+        showDashAlert("Error rejecting vendor.","error");
+      }
+    }
+
+    // ---------- Create Event ----------
+    const eventForm = document.getElementById("eventForm");
+    const createEventBtn = document.getElementById("createEventBtn");
+    const createEventBtnText = document.getElementById("createEventBtnText");
+
+    eventForm.addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      hideDashAlert();
+      createdEventInfo.style.display = "none";
+
+      if(!currentUser){
+        showDashAlert("You must be logged in to create an event.","error");
+        return;
+      }
+
+      const name = document.getElementById("eventName").value.trim();
+      const code = document.getElementById("eventCode").value.trim() || null;
+      const currency = document.getElementById("currency").value.trim() || "EGP";
+      const startDate = document.getElementById("startDate").value || null;
+      const endDate = document.getElementById("endDate").value || null;
+      const venue = document.getElementById("venue").value.trim() || null;
+      const city = document.getElementById("city").value.trim() || null;
+      const country = document.getElementById("country").value.trim() || null;
+      const vatPercent = parseFloat(document.getElementById("vat").value || "14");
+      const servicePercent = parseFloat(document.getElementById("service").value || "0");
+      const signupEnabled = document.getElementById("signupEnabled").checked;
+
+      if(!name){
+        showDashAlert("Please enter an event name.","error");
+        return;
+      }
+
+      setBtnLoading(createEventBtn, createEventBtnText, true, "Create event", "Creating…");
+
+      try{
+        const eventsCol = collection(db,"events");
+        const docRef = await addDoc(eventsCol, {
+          name,
+          code,
+          currency,
+          startDate,
+          endDate,
+          venue,
+          city,
+          country,
+          vatPercent: isNaN(vatPercent) ? 14 : vatPercent,
+          servicePercent: isNaN(servicePercent) ? 0 : servicePercent,
+          brandSignupEnabled: signupEnabled,
+          organizerId: currentUser.uid,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+
+        const eventId = docRef.id;
+        const origin = window.location.origin;
+        const vendorSignupPath = "/vendor-signup.html";
+        const signupUrl = `${origin}${vendorSignupPath}?eventId=${encodeURIComponent(eventId)}`;
+
+        createdEventIdPill.textContent = `ID: ${eventId}`;
+        createdEventSignupLink.textContent = signupUrl;
+        createdEventSignupLink.onclick = ()=>{
+          navigator.clipboard?.writeText(signupUrl).catch(()=>{});
+          showDashAlert("Vendor signup link copied to clipboard.","ok");
+        };
+        createdEventInfo.style.display = "block";
+
+        // Clear form lightly
+        document.getElementById("eventName").value = "";
+        document.getElementById("eventCode").value = "";
+        document.getElementById("venue").value = "";
+        document.getElementById("startDate").value = "";
+        document.getElementById("endDate").value = "";
+        showDashAlert("Event created successfully.","ok");
+      }catch(err){
+        console.error("Create event error", err);
+        showDashAlert("Error creating event. Check console.","error");
+      }finally{
+        setBtnLoading(createEventBtn, createEventBtnText, false, "Create event", "Creating…");
+      }
+    });
+
+    // ---------- Listen to events for this organizer ----------
+    function subscribeToEvents(uid){
+      if(eventsUnsub) eventsUnsub();
+      eventsMap.clear();
+      renderEventsTable();
+
+      const qEvents = query(collection(db,"events"), where("organizerId","==",uid));
+      eventsUnsub = onSnapshot(qEvents, (snap)=>{
+        eventsMap.clear();
+        snap.forEach(docSnap=>{
+          eventsMap.set(docSnap.id, docSnap.data());
+        });
+        renderEventsTable();
+      }, (err)=>{
+        console.error("Events snapshot error", err);
+        showDashAlert("Error loading events. Check console.","error");
+      });
+    }
+
+    // ---------- Auth state listener ----------
+    onAuthStateChanged(auth, async (user)=>{
+      currentUser = user;
+      if(user){
+        authSection.style.display = "none";
+        dashboardSection.style.display = "block";
+        userSubtitle.textContent = `Signed in as ${user.email || user.uid}`;
+        hideAuthAlert();
+        subscribeToEvents(user.uid);
+      }else{
+        authSection.style.display = "block";
+        dashboardSection.style.display = "none";
+        if(eventsUnsub) eventsUnsub();
+        if(vendorsUnsub) vendorsUnsub();
+        eventsMap.clear();
+        selectedEventId = null;
+        renderEventsTable();
+        clearVendorsTable("Select an event to load vendors.");
+        selectedEventInfo.style.display = "none";
+      }
+    });
+  </script>
+</body>
+</html>
