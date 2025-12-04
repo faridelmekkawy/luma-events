@@ -1,0 +1,688 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Luma Events — Brand Signup</title>
+
+  <!-- Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <style>
+    :root{
+      --bg:#f3f4f6;
+      --panel:#ffffff;
+      --panel-soft:#f9fafb;
+      --ink:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --accent:#2563eb;
+      --accent-soft:#dbeafe;
+      --accent-strong:#1d4ed8;
+      --danger:#ef4444;
+      --ok:#16a34a;
+      --radius:18px;
+      --shadow:0 18px 40px rgba(15,23,42,.12);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{
+      height:100%;
+      font-family:"Montserrat",system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+      background:var(--bg);
+      color:var(--ink);
+    }
+    body{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+    .shell{
+      width:100%;
+      max-width:1040px;
+      background:var(--panel);
+      border-radius:24px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      display:grid;
+      grid-template-columns:minmax(0,1.05fr) minmax(0,1.05fr);
+    }
+    @media (max-width:900px){
+      .shell{
+        grid-template-columns:1fr;
+      }
+      body{
+        padding:12px;
+      }
+    }
+
+    .left{
+      padding:28px 32px;
+      border-right:1px solid var(--border);
+      background:radial-gradient(circle at top left,#dbeafe,transparent 55%),
+                 radial-gradient(circle at bottom right,#fee2e2,transparent 55%),
+                 var(--panel-soft);
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:4px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.9);
+      border:1px solid rgba(148,163,184,.4);
+      font-size:11px;
+      color:var(--muted);
+      margin-bottom:16px;
+    }
+    .badge-dot{
+      width:8px;height:8px;border-radius:99px;background:#22c55e;
+    }
+    h1{
+      font-size:24px;
+      line-height:1.2;
+      margin-bottom:6px;
+    }
+    .event-subtitle{
+      font-size:13px;
+      color:var(--muted);
+      margin-bottom:20px;
+    }
+    .event-meta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-bottom:26px;
+    }
+    .chip{
+      font-size:11px;
+      padding:6px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.95);
+      border:1px solid var(--border);
+      display:flex;
+      align-items:center;
+      gap:6px;
+      color:var(--muted);
+    }
+    .chip-icon{
+      width:18px;height:18px;border-radius:999px;
+      display:flex;align-items:center;justify-content:center;
+      background:var(--accent-soft);
+      color:var(--accent-strong);
+      font-size:11px;
+    }
+    .left-footer{
+      margin-top:32px;
+      font-size:11px;
+      color:var(--muted);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .left-footer span strong{
+      color:var(--ink);
+    }
+
+    .right{
+      padding:22px 24px 24px;
+      background:var(--panel);
+    }
+
+    .alert{
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:12px;
+      display:flex;
+      align-items:flex-start;
+      gap:8px;
+      margin-bottom:14px;
+      border:1px solid var(--border);
+      background:var(--panel-soft);
+      color:var(--muted);
+    }
+    .alert-icon{
+      font-size:15px;
+      margin-top:1px;
+    }
+    .alert.ok{
+      border-color:#bbf7d0;
+      background:#dcfce7;
+      color:#166534;
+    }
+    .alert.error{
+      border-color:#fecaca;
+      background:#fee2e2;
+      color:#b91c1c;
+    }
+    .alert.hidden{
+      display:none;
+    }
+
+    .section-title{
+      font-size:14px;
+      font-weight:600;
+      margin-bottom:2px;
+    }
+    .section-sub{
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:10px;
+    }
+
+    form{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      margin-top:6px;
+    }
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:5px;
+    }
+    .field-row{
+      display:flex;
+      gap:10px;
+    }
+    .field-row>.field{
+      flex:1;
+    }
+    label{
+      font-size:12px;
+      font-weight:500;
+      color:var(--muted);
+    }
+    input,select,textarea{
+      font-family:inherit;
+      font-size:13px;
+      padding:9px 10px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:#f9fafb;
+      outline:none;
+      transition:border-color .15s, box-shadow .15s, background .15s;
+    }
+    textarea{
+      resize:vertical;
+      min-height:60px;
+    }
+    input:focus,select:focus,textarea:focus{
+      border-color:var(--accent);
+      box-shadow:0 0 0 1px rgba(37,99,235,.35);
+      background:#fff;
+    }
+
+    .helper{
+      font-size:11px;
+      color:var(--muted);
+    }
+
+    .btn{
+      border:none;
+      border-radius:999px;
+      font-size:13px;
+      font-weight:600;
+      padding:9px 14px;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      transition:transform .08s ease, box-shadow .08s ease, background .15s, opacity .12s;
+    }
+    .btn-primary{
+      background:var(--accent);
+      color:#fff;
+      box-shadow:0 10px 24px rgba(37,99,235,.35);
+    }
+    .btn-primary:active{
+      transform:translateY(1px);
+      box-shadow:0 4px 14px rgba(37,99,235,.22);
+    }
+    .btn[disabled]{
+      opacity:.72;
+      cursor:default;
+      transform:none;
+      box-shadow:none;
+    }
+
+    .form-footer{
+      margin-top:4px;
+      font-size:11px;
+      color:var(--muted);
+    }
+
+    .success-state{
+      display:none;
+      padding:8px 0 4px;
+    }
+    .success-state.active{
+      display:block;
+    }
+    .success-title{
+      font-size:16px;
+      font-weight:600;
+      margin-bottom:6px;
+    }
+    .success-body{
+      font-size:13px;
+      color:var(--muted);
+      margin-bottom:12px;
+    }
+    .tag-pill{
+      font-size:11px;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:4px 9px;
+      border-radius:999px;
+      background:#dcfce7;
+      color:#166534;
+      border:1px solid #bbf7d0;
+    }
+
+    .pill-dot{
+      width:8px;height:8px;border-radius:999px;background:#22c55e;
+    }
+
+    .loading-text{
+      font-size:12px;
+      color:var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <!-- LEFT: Event info -->
+    <aside class="left">
+      <div class="badge">
+        <div class="badge-dot"></div>
+        <span>Hosted with Luma Events</span>
+      </div>
+      <h1 id="eventTitle">Loading event…</h1>
+      <p class="event-subtitle" id="eventSubtitle">Please wait while we fetch the event details.</p>
+
+      <div class="event-meta" id="eventMeta" style="display:none;">
+        <div class="chip">
+          <div class="chip-icon">📆</div>
+          <span id="eventDates">Dates</span>
+        </div>
+        <div class="chip">
+          <div class="chip-icon">📍</div>
+          <span id="eventVenue">Venue</span>
+        </div>
+        <div class="chip">
+          <div class="chip-icon">💰</div>
+          <span id="eventCurrency">Currency</span>
+        </div>
+      </div>
+
+      <div class="left-footer">
+        <span>Powered by <strong>Luma Events OS</strong></span>
+        <span id="eventCodeHint"></span>
+      </div>
+    </aside>
+
+    <!-- RIGHT: Brand signup -->
+    <main class="right">
+      <div id="topAlert" class="alert hidden">
+        <div class="alert-icon" id="topAlertIcon">ℹ️</div>
+        <div id="topAlertText">Message</div>
+      </div>
+
+      <div id="formContainer">
+        <div>
+          <div class="section-title">Register your brand for this event</div>
+          <div class="section-sub">
+            Fill your brand details and create your login. This account will be used later to access your event dashboard and POS.
+          </div>
+        </div>
+
+        <form id="brandForm">
+          <!-- Brand details -->
+          <div class="field">
+            <label for="brandName">Brand name</label>
+            <input id="brandName" name="brandName" type="text" required placeholder="e.g. Nizu" autocomplete="organization"/>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="category">Category</label>
+              <input id="category" name="category" type="text" placeholder="e.g. Clothing, Accessories" />
+            </div>
+            <div class="field">
+              <label for="booth">Booth / Area (optional)</label>
+              <input id="booth" name="booth" type="text" placeholder="e.g. B12" />
+            </div>
+          </div>
+
+          <!-- Contact person -->
+          <div class="field-row">
+            <div class="field">
+              <label for="contactName">Contact person</label>
+              <input id="contactName" name="contactName" type="text" required placeholder="Full name"/>
+            </div>
+            <div class="field">
+              <label for="phone">Phone (WhatsApp preferred)</label>
+              <input id="phone" name="phone" type="tel" required placeholder="+20…" autocomplete="tel"/>
+            </div>
+          </div>
+
+          <!-- Login credentials -->
+          <div class="field">
+            <label for="email">Login email</label>
+            <input id="email" name="email" type="email" required placeholder="you@brand.com" autocomplete="email"/>
+            <div class="helper">This email will be your username for Luma Events and POS.</div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="password">Password</label>
+              <input id="password" name="password" type="password" required minlength="6" placeholder="At least 6 characters" autocomplete="new-password"/>
+            </div>
+            <div class="field">
+              <label for="passwordConfirm">Confirm password</label>
+              <input id="passwordConfirm" name="passwordConfirm" type="password" required minlength="6" placeholder="Repeat password" autocomplete="new-password"/>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="notes">Notes for organizer (optional)</label>
+            <textarea id="notes" name="notes" placeholder="Share any requirements, power needs, setup times…"></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="submitBtn">
+            <span id="submitBtnText">Submit brand registration</span>
+          </button>
+
+          <div class="form-footer">
+            After submitting, your brand will be created and your account will be logged in automatically.  
+            The organizer will review and approve your participation.
+          </div>
+        </form>
+      </div>
+
+      <!-- Success state -->
+      <div id="successState" class="success-state">
+        <div class="success-title">You’re in! 🎉</div>
+        <div class="success-body">
+          Your brand has been registered for this event and your login has been created.
+          The event organizer will review your application and share the POS setup and next steps.
+        </div>
+        <div class="tag-pill">
+          <div class="pill-dot"></div>
+          <span>Account created & logged in</span>
+        </div>
+        <p class="success-body" style="margin-top:12px;">
+          You can safely close this page. If you need to update your details later, contact the event team or use the brand portal link they share with you.
+        </p>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    // --------- Firebase imports ----------
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getFirestore,
+      doc,
+      getDoc,
+      setDoc,
+      collection,
+      addDoc,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import {
+      getAuth,
+      createUserWithEmailAndPassword
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    // --------- Your Firebase config ----------
+    const firebaseConfig = {
+      apiKey:"AIzaSyA80bAAGPuyscnTVS-zwrxE9Jp3tPiS1gM",
+      authDomain:"events-339ce.firebaseapp.com",
+      projectId:"events-339ce",
+      storageBucket:"events-339ce.firebasestorage.app",
+      messagingSenderId:"175601544315",
+      appId:"1:175601544315:web:00c94b4affa972b3a286de"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    // --------- Helpers ----------
+    function getQueryParam(key){
+      return new URLSearchParams(window.location.search).get(key);
+    }
+
+    function showAlert(msg, type = "info"){
+      const alertEl = document.getElementById("topAlert");
+      const iconEl = document.getElementById("topAlertIcon");
+      const textEl = document.getElementById("topAlertText");
+
+      alertEl.classList.remove("hidden","ok","error");
+      if(type === "ok"){
+        alertEl.classList.add("ok");
+        iconEl.textContent = "✅";
+      }else if(type === "error"){
+        alertEl.classList.add("error");
+        iconEl.textContent = "⚠️";
+      }else{
+        iconEl.textContent = "ℹ️";
+      }
+      textEl.textContent = msg;
+    }
+
+    function hideAlert(){
+      const alertEl = document.getElementById("topAlert");
+      alertEl.classList.add("hidden");
+    }
+
+    function setLoading(isLoading){
+      const btn = document.getElementById("submitBtn");
+      const txt = document.getElementById("submitBtnText");
+      if(isLoading){
+        btn.disabled = true;
+        txt.textContent = "Submitting…";
+      }else{
+        btn.disabled = false;
+        txt.textContent = "Submit brand registration";
+      }
+    }
+
+    function formatDateRange(startStr, endStr){
+      if(!startStr && !endStr) return "Dates to be announced";
+      try{
+        const opts = { day:"2-digit", month:"short" };
+        if(startStr && endStr){
+          const s = new Date(startStr);
+          const e = new Date(endStr);
+          if(!isNaN(s) && !isNaN(e)){
+            return `${s.toLocaleDateString("en-GB",opts)} – ${e.toLocaleDateString("en-GB",opts)}`;
+          }
+        }else if(startStr){
+          const s = new Date(startStr);
+          if(!isNaN(s)){
+            return s.toLocaleDateString("en-GB",{ day:"2-digit", month:"short", year:"numeric" });
+          }
+        }
+      }catch(e){
+        console.warn("Error parsing date", e);
+      }
+      return "Dates to be announced";
+    }
+
+    // --------- Load event info ----------
+    const eventId = getQueryParam("eventId");
+
+    async function loadEvent(){
+      if(!eventId){
+        showAlert("Invalid link: missing event ID. Please contact the event organizer.","error");
+        document.getElementById("formContainer").style.display = "none";
+        return;
+      }
+
+      try{
+        const eventRef = doc(db,"events",eventId);
+        const snap = await getDoc(eventRef);
+        if(!snap.exists()){
+          showAlert("This event could not be found. Please confirm the link with the organizer.","error");
+          document.getElementById("formContainer").style.display = "none";
+
+          document.getElementById("eventTitle").textContent = "Event not found";
+          document.getElementById("eventSubtitle").textContent = "Please contact the event organizer.";
+          return;
+        }
+
+        const data = snap.data();
+        const titleEl = document.getElementById("eventTitle");
+        const subEl = document.getElementById("eventSubtitle");
+        const metaEl = document.getElementById("eventMeta");
+        const datesEl = document.getElementById("eventDates");
+        const venueEl = document.getElementById("eventVenue");
+        const currencyEl = document.getElementById("eventCurrency");
+        const codeHintEl = document.getElementById("eventCodeHint");
+
+        titleEl.textContent = data.name || "Event";
+        subEl.textContent = data.venue
+          ? `Join us at ${data.venue} as an official partner brand.`
+          : "Register your brand to participate in this event.";
+
+        datesEl.textContent = formatDateRange(data.startDate, data.endDate);
+        venueEl.textContent = data.venue || "Venue to be announced";
+        currencyEl.textContent = data.currency ? `Main currency: ${data.currency}` : "Currency: TBD";
+
+        if(data.code){
+          codeHintEl.textContent = `Event code: ${data.code}`;
+        }
+
+        metaEl.style.display = "flex";
+
+        if(data.brandSignupEnabled === false){
+          showAlert("Brand applications for this event are currently closed.","error");
+          document.getElementById("formContainer").style.display = "none";
+        }else{
+          hideAlert();
+        }
+      }catch(e){
+        console.error("Error loading event", e);
+        showAlert("Error loading event details. Please try again later.","error");
+      }
+    }
+
+    // --------- Handle brand form submit ----------
+    const brandForm = document.getElementById("brandForm");
+    const formContainer = document.getElementById("formContainer");
+    const successState = document.getElementById("successState");
+
+    brandForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      hideAlert();
+
+      if(!eventId){
+        showAlert("Missing event ID in link. Please contact the organizer.","error");
+        return;
+      }
+
+      const brandName = document.getElementById("brandName").value.trim();
+      const category = document.getElementById("category").value.trim();
+      const booth = document.getElementById("booth").value.trim();
+      const contactName = document.getElementById("contactName").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      const passwordConfirm = document.getElementById("passwordConfirm").value;
+      const notes = document.getElementById("notes").value.trim();
+
+      if(!brandName || !contactName || !phone || !email || !password || !passwordConfirm){
+        showAlert("Please fill in all required fields.","error");
+        return;
+      }
+
+      if(password !== passwordConfirm){
+        showAlert("Passwords do not match. Please check and try again.","error");
+        return;
+      }
+
+      if(password.length < 6){
+        showAlert("Password should be at least 6 characters long.","error");
+        return;
+      }
+
+      setLoading(true);
+
+      try{
+        // 1) Create Auth user (auto logs in on success)
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        const uid = cred.user.uid;
+
+        // 2) Create /brands/{brandId}
+        const brandId = uid; // simple mapping: brandId = owner uid
+        const brandRef = doc(db,"brands",brandId);
+
+        await setDoc(brandRef, {
+          name: brandName,
+          category: category || null,
+          ownerUid: uid,
+          ownerEmail: email,
+          ownerName: contactName,
+          phone,
+          whatsappPhone: phone,
+          notes: notes || null,
+          createdFrom: "eventSignup",
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        }, { merge:true });
+
+        // 3) Create /events/{eventId}/vendors/{eventVendorId}
+        const vendorsCol = collection(db,"events",eventId,"vendors");
+        const vendorDocRef = await addDoc(vendorsCol, {
+          brandId,
+          brandName,
+          category: category || null,
+          boothNumber: booth || null,
+          contactName,
+          contactPhone: phone,
+          contactEmail: email,
+          notes: notes || null,
+          status: "pending",       // pending | approved | rejected
+          payoutType: "percent",
+          payoutValue: 80,         // default; can be edited by organizer
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          createdByUid: uid
+        });
+
+        console.log("Vendor registered with id:", vendorDocRef.id);
+
+        // 4) Show success state (user is already logged in)
+        formContainer.style.display = "none";
+        successState.classList.add("active");
+        hideAlert();
+      }catch(err){
+        console.error("Error during signup", err);
+        let msg = "Error creating your account. Please try again.";
+        if(err && err.code){
+          if(err.code === "auth/email-already-in-use"){
+            msg = "This email is already in use. Try logging in from the brand portal or use another email.";
+          }else if(err.code === "auth/invalid-email"){
+            msg = "Invalid email address. Please check and try again.";
+          }else if(err.code === "auth/weak-password"){
+            msg = "Password is too weak. Please choose a stronger one.";
+          }
+        }
+        showAlert(msg,"error");
+      }finally{
+        setLoading(false);
+      }
+    });
+
+    // --------- Init ----------
+    loadEvent();
+  </script>
+</body>
+</html>
