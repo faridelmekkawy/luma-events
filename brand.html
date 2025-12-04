@@ -1,0 +1,2886 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Luma Events — Vendor Dashboard</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <style>
+    :root{
+      --bg:#f3f4f6;
+      --panel:#ffffff;
+      --panel-soft:#f9fafb;
+      --ink:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --accent:#2563eb;
+      --accent-soft:#dbeafe;
+      --accent-strong:#1d4ed8;
+      --radius:16px;
+      --shadow:0 18px 40px rgba(15,23,42,.12);
+      --danger:#ef4444;
+      --ok:#16a34a;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{
+      height:100%;
+      font-family:"Montserrat",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:var(--bg);
+      color:var(--ink);
+    }
+
+    /* AUTH WRAPPER */
+    .auth-wrapper{
+      width:100%;
+      max-width:460px;
+      background:var(--panel);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      border:1px solid rgba(148,163,184,.3);
+      padding:18px;
+      margin:40px auto;
+    }
+    .auth-header{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-bottom:10px;
+    }
+    .auth-logo{
+      width:38px;height:38px;border-radius:999px;
+      background:linear-gradient(135deg,#2563eb,#a855f7);
+      display:flex;align-items:center;justify-content:center;
+      color:#fff;font-weight:700;font-size:18px;
+      overflow:hidden;
+      background-size:cover;
+      background-position:center;
+    }
+    .auth-title{font-size:17px;font-weight:700;}
+    .auth-subtitle{font-size:11px;color:var(--muted);margin-top:2px;}
+    .event-chip{
+      font-size:10px;
+      color:var(--muted);
+      margin-top:2px;
+    }
+
+    .auth-tabs{
+      display:flex;gap:6px;margin:10px 0 12px;
+    }
+    .auth-tab{
+      flex:1;
+      padding:6px 8px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:var(--panel-soft);
+      color:var(--muted);
+      font-size:12px;
+      cursor:pointer;
+      text-align:center;
+    }
+    .auth-tab.active{
+      background:var(--accent-soft);
+      border-color:var(--accent-soft);
+      color:var(--accent-strong);
+      font-weight:600;
+    }
+    .auth-alert{
+      padding:8px 10px;
+      border-radius:10px;
+      font-size:11px;
+      margin-bottom:10px;
+    }
+    .auth-alert-error{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;}
+    .auth-alert-info{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;}
+
+    .field{margin-bottom:10px;}
+    .field-label{font-size:11px;margin-bottom:4px;color:#4b5563;}
+    .field-input,.field-select,textarea.field-input{
+      width:100%;padding:8px;border-radius:9px;
+      border:1px solid var(--border);background:#f9fafb;font-size:12px;
+    }
+    .field-input:focus,.field-select:focus,textarea.field-input:focus{
+      outline:none;border-color:var(--accent);box-shadow:0 0 0 1px var(--accent-soft);
+    }
+    .field-hint{font-size:10px;color:var(--muted);margin-top:3px;}
+
+    .btn{
+      border:none;border-radius:999px;
+      padding:8px 12px;font-size:12px;font-weight:600;
+      cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+      gap:6px;
+    }
+    .btn-primary{background:var(--accent);color:#fff;}
+    .btn-primary:hover{background:var(--accent-strong);}
+    .btn-ghost{
+      background:transparent;color:var(--accent-strong);
+      border:1px solid var(--accent-soft);
+    }
+    .btn-ghost:hover{background:var(--accent-soft);}
+    .btn-danger{background:var(--danger);color:#fff;}
+    .btn-danger:hover{background:#b91c1c;}
+
+    .auth-footer{text-align:center;margin-top:8px;font-size:10px;color:var(--muted);}
+
+    /* APP LAYOUT */
+    .app-shell{
+      display:none;
+      height:100vh;width:100%;
+    }
+    .sidebar{
+      width:220px;background:var(--panel);
+      border-right:1px solid var(--border);
+      display:flex;flex-direction:column;
+      padding:20px 12px;
+    }
+    .sidebar-brand{
+      display:flex;align-items:center;gap:10px;margin-bottom:18px;
+    }
+    .sidebar-logo{
+      width:36px;height:36px;border-radius:999px;
+      background:linear-gradient(135deg,#2563eb,#a855f7);
+      display:flex;align-items:center;justify-content:center;
+      color:#fff;font-weight:700;
+      overflow:hidden;
+      background-size:cover;
+      background-position:center;
+    }
+    .sidebar-brand-name{font-size:15px;font-weight:700;}
+    .sidebar-nav{
+      display:flex;flex-direction:column;gap:6px;margin-top:10px;flex:1;
+    }
+    .nav-item{
+      padding:9px 12px;border-radius:10px;
+      cursor:pointer;font-size:13px;
+      border:none;background:transparent;text-align:left;color:var(--ink);
+    }
+    .nav-item:hover{background:var(--panel-soft);}
+    .nav-item.active{background:var(--accent-soft);color:var(--accent-strong);font-weight:600;}
+    .nav-item.logout{
+      margin-top:auto;
+      background:#fee2e2;
+      color:#b91c1c;
+      border:1px solid #fecaca;
+    }
+    .nav-item.logout:hover{background:#fecaca;}
+
+    .topbar{
+      height:70px;background:var(--panel);
+      border-bottom:1px solid var(--border);
+      padding:12px 18px;
+      display:flex;justify-content:space-between;align-items:center;
+    }
+    .topbar-title{font-size:16px;font-weight:700;}
+    .topbar-sub{font-size:11px;color:var(--muted);}
+    .topbar-branch-filter{display:flex;align-items:center;gap:10px;font-size:12px;}
+    .topbar-branch-filter select{
+      padding:6px 9px;border-radius:8px;
+      border:1px solid var(--border);background:var(--panel-soft);
+    }
+
+    .content-area{flex:1;padding:20px;overflow-y:auto;background:var(--bg);}
+    .page{display:none;}
+    .page.active{display:block;}
+    .page-header{
+      display:flex;justify-content:space-between;
+      align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;
+    }
+    .page-title{font-size:18px;font-weight:700;}
+    .page-sub{font-size:12px;color:var(--muted);}
+    .page-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+
+    .toolbar{
+      display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;align-items:center;
+      font-size:12px;
+    }
+    .toolbar input{
+      padding:6px 9px;border-radius:9px;
+      border:1px solid var(--border);background:#fff;font-size:12px;
+    }
+    .toolbar select{
+      padding:6px 9px;border-radius:9px;
+      border:1px solid var(--border);background:#fff;font-size:12px;
+    }
+
+    .cards-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:12px;margin-bottom:22px;
+    }
+    .card{
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:18px;
+      box-shadow:var(--shadow);
+    }
+    .card-title{font-size:13px;color:var(--muted);margin-bottom:4px;}
+    .card-number{font-size:20px;font-weight:700;}
+    .card-note{font-size:11px;color:var(--muted);margin-top:6px;}
+
+    .table-wrapper{
+      background:#fff;border-radius:12px;border:1px solid var(--border);
+      overflow-x:auto;
+    }
+    table{width:100%;border-collapse:collapse;font-size:12px;}
+    thead{background:var(--panel-soft);}
+    th,td{padding:9px 10px;border-bottom:1px solid var(--border);text-align:left;}
+    th{
+      font-size:11px;text-transform:uppercase;color:var(--muted);
+      letter-spacing:.04em;
+    }
+    tbody tr:hover{background:#f9fafb;}
+    .table-empty{text-align:center;padding:20px;font-size:12px;color:var(--muted);}
+
+    .settings-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+      gap:16px;margin-top:14px;
+    }
+    .settings-card{
+      background:var(--panel);
+      border-radius:14px;
+      border:1px solid var(--border);
+      padding:16px;
+    }
+    .settings-title{font-size:14px;font-weight:600;margin-bottom:12px;}
+    .low-stock{
+      color:#b91c1c;
+      font-weight:600;
+    }
+    .low-stock-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+      padding:2px 8px;
+      border-radius:999px;
+      background:#fee2e2;
+      color:#b91c1c;
+      font-size:11px;
+      font-weight:600;
+      margin-left:4px;
+    }
+    #lowStockPanel{
+      margin-top:12px;
+      padding:10px 12px;
+      border-radius:12px;
+      background:#fef2f2;
+      border:1px solid #fee2e2;
+      display:none;
+      font-size:12px;
+    }
+    #lowStockPanelTitle{
+      font-weight:600;
+      color:#b91c1c;
+      margin-bottom:4px;
+    }
+    #lowStockList{
+      color:#7f1d1d;
+      font-size:12px;
+    }
+
+    /* MODAL */
+    #modal-container{
+      position:fixed;inset:0;
+      display:none;justify-content:center;align-items:center;
+      background:rgba(0,0,0,.35);z-index:9999;
+    }
+    .modal{
+      background:var(--panel);
+      width:100%;max-width:480px;
+      border-radius:16px;
+      padding:18px;
+      box-shadow:var(--shadow);
+      animation:fadeIn .2s ease;
+    }
+    .modal-title{font-size:16px;font-weight:700;margin-bottom:14px;}
+    .modal-actions{margin-top:16px;display:flex;justify-content:flex-end;gap:8px;}
+
+    .variant-row{
+      display:flex;gap:8px;margin-bottom:6px;
+    }
+    .variant-row input{flex:1;}
+    .variant-row .variant-qty{max-width:80px;}
+
+    @keyframes fadeIn{
+      from{transform:scale(.96);opacity:0;}
+      to{transform:scale(1);opacity:1;}
+    }
+
+    @media(max-width:768px){
+      .app-shell{flex-direction:column;}
+      .sidebar{width:100%;flex-direction:row;overflow-x:auto;height:auto;}
+      .sidebar-nav{flex-direction:row;}
+      .topbar{flex-direction:column;align-items:flex-start;gap:8px;height:auto;}
+    }
+  </style>
+</head>
+<body>
+
+  <!-- AUTH VIEW -->
+  <div id="auth-view" class="auth-wrapper">
+    <div class="auth-header">
+      <div class="auth-logo">B</div>
+      <div>
+        <div class="auth-title">Luma Events — Vendor Portal</div>
+        <div id="auth-subtitle" class="auth-subtitle">
+          Sign in or create your brand to manage your event booth.
+        </div>
+        <div id="auth-event-chip" class="event-chip"></div>
+      </div>
+    </div>
+
+    <div id="auth-alert-container"></div>
+
+    <div class="auth-tabs">
+      <button type="button" id="tab-login" class="auth-tab active">Sign in</button>
+      <button type="button" id="tab-create" class="auth-tab">Create brand</button>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <form id="login-form">
+      <div class="field">
+        <div class="field-label">Email</div>
+        <input id="login-email" class="field-input" type="email" placeholder="you@example.com"/>
+      </div>
+      <div class="field">
+        <div class="field-label">Password</div>
+        <input id="login-password" class="field-input" type="password" placeholder="Your password"/>
+      </div>
+      <button type="submit" id="login-btn" class="btn btn-primary" style="width:100%;">Sign in</button>
+    </form>
+
+    <!-- CREATE BRAND -->
+    <form id="create-form" style="display:none;">
+      <div class="field">
+        <div class="field-label">Brand name</div>
+        <input id="brand-name" class="field-input" placeholder="Example: Luma Coffee"/>
+      </div>
+      <div class="field">
+        <div class="field-label">Country (optional)</div>
+        <input id="brand-country" class="field-input" placeholder="Egypt, UAE, Germany…"/>
+      </div>
+      <div class="field">
+        <div class="field-label">Your full name</div>
+        <input id="owner-name" class="field-input" placeholder="Owner / manager name"/>
+      </div>
+      <div class="field">
+        <div class="field-label">Email</div>
+        <input id="owner-email" class="field-input" type="email" placeholder="owner@example.com"/>
+      </div>
+      <div class="field">
+        <div class="field-label">Password</div>
+        <input id="owner-password" class="field-input" type="password" placeholder="Minimum 6 characters"/>
+      </div>
+      <button type="submit" id="create-btn" class="btn btn-primary" style="width:100%;">Create brand for this event</button>
+      <div class="field-hint">
+        This will create your brand, an event booth branch, and link your account automatically.
+      </div>
+    </form>
+
+    <div class="auth-footer">
+      After login, you will access your event dashboard and POS settings.
+    </div>
+  </div>
+
+  <!-- APP VIEW -->
+  <div id="app-view" class="app-shell">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div id="sidebar-brand-logo" class="sidebar-logo">B</div>
+        <div>
+          <div id="sidebar-brand-name" class="sidebar-brand-name">Brand</div>
+          <div id="sidebar-event-label" style="font-size:10px;color:var(--muted);"></div>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-page="page-dashboard">Event Dashboard</button>
+        <button class="nav-item" data-page="page-products">Products</button>
+        <button class="nav-item" data-page="page-branches">Booths / Branches</button>
+        <button class="nav-item" data-page="page-staff">Staff & POS Users</button>
+        <button class="nav-item" data-page="page-customers">Customers</button>
+        <button class="nav-item" data-page="page-orders">Orders</button>
+        <button class="nav-item" data-page="page-settings">Settings</button>
+      </nav>
+      <button id="btn-logout" class="nav-item logout">Logout</button>
+    </aside>
+
+    <!-- MAIN -->
+    <div style="flex:1;display:flex;flex-direction:column;">
+      <header class="topbar">
+        <div>
+          <div id="topbar-brand-title" class="topbar-title">Vendor Dashboard</div>
+          <div class="topbar-sub" id="topbar-subtitle">
+            Control center for your brand inside this event.
+          </div>
+        </div>
+        <div class="topbar-branch-filter">
+          <span>Branch / Booth:</span>
+          <select id="global-branch-select">
+            <option value="global">All branches</option>
+          </select>
+        </div>
+      </header>
+
+      <main class="content-area">
+        <!-- DASHBOARD -->
+        <section id="page-dashboard" class="page active">
+          <div class="cards-grid">
+            <div class="card">
+              <div class="card-title">Sales Today</div>
+              <div id="dash-sales-today" class="card-number">0</div>
+              <div class="card-note">Net of returns, all booths.</div>
+            </div>
+            <div class="card">
+              <div class="card-title">Sales Orders Today</div>
+              <div id="dash-orders-today" class="card-number">0</div>
+              <div class="card-note">Number of sales orders (no returns).</div>
+            </div>
+            <div class="card">
+              <div class="card-title">Return Orders Today</div>
+              <div id="dash-orders-returns-today" class="card-number">0</div>
+              <div class="card-note">Number of return orders today.</div>
+            </div>
+            <div class="card">
+              <div class="card-title">Active Booths</div>
+              <div id="dash-active-branches" class="card-number">0</div>
+              <div class="card-note">Booths / branches marked as active.</div>
+            </div>
+          </div>
+
+          <!-- Event info card (only if eventId present) -->
+          <div class="card" id="event-info-card" style="margin-top:4px;display:none;">
+            <div class="card-title">Current Event</div>
+            <div id="event-card-name" class="card-number" style="font-size:14px;line-height:20px;"></div>
+            <div id="event-card-meta" class="card-note"></div>
+          </div>
+
+          <div class="card" style="margin-top:10px;">
+            <div class="card-title">Top Staff Today</div>
+            <div id="top-staff-today" class="card-number" style="font-size:14px;line-height:20px"></div>
+          </div>
+
+          <div class="page-header" style="margin-top:8px;">
+            <div>
+              <div class="page-title" style="font-size:15px;">Recent Orders</div>
+              <div class="page-sub">Last 10 orders across all booths.</div>
+            </div>
+          </div>
+          <div id="table-recent-orders" class="table-wrapper"></div>
+        </section>
+
+        <!-- PRODUCTS -->
+        <section id="page-products" class="page">
+          <div class="page-header">
+            <div>
+              <div class="page-title">Products</div>
+              <div class="page-sub">Manage products, images, variants & stock for this event.</div>
+            </div>
+            <div class="page-actions">
+              <button id="btn-add-product" class="btn btn-primary">Add Product</button>
+              <button id="btn-import-excel" class="btn btn-ghost">Import (Excel/CSV)</button>
+              <button id="btn-download-sample" class="btn btn-ghost">Sample CSV</button>
+              <button id="btn-export-products" class="btn btn-ghost">Export CSV</button>
+            </div>
+          </div>
+          <div id="products-analytics" class="cards-grid" style="margin-top:4px;"></div>
+          <div class="toolbar">
+            <input id="search-products" placeholder="Search products by name or SKU"/>
+            <select id="sort-products">
+              <option value="name-asc">Name A → Z</option>
+              <option value="name-desc">Name Z → A</option>
+              <option value="price-desc">Price high → low</option>
+              <option value="price-asc">Price low → high</option>
+              <option value="stock-asc">Stock low → high</option>
+              <option value="stock-desc">Stock high → low</option>
+            </select>
+          </div>
+
+          <!-- Low stock alert panel -->
+          <div id="lowStockPanel">
+            <div id="lowStockPanelTitle">Low Stock Alerts</div>
+            <div id="lowStockList"></div>
+          </div>
+
+          <div id="products-table" class="table-wrapper"></div>
+        </section>
+
+        <!-- BRANCHES -->
+        <section id="page-branches" class="page">
+          <div class="page-header">
+            <div>
+              <div class="page-title">Booths / Branches</div>
+              <div class="page-sub">Manage multiple booths or serving points inside the event.</div>
+            </div>
+            <div class="page-actions">
+              <button id="btn-add-branch" class="btn btn-primary">Add Booth/Branch</button>
+              <button id="btn-export-branches" class="btn btn-ghost">Export CSV</button>
+            </div>
+          </div>
+          <div id="branches-analytics" class="cards-grid" style="margin-top:4px;"></div>
+          <div class="toolbar">
+            <input id="search-branches" placeholder="Search booths / branches"/>
+            <select id="sort-branches">
+              <option value="name-asc">Name A → Z</option>
+              <option value="name-desc">Name Z → A</option>
+              <option value="active-first">Active first</option>
+              <option value="inactive-first">Inactive first</option>
+            </select>
+          </div>
+          <div id="branches-table" class="table-wrapper"></div>
+        </section>
+
+        <!-- STAFF -->
+        <section id="page-staff" class="page">
+          <div class="page-header">
+            <div>
+              <div class="page-title">Staff & POS Users</div>
+              <div class="page-sub">Create usernames & PINs for your cashiers in this event.</div>
+            </div>
+            <div class="page-actions">
+              <button id="btn-add-staff" class="btn btn-primary">Add Staff User</button>
+              <button id="btn-export-staff" class="btn btn-ghost">Export CSV</button>
+            </div>
+          </div>
+          <div id="staff-analytics" class="cards-grid" style="margin-top:4px;"></div>
+          <div class="toolbar">
+            <input id="search-staff" placeholder="Search staff by username or name"/>
+            <select id="sort-staff">
+              <option value="username-asc">Username A → Z</option>
+              <option value="username-desc">Username Z → A</option>
+              <option value="role">By role</option>
+              <option value="active-first">Active first</option>
+            </select>
+          </div>
+          <div id="staff-table" class="table-wrapper"></div>
+
+          <!-- CASHIER ANALYTICS -->
+          <div style="margin-top:24px;">
+            <h2 style="font-size:18px;font-weight:600;margin-bottom:10px;">Cashier Performance (Today)</h2>
+            <div id="cashier-performance-table"></div>
+
+            <h3 style="font-size:16px;font-weight:600;margin-top:20px;margin-bottom:8px;">Payment Method Split</h3>
+            <canvas id="cashier-payment-chart" height="160"></canvas>
+
+            <h3 style="font-size:16px;font-weight:600;margin-top:20px;margin-bottom:8px;">Returns by Cashier</h3>
+            <div id="cashier-returns-table"></div>
+          </div>
+        </section>
+
+        <!-- CUSTOMERS -->
+        <section id="page-customers" class="page">
+          <div class="page-header">
+            <div>
+              <div class="page-title">Customers</div>
+              <div class="page-sub">Customer database & purchase history for this event.</div>
+            </div>
+            <div class="page-actions">
+              <button id="btn-export-customers" class="btn btn-ghost">Export CSV</button>
+            </div>
+          </div>
+          <div id="customers-analytics" class="cards-grid" style="margin-top:4px;"></div>
+          <div class="toolbar">
+            <input id="search-customers" placeholder="Search by name, phone or email"/>
+            <select id="sort-customers">
+              <option value="name-asc">Name A → Z</option>
+              <option value="name-desc">Name Z → A</option>
+              <option value="total-desc">Total spent high → low</option>
+              <option value="orders-desc">Most orders</option>
+            </select>
+          </div>
+          <div id="customers-table" class="table-wrapper"></div>
+        </section>
+
+        <!-- ORDERS -->
+        <section id="page-orders" class="page">
+          <div class="page-header">
+            <div>
+              <div class="page-title">Orders</div>
+              <div class="page-sub">Track purchases and returns during the event.</div>
+            </div>
+            <div class="page-actions">
+              <button id="btn-export-orders" class="btn btn-ghost">Export CSV</button>
+            </div>
+          </div>
+          <div id="orders-analytics" class="cards-grid" style="margin-top:4px;"></div>
+          <div class="toolbar">
+            <input id="search-orders" placeholder="Search orders by ID or customer name"/>
+            <select id="sort-orders">
+              <option value="date-desc">Newest first</option>
+              <option value="date-asc">Oldest first</option>
+              <option value="total-desc">Total high → low</option>
+              <option value="total-asc">Total low → high</option>
+            </select>
+          </div>
+          <div id="orders-table" class="table-wrapper"></div>
+        </section>
+
+        <!-- SETTINGS -->
+        <section id="page-settings" class="page">
+          <div class="page-header">
+            <div>
+              <div class="page-title">Settings</div>
+              <div class="page-sub">Brand details & configurations for your event setup.</div>
+            </div>
+          </div>
+          <div class="settings-grid">
+            <div class="settings-card">
+              <div class="settings-title">Brand Information</div>
+              <div class="field">
+                <div class="field-label">Brand Name</div>
+                <input id="set-brand-name" class="field-input"/>
+              </div>
+              <div class="field">
+                <div class="field-label">Country</div>
+                <input id="set-brand-country" class="field-input"/>
+              </div>
+              <div class="field">
+                <div class="field-label">Brand Logo</div>
+                <input id="set-brand-logo" class="field-input" type="file" accept="image/*"/>
+                <div class="field-hint">
+                  Used on POS and vendor dashboard. Stored under brands/&lt;brandId&gt;/branding/.
+                </div>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;">
+                <button id="btn-save-brand-settings" class="btn btn-primary">Save</button>
+                <button id="btn-delete-brand" class="btn btn-danger">Delete Brand</button>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <div class="settings-title">Financial Settings</div>
+              <div class="field">
+                <div class="field-label">VAT %</div>
+                <input id="set-vat" class="field-input" type="number"/>
+              </div>
+              <div class="field">
+                <div class="field-label">Service Fee %</div>
+                <input id="set-service-fee" class="field-input" type="number"/>
+              </div>
+              <button id="btn-save-financial-settings" class="btn btn-primary">Save</button>
+            </div>
+
+            <div class="settings-card">
+              <div class="settings-title">Receipt Settings</div>
+              <div class="field">
+                <label><input type="checkbox" id="set-send-email"/> Always send email receipts</label>
+              </div>
+
+              <div class="settings-card" style="margin-top:10px;">
+                <div class="settings-title">Discount Codes</div>
+
+                <div class="field">
+                  <div class="field-label">New Code</div>
+                  <input id="disc-code" class="field-input" placeholder="e.g. EVENT10"/>
+                </div>
+
+                <div class="field">
+                  <div class="field-label">Percentage %</div>
+                  <input id="disc-percent" class="field-input" type="number" placeholder="e.g. 10"/>
+                </div>
+                <div class="field">
+                  <div class="field-label">Where can this code be used?</div>
+                  <select id="disc-scope" class="field-input">
+                    <option value="store_and_online">POS &amp; online</option>
+                    <option value="online_only">Online only (not valid at POS)</option>
+                  </select>
+                  <div class="field-hint">
+                    POS will block “online only” codes at the cashier.
+                  </div>
+                </div>
+
+                <div class="field">
+                  <div class="field-label">Description (optional)</div>
+                  <input id="disc-desc" class="field-input" placeholder="Short note (e.g. Event promo)"/>
+                </div>
+
+                <button id="btn-add-discount" class="btn btn-primary" style="margin-top:6px;">
+                  Add / Update Code
+                </button>
+
+                <div id="discounts-list" style="margin-top:12px;font-size:12px;">
+                  <!-- Filled by JS -->
+                </div>
+              </div>
+
+              <button id="btn-save-receipt-settings" class="btn btn-primary" style="margin-top:10px;">Save</button>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- MODALS -->
+  <div id="modal-container"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import {
+      getFirestore, doc, collection, collectionGroup, addDoc, setDoc, getDoc, getDocs,
+      updateDoc, deleteDoc, query, where, limit, serverTimestamp, onSnapshot
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import {
+      getAuth, onAuthStateChanged, createUserWithEmailAndPassword,
+      signInWithEmailAndPassword, updateProfile, signOut
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import {
+      getStorage, ref, uploadBytes, getDownloadURL
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+
+    /* FIREBASE CONFIG (EVENTS PROJECT) */
+    const firebaseConfig = {
+      apiKey:"AIzaSyA80bAAGPuyscnTVS-zwrxE9Jp3tPiS1gM",
+      authDomain:"events-339ce.firebaseapp.com",
+      projectId:"events-339ce",
+      storageBucket:"events-339ce.firebasestorage.app",
+      messagingSenderId:"175601544315",
+      appId:"1:175601544315:web:00c94b4affa972b3a286de"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const storage = getStorage(app);
+
+    /* QUERY PARAM / EVENT ID */
+    const qs = s => document.querySelector(s);
+    const qsa = s => document.querySelectorAll(s);
+    function getQueryParam(key){
+      return new URLSearchParams(window.location.search).get(key);
+    }
+    const eventId = getQueryParam("eventId");
+
+    /* AUTH DOM */
+    const authView = qs("#auth-view");
+    const authAlertContainer = qs("#auth-alert-container");
+    const tabLogin = qs("#tab-login");
+    const tabCreate = qs("#tab-create");
+    const loginForm = qs("#login-form");
+    const createForm = qs("#create-form");
+    const authEventChip = qs("#auth-event-chip");
+
+    /* APP DOM */
+    const appView = qs("#app-view");
+    const sidebarBrandLogo = qs("#sidebar-brand-logo");
+    const sidebarBrandName = qs("#sidebar-brand-name");
+    const sidebarEventLabel = qs("#sidebar-event-label");
+    const topbarBrandTitle = qs("#topbar-brand-title");
+    const topbarSubtitle = qs("#topbar-subtitle");
+    const globalBranchSelect = qs("#global-branch-select");
+
+    /* TABLE CONTAINERS */
+    const productsTable = qs("#products-table");
+    const branchesTable = qs("#branches-table");
+    const staffTable = qs("#staff-table");
+    const customersTable = qs("#customers-table");
+    const ordersTable = qs("#orders-table");
+    const recentOrdersTable = qs("#table-recent-orders");
+    const modalContainer = qs("#modal-container");
+
+    /* ANALYTICS BLOCKS */
+    const dashSalesTodayEl = qs("#dash-sales-today");
+    const dashOrdersTodayEl = qs("#dash-orders-today");
+    const dashOrdersReturnsTodayEl = qs("#dash-orders-returns-today");
+    const dashActiveBranchesEl = qs("#dash-active-branches");
+    const productsAnalyticsEl = qs("#products-analytics");
+    const branchesAnalyticsEl = qs("#branches-analytics");
+    const staffAnalyticsEl = qs("#staff-analytics");
+    const customersAnalyticsEl = qs("#customers-analytics");
+    const ordersAnalyticsEl = qs("#orders-analytics");
+
+    const eventInfoCard = qs("#event-info-card");
+    const eventCardName = qs("#event-card-name");
+    const eventCardMeta = qs("#event-card-meta");
+    const authSubtitle = qs("#auth-subtitle");
+
+    /* STATE */
+    let currentUser = null;
+    let brandId = null;
+    let brandData = {};
+    let isBrandCreationInProgress = false;
+    let branches = [];
+    let products = [];
+    let staffUsers = [];
+    let customersList = [];
+    let ordersList = [];
+    let ordersUnsub = null;
+    let productsUnsub = null;
+    let discounts = [];
+
+    /* ALERTS + MODALS */
+    function showAuthAlert(msg, type = "error") {
+      const cls = type === "error" ? "auth-alert-error" : "auth-alert-info";
+      authAlertContainer.innerHTML = `<div class="auth-alert ${cls}">${msg}</div>`;
+    }
+    function clearAuthAlert() {
+      authAlertContainer.innerHTML = "";
+    }
+
+    function openModal(innerHtml) {
+      modalContainer.style.display = "flex";
+      modalContainer.innerHTML = `<div class="modal">${innerHtml}</div>`;
+    }
+    function closeModal() {
+      modalContainer.style.display = "none";
+      modalContainer.innerHTML = "";
+    }
+    window.closeModal = closeModal;
+
+    /* EVENT META (optional) */
+    async function loadEventMeta() {
+      if (!eventId) return;
+      try {
+        const snap = await getDoc(doc(db,"events",eventId));
+        if (!snap.exists()) return;
+        const data = snap.data();
+        const name = data.name || data.title || "Event";
+        const date = data.date || data.startDate || "";
+        const location = data.location || "";
+
+        const metaParts = [];
+        if (date) metaParts.push(date);
+        if (location) metaParts.push(location);
+
+        const metaText = metaParts.join(" • ");
+
+        if (authEventChip) {
+          authEventChip.textContent = `You are joining: ${name}${metaText ? " • " + metaText : ""}`;
+        }
+        if (sidebarEventLabel) {
+          sidebarEventLabel.textContent = name;
+        }
+        if (topbarSubtitle) {
+          topbarSubtitle.textContent = `Sales and POS dashboard for "${name}".`;
+        }
+        if (eventInfoCard && eventCardName && eventCardMeta) {
+          eventInfoCard.style.display = "block";
+          eventCardName.textContent = name;
+          eventCardMeta.textContent = metaText || "Event details from organizer.";
+        }
+      } catch (err) {
+        console.error("Error loading event meta", err);
+      }
+    }
+
+    if (eventId) {
+      loadEventMeta();
+    }
+
+    /* AUTH TABS */
+    tabLogin.addEventListener("click", () => {
+      tabLogin.classList.add("active");
+      tabCreate.classList.remove("active");
+      loginForm.style.display = "block";
+      createForm.style.display = "none";
+    });
+
+    tabCreate.addEventListener("click", () => {
+      tabCreate.classList.add("active");
+      tabLogin.classList.remove("active");
+      loginForm.style.display = "none";
+      createForm.style.display = "block";
+    });
+
+    /* SHOW/HIDE APP */
+    function showApp() {
+      authView.style.display = "none";
+      appView.style.display = "flex";
+    }
+    function showAuth() {
+      appView.style.display = "none";
+      authView.style.display = "block";
+    }
+
+    /* DATE HELPERS */
+    function todayDate() {
+      const d = new Date();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${d.getFullYear()}-${m}-${day}`;
+    }
+    function formatDate(d) {
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${d.getFullYear()}-${m}-${day}`;
+    }
+    function orderDate(o) {
+      if (o.date) return o.date;
+      if (o.createdAt && typeof o.createdAt.toDate === "function") {
+        return formatDate(o.createdAt.toDate());
+      }
+      if (o.createdAtLocal && typeof o.createdAtLocal === "string") {
+        return o.createdAtLocal.slice(0, 10);
+      }
+      return "";
+    }
+
+    /* CSV DOWNLOAD */
+    function downloadCsv(filename, rows) {
+      const escapeVal = v => {
+        if (v === null || v === undefined) return "";
+        const s = String(v).replace(/"/g, '""');
+        if (/[" ,\n]/.test(s)) return `"${s}"`;
+        return s;
+      };
+      const csv = rows.map(r => r.map(escapeVal).join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    /* IMAGE UPLOAD HELPER */
+    async function uploadImageToStorage(file, path) {
+      if (!file) return null;
+      const safeName = file.name.replace(/\s+/g, "_");
+      const refPath = `${path}/${safeName}`;
+      const storageRef = ref(storage, refPath);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      return url;
+    }
+
+    /* LOGIN */
+    loginForm.addEventListener("submit", async e => {
+      e.preventDefault();
+      clearAuthAlert();
+      const email = qs("#login-email").value.trim();
+      const pw = qs("#login-password").value;
+      if (!email || !pw) {
+        showAuthAlert("Enter email and password.");
+        return;
+      }
+      try {
+        await signInWithEmailAndPassword(auth, email, pw);
+      } catch (err) {
+        let msg = "Login failed.";
+        if (err.code === "auth/user-not-found") msg = "User not found.";
+        if (err.code === "auth/wrong-password") msg = "Wrong password.";
+        showAuthAlert(msg);
+      }
+    });
+
+    /* CREATE BRAND (from inside vendor portal, same as vendor.html flow but generic) */
+    createForm.addEventListener("submit", async e => {
+      e.preventDefault();
+      clearAuthAlert();
+
+      const brandName = qs("#brand-name").value.trim();
+      const brandCountry = qs("#brand-country").value.trim();
+      const ownerName = qs("#owner-name").value.trim();
+      const email = qs("#owner-email").value.trim();
+      const pw = qs("#owner-password").value;
+
+      if (!brandName || !ownerName || !email || !pw) {
+        showAuthAlert("Fill all required fields.");
+        return;
+      }
+      if (pw.length < 6) {
+        showAuthAlert("Password must be at least 6 characters.");
+        return;
+      }
+
+      try {
+        isBrandCreationInProgress = true;
+
+        // 1) create auth user (logs them in)
+        const cred = await createUserWithEmailAndPassword(auth, email, pw);
+        const user = cred.user;
+        await updateProfile(user, { displayName: ownerName });
+
+        // 2) create brand
+        const brandRef = await addDoc(collection(db, "brands"), {
+          name: brandName,
+          country: brandCountry || null,
+          ownerUserId: user.uid,
+          ownerEmail: email,
+          status: "active",
+          vat: 0,
+          serviceFee: 0,
+          sendEmail: false,
+          eventId: eventId || null,
+          createdAt: serverTimestamp()
+        });
+        brandId = brandRef.id;
+
+        // 3) userBrands link
+        await setDoc(doc(db, "userBrands", user.uid), {
+          primaryBrandId: brandRef.id,
+          brandIds: [brandRef.id]
+        });
+
+        // 4) top-level users doc
+        await setDoc(doc(db, "users", user.uid), {
+          uid: user.uid,
+          name: ownerName,
+          email,
+          primaryBrandId: brandRef.id,
+          role: "brand_owner",
+          createdAt: serverTimestamp()
+        });
+
+        // 5) first branch as Event Booth
+        const mainBranchRef = await addDoc(collection(brandRef, "branches"), {
+          name: "Event Booth",
+          code: "EVENT",
+          isActive: true,
+          eventId: eventId || null,
+          createdAt: serverTimestamp()
+        });
+
+        // 6) staff record for the owner
+        await setDoc(doc(brandRef, "staff", user.uid), {
+          userId: user.uid,
+          name: ownerName,
+          email,
+          role: "brand_owner",
+          isActive: true,
+          branchId: mainBranchRef.id,
+          createdAt: serverTimestamp()
+        });
+
+        // 7) initial loads
+        await loadBrand();
+        await loadBranches();
+        await loadProducts();
+        listenToProductsRealtime();
+        await loadStaff();
+        await loadCustomers();
+        await loadOrders();
+        await loadDiscounts();
+        listenToOrdersRealtime();
+
+        updateDashboardUI();
+        renderProductsTable();
+        renderBranchesTable();
+        renderStaffTable();
+        renderCustomersTable();
+        renderOrdersTable();
+        renderRecentOrdersTable();
+        renderDiscounts();
+
+        const staffStats = buildCashierAnalytics();
+        renderTopStaff(staffStats);
+
+        await loadEventMeta();
+        showApp();
+      } catch (err) {
+        console.error(err);
+        let msg = "Failed to create brand.";
+        if (err.code === "auth/email-already-in-use") msg = "Email already in use.";
+        showAuthAlert(msg);
+      } finally {
+        isBrandCreationInProgress = false;
+      }
+    });
+        /* AUTH STATE */
+    onAuthStateChanged(auth, async user => {
+      currentUser = user || null;
+
+      if (!user) {
+        brandId = null;
+        brandData = {};
+        branches = [];
+        products = [];
+        staffUsers = [];
+        customersList = [];
+        ordersList = [];
+        if (ordersUnsub) ordersUnsub();
+        if (productsUnsub) productsUnsub();
+        showAuth();
+        return;
+      }
+
+      // If we're in the middle of brand creation, let that flow handle everything.
+      if (isBrandCreationInProgress) return;
+
+      try {
+        // read userBrands to know which brand to open
+        const ubSnap = await getDoc(doc(db, "userBrands", user.uid));
+        if (!ubSnap.exists()) {
+          showAuthAlert("No brand linked to this account yet. Use 'Create brand' to get started.");
+          showAuth();
+          return;
+        }
+        const ub = ubSnap.data();
+        brandId = ub.primaryBrandId || (Array.isArray(ub.brandIds) ? ub.brandIds[0] : null);
+
+        if (!brandId) {
+          showAuthAlert("No brandId found for this user.");
+          showAuth();
+          return;
+        }
+
+        // Load everything
+        await loadBrand();
+        await loadBranches();
+        await loadProducts();
+        listenToProductsRealtime();
+        await loadStaff();
+        await loadCustomers();
+        await loadOrders();
+        await loadDiscounts();
+        listenToOrdersRealtime();
+
+        updateDashboardUI();
+        renderProductsTable();
+        renderBranchesTable();
+        renderStaffTable();
+        renderCustomersTable();
+        renderOrdersTable();
+        renderRecentOrdersTable();
+        renderDiscounts();
+
+        const stats = buildCashierAnalytics();
+        renderTopStaff(stats);
+        renderCashierTables(stats);
+        renderCashierPaymentChart(stats);
+
+        await loadEventMeta();
+        showApp();
+      } catch (err) {
+        console.error("Error in auth state load", err);
+        showAuthAlert("Error loading your vendor dashboard. Contact support.");
+        showAuth();
+      }
+    });
+
+    /* LOAD BRAND */
+    async function loadBrand() {
+      if (!brandId) return;
+      const brandRef = doc(db, "brands", brandId);
+      const snap = await getDoc(brandRef);
+      if (!snap.exists()) throw new Error("Brand not found");
+      brandData = snap.data();
+
+      const name = brandData.name || "Brand";
+      const country = brandData.country || "";
+      const logo = brandData.logoUrl || brandData.logo || null;
+
+      sidebarBrandName.textContent = name;
+      topbarBrandTitle.textContent = `${name} — Vendor Dashboard`;
+
+      // Auth header logo
+      const authLogo = document.querySelector(".auth-logo");
+      if (logo) {
+        sidebarBrandLogo.textContent = "";
+        sidebarBrandLogo.style.backgroundImage = `url("${logo}")`;
+        sidebarBrandLogo.style.backgroundSize = "cover";
+        sidebarBrandLogo.style.backgroundPosition = "center";
+
+        if (authLogo) {
+          authLogo.textContent = "";
+          authLogo.style.backgroundImage = `url("${logo}")`;
+          authLogo.style.backgroundSize = "cover";
+          authLogo.style.backgroundPosition = "center";
+        }
+      } else {
+        sidebarBrandLogo.style.backgroundImage = "none";
+        sidebarBrandLogo.textContent = name[0]?.toUpperCase() || "B";
+        if (authLogo) {
+          authLogo.style.backgroundImage = "none";
+          authLogo.textContent = name[0]?.toUpperCase() || "B";
+        }
+      }
+
+      // Settings form
+      const setBrandName = qs("#set-brand-name");
+      const setBrandCountry = qs("#set-brand-country");
+      const setVat = qs("#set-vat");
+      const setServiceFee = qs("#set-service-fee");
+      const setSendEmail = qs("#set-send-email");
+
+      if (setBrandName) setBrandName.value = name;
+      if (setBrandCountry) setBrandCountry.value = country;
+      if (setVat) setVat.value = brandData.vat ?? 0;
+      if (setServiceFee) setServiceFee.value = brandData.serviceFee ?? 0;
+      if (setSendEmail) setSendEmail.checked = !!brandData.sendEmail;
+
+      if (brandData.eventId && !eventId) {
+        // if brand is tied to a specific event, we can show that
+        sidebarEventLabel.textContent = `Event: ${brandData.eventId}`;
+      }
+    }
+
+    /* LOAD BRANCHES */
+    async function loadBranches() {
+      if (!brandId) return;
+      const brandRef = doc(db, "brands", brandId);
+      const brSnap = await getDocs(collection(brandRef, "branches"));
+      branches = brSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      // Fill global branch select
+      globalBranchSelect.innerHTML = `<option value="global">All branches</option>`;
+      branches.forEach(b => {
+        const opt = document.createElement("option");
+        opt.value = b.id;
+        opt.textContent = b.name || "Branch";
+        globalBranchSelect.appendChild(opt);
+      });
+
+      updateBranchesAnalytics();
+    }
+
+    /* LOAD PRODUCTS (one-shot) */
+    async function loadProducts() {
+      if (!brandId) return;
+      const brandRef = doc(db, "brands", brandId);
+      const prodSnap = await getDocs(collection(brandRef, "products"));
+      products = prodSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      updateProductsAnalytics();
+      updateLowStockPanel();
+    }
+
+    /* REALTIME PRODUCTS */
+    function listenToProductsRealtime() {
+      if (!brandId) return;
+      if (productsUnsub) productsUnsub();
+
+      const brandRef = doc(db, "brands", brandId);
+      const colRef = collection(brandRef, "products");
+      productsUnsub = onSnapshot(colRef, snap => {
+        products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderProductsTable();
+        updateProductsAnalytics();
+        updateLowStockPanel();
+      });
+    }
+
+    /* LOAD STAFF */
+    async function loadStaff() {
+      if (!brandId) return;
+      const brandRef = doc(db, "brands", brandId);
+      const stSnap = await getDocs(collection(brandRef, "staff"));
+      staffUsers = stSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      updateStaffAnalytics();
+    }
+
+    /* LOAD CUSTOMERS */
+    async function loadCustomers() {
+      customersList = [];
+      if (!brandId) return;
+      // customers can be subcollection or top-level; we assume subcollection
+      const brandRef = doc(db, "brands", brandId);
+      const custSnap = await getDocs(collection(brandRef, "customers"));
+      customersList = custSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      updateCustomersAnalytics();
+    }
+
+    /* LOAD ORDERS */
+    async function loadOrders() {
+      ordersList = [];
+      if (!brandId) return;
+      const qRef = query(collection(db, "orders"), where("brandId", "==", brandId));
+      const oSnap = await getDocs(qRef);
+      ordersList = oSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      updateOrdersAnalytics();
+    }
+
+    /* REALTIME ORDERS */
+    function listenToOrdersRealtime() {
+      if (!brandId) return;
+      if (ordersUnsub) ordersUnsub();
+
+      const qRef = query(collection(db, "orders"), where("brandId", "==", brandId));
+      ordersUnsub = onSnapshot(qRef, snap => {
+        ordersList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        updateDashboardUI();
+        updateOrdersAnalytics();
+
+        renderOrdersTable();
+        renderRecentOrdersTable();
+
+        const stats = buildCashierAnalytics();
+        renderTopStaff(stats);
+        renderCashierTables(stats);
+        renderCashierPaymentChart(stats);
+      });
+    }
+
+    /* LOAD DISCOUNTS */
+    async function loadDiscounts() {
+      discounts = [];
+      if (!brandId) return;
+      const brandRef = doc(db, "brands", brandId);
+      const dSnap = await getDocs(collection(brandRef, "discounts"));
+      discounts = dSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    }
+
+    /* BRANCH FILTER */
+    function getActiveBranchFilter() {
+      const v = globalBranchSelect.value;
+      if (!v || v === "global") return null;
+      return v;
+    }
+
+    /* DASHBOARD UI */
+    function updateDashboardUI() {
+      const todayStr = todayDate();
+      const branchFilter = getActiveBranchFilter();
+
+      let sales = 0;
+      let salesCount = 0;
+      let returnCount = 0;
+
+      for (const o of ordersList) {
+        const d = orderDate(o);
+        const isReturn = !!o.isReturn;
+        const branchId = o.branchId || null;
+
+        if (d !== todayStr) continue;
+        if (branchFilter && branchFilter !== branchId) continue;
+
+        const total = Number(o.total || 0);
+        if (isReturn) {
+          sales -= Math.abs(total);
+          returnCount += 1;
+        } else {
+          sales += total;
+          salesCount += 1;
+        }
+      }
+
+      dashSalesTodayEl.textContent = sales.toFixed(2);
+      dashOrdersTodayEl.textContent = String(salesCount);
+      dashOrdersReturnsTodayEl.textContent = String(returnCount);
+
+      const activeBranches = branches.filter(b => b.isActive !== false);
+      dashActiveBranchesEl.textContent = String(activeBranches.length);
+    }
+
+    /* ANALYTICS HELPERS */
+    function updateProductsAnalytics() {
+      productsAnalyticsEl.innerHTML = "";
+      if (!products.length) return;
+
+      const total = products.length;
+      let totalStock = 0;
+      let lowStockCount = 0;
+      let avgPrice = 0;
+      let pricedItems = 0;
+
+      for (const p of products) {
+        const stock = Number(p.stock || 0);
+        const price = Number(p.price || 0);
+        totalStock += stock;
+        if (p.lowStockThreshold != null && stock <= Number(p.lowStockThreshold)) {
+          lowStockCount += 1;
+        }
+        if (!isNaN(price) && price > 0) {
+          avgPrice += price;
+          pricedItems += 1;
+        }
+      }
+      avgPrice = pricedItems ? avgPrice / pricedItems : 0;
+
+      productsAnalyticsEl.innerHTML = `
+        <div class="card">
+          <div class="card-title">Total Products</div>
+          <div class="card-number">${total}</div>
+          <div class="card-note">All products available for this event.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Total Stock</div>
+          <div class="card-number">${totalStock}</div>
+          <div class="card-note">Sum of all product quantities.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Avg. Price</div>
+          <div class="card-number">${avgPrice.toFixed(2)}</div>
+          <div class="card-note">Average price for priced items.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Low Stock Items</div>
+          <div class="card-number">${lowStockCount}</div>
+          <div class="card-note">Products near or below threshold.</div>
+        </div>
+      `;
+    }
+
+    function updateBranchesAnalytics() {
+      branchesAnalyticsEl.innerHTML = "";
+      if (!branches.length) return;
+
+      const total = branches.length;
+      const active = branches.filter(b => b.isActive !== false).length;
+
+      branchesAnalyticsEl.innerHTML = `
+        <div class="card">
+          <div class="card-title">Total Booths / Branches</div>
+          <div class="card-number">${total}</div>
+          <div class="card-note">Configured POS locations inside this event.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Active</div>
+          <div class="card-number">${active}</div>
+          <div class="card-note">Active booths available for checkout.</div>
+        </div>
+      `;
+    }
+
+    function updateStaffAnalytics() {
+      staffAnalyticsEl.innerHTML = "";
+      if (!staffUsers.length) return;
+
+      const total = staffUsers.length;
+      const active = staffUsers.filter(s => s.isActive !== false).length;
+      const cashiers = staffUsers.filter(s => (s.role || "").includes("cashier")).length;
+
+      staffAnalyticsEl.innerHTML = `
+        <div class="card">
+          <div class="card-title">Total Staff</div>
+          <div class="card-number">${total}</div>
+          <div class="card-note">Users with access to POS & dashboard.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Active Staff</div>
+          <div class="card-number">${active}</div>
+          <div class="card-note">Currently active logins.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Cashiers</div>
+          <div class="card-number">${cashiers}</div>
+          <div class="card-note">Users assigned to cashier roles.</div>
+        </div>
+      `;
+    }
+
+    function updateCustomersAnalytics() {
+      customersAnalyticsEl.innerHTML = "";
+      if (!customersList.length) return;
+
+      const total = customersList.length;
+      let totalSpent = 0;
+      for (const c of customersList) {
+        totalSpent += Number(c.totalSpent || 0);
+      }
+
+      customersAnalyticsEl.innerHTML = `
+        <div class="card">
+          <div class="card-title">Customers</div>
+          <div class="card-number">${total}</div>
+          <div class="card-note">Unique customers saved for this brand.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Recorded Spend</div>
+          <div class="card-number">${totalSpent.toFixed(2)}</div>
+          <div class="card-note">Total tracked spend in this event.</div>
+        </div>
+      `;
+    }
+
+    function updateOrdersAnalytics() {
+      ordersAnalyticsEl.innerHTML = "";
+      if (!ordersList.length) return;
+
+      let totalOrders = 0;
+      let totalSales = 0;
+      let totalReturns = 0;
+      let returnsCount = 0;
+
+      for (const o of ordersList) {
+        const t = Number(o.total || 0);
+        const isReturn = !!o.isReturn;
+        if (isReturn) {
+          totalReturns += Math.abs(t);
+          returnsCount += 1;
+        } else {
+          totalSales += t;
+          totalOrders += 1;
+        }
+      }
+
+      ordersAnalyticsEl.innerHTML = `
+        <div class="card">
+          <div class="card-title">Sales Orders</div>
+          <div class="card-number">${totalOrders}</div>
+          <div class="card-note">All non-return orders.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Sales Value</div>
+          <div class="card-number">${totalSales.toFixed(2)}</div>
+          <div class="card-note">Gross sales before returns.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Returns</div>
+          <div class="card-number">${returnsCount}</div>
+          <div class="card-note">Return orders count.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Return Value</div>
+          <div class="card-number">${totalReturns.toFixed(2)}</div>
+          <div class="card-note">Total refunded to customers.</div>
+        </div>
+      `;
+    }
+
+    /* LOW STOCK PANEL */
+    const lowStockPanel = qs("#lowStockPanel");
+    const lowStockPanelTitle = qs("#lowStockPanelTitle");
+    const lowStockListEl = qs("#lowStockList");
+
+    function updateLowStockPanel() {
+      if (!lowStockPanel) return;
+      const low = products.filter(p => {
+        let threshold = p.lowStockThreshold;
+        if (threshold == null) threshold = 8; // default threshold for event
+        return Number(p.stock || 0) <= Number(threshold);
+      });
+
+      if (!low.length) {
+        lowStockPanel.style.display = "none";
+        return;
+      }
+
+      lowStockPanel.style.display = "block";
+      lowStockPanelTitle.textContent = `Low Stock Alerts (${low.length})`;
+      lowStockListEl.innerHTML = low
+        .map(p => {
+          const n = p.name || "Unnamed product";
+          const s = Number(p.stock || 0);
+          return `<div>• ${n} — <span class="low-stock">${s}</span> left</div>`;
+        })
+        .join("");
+    }
+
+    /* RENDER TABLES */
+    function renderProductsTable() {
+      const branchFilter = getActiveBranchFilter();
+      const searchVal = (qs("#search-products")?.value || "").toLowerCase();
+      const sortVal = qs("#sort-products")?.value || "name-asc";
+
+      let list = products.slice();
+
+      if (branchFilter) {
+        list = list.filter(p => {
+          const allowedBranches = p.branchIds || p.branches || null;
+          if (!allowedBranches || !Array.isArray(allowedBranches) || !allowedBranches.length) return true;
+          return allowedBranches.includes(branchFilter);
+        });
+      }
+
+      if (searchVal) {
+        list = list.filter(p => {
+          const s = `${p.name || ""} ${p.sku || ""}`.toLowerCase();
+          return s.includes(searchVal);
+        });
+      }
+
+      list.sort((a, b) => {
+        switch (sortVal) {
+          case "name-desc":
+            return (b.name || "").localeCompare(a.name || "");
+          case "price-asc":
+            return Number(a.price || 0) - Number(b.price || 0);
+          case "price-desc":
+            return Number(b.price || 0) - Number(a.price || 0);
+          case "stock-asc":
+            return Number(a.stock || 0) - Number(b.stock || 0);
+          case "stock-desc":
+            return Number(b.stock || 0) - Number(a.stock || 0);
+          case "name-asc":
+          default:
+            return (a.name || "").localeCompare(b.name || "");
+        }
+      });
+
+      if (!list.length) {
+        productsTable.innerHTML = `<div class="table-empty">No products yet. Add your first product for this event.</div>`;
+        return;
+      }
+
+      const rows = list.map(p => {
+        const name = p.name || "Unnamed product";
+        const sku = p.sku || "-";
+        const price = Number(p.price || 0).toFixed(2);
+        const stock = Number(p.stock || 0);
+        const threshold = p.lowStockThreshold != null ? Number(p.lowStockThreshold) : 8;
+        const lowClass = stock <= threshold ? "low-stock" : "";
+        const branchNames = (p.branchIds || [])
+          .map(id => branches.find(b => b.id === id)?.name || "")
+          .filter(Boolean)
+          .join(", ");
+
+        return `
+          <tr>
+            <td>${name}</td>
+            <td>${sku}</td>
+            <td>${price}</td>
+            <td class="${lowClass}">${stock}</td>
+            <td>${branchNames || "All"}</td>
+            <td>
+              <button class="btn btn-ghost" data-action="edit-product" data-id="${p.id}">Edit</button>
+              <button class="btn btn-danger" data-action="delete-product" data-id="${p.id}">Delete</button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      productsTable.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>SKU</th>
+              <th>Price</th>
+              <th>Stock</th>
+              <th>Branches</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+
+      productsTable.querySelectorAll("button[data-action]").forEach(btn => {
+        const id = btn.getAttribute("data-id");
+        const action = btn.getAttribute("data-action");
+        btn.addEventListener("click", () => {
+          const prod = products.find(p => p.id === id);
+          if (!prod && action !== "delete-product") return;
+          if (action === "edit-product") {
+            openProductModal(prod);
+          } else if (action === "delete-product") {
+            confirmDeleteProduct(id);
+          }
+        });
+      });
+    }
+
+    function renderBranchesTable() {
+      const searchVal = (qs("#search-branches")?.value || "").toLowerCase();
+      const sortVal = qs("#sort-branches")?.value || "name-asc";
+
+      let list = branches.slice();
+
+      if (searchVal) {
+        list = list.filter(b => {
+          const s = `${b.name || ""} ${b.code || ""}`.toLowerCase();
+          return s.includes(searchVal);
+        });
+      }
+
+      list.sort((a, b) => {
+        switch (sortVal) {
+          case "name-desc":
+            return (b.name || "").localeCompare(a.name || "");
+          case "active-first":
+            return (b.isActive === false) - (a.isActive === false);
+          case "inactive-first":
+            return (a.isActive === false) - (b.isActive === false);
+          case "name-asc":
+          default:
+            return (a.name || "").localeCompare(b.name || "");
+        }
+      });
+
+      if (!list.length) {
+        branchesTable.innerHTML = `<div class="table-empty">No booths/branches created. Add your first one.</div>`;
+        return;
+      }
+
+      const rows = list.map(b => {
+        const name = b.name || "Branch";
+        const code = b.code || "-";
+        const isActive = b.isActive !== false;
+        return `
+          <tr>
+            <td>${name}</td>
+            <td>${code}</td>
+            <td>${isActive ? "Active" : "Inactive"}</td>
+            <td>
+              <button class="btn btn-ghost" data-action="edit-branch" data-id="${b.id}">Edit</button>
+              <button class="btn btn-danger" data-action="delete-branch" data-id="${b.id}">Delete</button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      branchesTable.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Code</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+
+      branchesTable.querySelectorAll("button[data-action]").forEach(btn => {
+        const id = btn.getAttribute("data-id");
+        const action = btn.getAttribute("data-action");
+        btn.addEventListener("click", () => {
+          const branch = branches.find(b => b.id === id);
+          if (!branch && action !== "delete-branch") return;
+          if (action === "edit-branch") {
+            openBranchModal(branch);
+          } else if (action === "delete-branch") {
+            confirmDeleteBranch(id);
+          }
+        });
+      });
+    }
+
+    function renderStaffTable() {
+      const searchVal = (qs("#search-staff")?.value || "").toLowerCase();
+      const sortVal = qs("#sort-staff")?.value || "username-asc";
+
+      let list = staffUsers.slice();
+
+      if (searchVal) {
+        list = list.filter(s => {
+          const text = `${s.username || ""} ${s.name || ""}`.toLowerCase();
+          return text.includes(searchVal);
+        });
+      }
+
+      list.sort((a, b) => {
+        switch (sortVal) {
+          case "username-desc":
+            return (b.username || "").localeCompare(a.username || "");
+          case "role":
+            return (a.role || "").localeCompare(b.role || "");
+          case "active-first":
+            return (b.isActive === false) - (a.isActive === false);
+          case "username-asc":
+          default:
+            return (a.username || "").localeCompare(b.username || "");
+        }
+      });
+
+      if (!list.length) {
+        staffTable.innerHTML = `<div class="table-empty">No staff yet. Add your first cashier or staff user.</div>`;
+        return;
+      }
+
+      const rows = list.map(s => {
+        const name = s.name || "-";
+        const username = s.username || "-";
+        const role = s.role || "-";
+        const branchName = branches.find(b => b.id === s.branchId)?.name || "All";
+        const isActive = s.isActive !== false;
+        return `
+          <tr>
+            <td>${name}</td>
+            <td>${username}</td>
+            <td>${role}</td>
+            <td>${branchName}</td>
+            <td>${isActive ? "Active" : "Inactive"}</td>
+            <td>
+              <button class="btn btn-ghost" data-action="edit-staff" data-id="${s.id}">Edit</button>
+              <button class="btn btn-danger" data-action="delete-staff" data-id="${s.id}">Delete</button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      staffTable.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Username</th>
+              <th>Role</th>
+              <th>Branch</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+
+      staffTable.querySelectorAll("button[data-action]").forEach(btn => {
+        const id = btn.getAttribute("data-id");
+        const action = btn.getAttribute("data-action");
+        btn.addEventListener("click", () => {
+          const staff = staffUsers.find(s => s.id === id);
+          if (!staff && action !== "delete-staff") return;
+          if (action === "edit-staff") {
+            openStaffModal(staff);
+          } else if (action === "delete-staff") {
+            confirmDeleteStaff(id);
+          }
+        });
+      });
+    }
+
+    function renderCustomersTable() {
+      const searchVal = (qs("#search-customers")?.value || "").toLowerCase();
+      const sortVal = qs("#sort-customers")?.value || "name-asc";
+
+      let list = customersList.slice();
+
+      if (searchVal) {
+        list = list.filter(c => {
+          const text = `${c.name || ""} ${c.phone || ""} ${c.email || ""}`.toLowerCase();
+          return text.includes(searchVal);
+        });
+      }
+
+      list.sort((a, b) => {
+        const nameA = (a.name || "").toLowerCase();
+        const nameB = (b.name || "").toLowerCase();
+        const totalA = Number(a.totalSpent || 0);
+        const totalB = Number(b.totalSpent || 0);
+        const ordersA = Number(a.ordersCount || 0);
+        const ordersB = Number(b.ordersCount || 0);
+
+        switch (sortVal) {
+          case "name-desc":
+            return nameB.localeCompare(nameA);
+          case "total-desc":
+            return totalB - totalA;
+          case "orders-desc":
+            return ordersB - ordersA;
+          case "name-asc":
+          default:
+            return nameA.localeCompare(nameB);
+        }
+      });
+
+      if (!list.length) {
+        customersTable.innerHTML = `<div class="table-empty">No customers recorded yet.</div>`;
+        return;
+      }
+
+      const rows = list.map(c => {
+        const name = c.name || "-";
+        const phone = c.phone || "-";
+        const email = c.email || "-";
+        const total = Number(c.totalSpent || 0).toFixed(2);
+        const ordersCount = c.ordersCount || 0;
+        return `
+          <tr>
+            <td>${name}</td>
+            <td>${phone}</td>
+            <td>${email}</td>
+            <td>${ordersCount}</td>
+            <td>${total}</td>
+          </tr>
+        `;
+      }).join("");
+
+      customersTable.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>Email</th>
+              <th>Orders</th>
+              <th>Total Spent</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    }
+
+    function renderOrdersTable() {
+      const branchFilter = getActiveBranchFilter();
+      const searchVal = (qs("#search-orders")?.value || "").toLowerCase();
+      const sortVal = qs("#sort-orders")?.value || "date-desc";
+
+      let list = ordersList.slice();
+
+      if (branchFilter) {
+        list = list.filter(o => (o.branchId || null) === branchFilter);
+      }
+
+      if (searchVal) {
+        list = list.filter(o => {
+          const text = `${o.id || ""} ${o.orderId || ""} ${(o.customerName || "")}`.toLowerCase();
+          return text.includes(searchVal);
+        });
+      }
+
+      list.sort((a, b) => {
+        const dA = orderDate(a);
+        const dB = orderDate(b);
+        const tA = Number(a.total || 0);
+        const tB = Number(b.total || 0);
+        switch (sortVal) {
+          case "date-asc":
+            return dA.localeCompare(dB);
+          case "total-desc":
+            return tB - tA;
+          case "total-asc":
+            return tA - tB;
+          case "date-desc":
+          default:
+            return dB.localeCompare(dA);
+        }
+      });
+
+      if (!list.length) {
+        ordersTable.innerHTML = `<div class="table-empty">No orders yet.</div>`;
+        return;
+      }
+
+      const rows = list.map(o => {
+        const id = o.orderId || o.id;
+        const dateStr = orderDate(o) || "-";
+        const isReturn = !!o.isReturn;
+        const total = Number(o.total || 0).toFixed(2);
+        const customerName = o.customerName || o.customer?.name || "-";
+        const branchName = branches.find(b => b.id === o.branchId)?.name || "—";
+        const paymentMethod = o.paymentMethod || "-";
+        const statusLabel = isReturn ? "Return" : "Sale";
+
+        return `
+          <tr>
+            <td>${id}</td>
+            <td>${dateStr}</td>
+            <td>${statusLabel}</td>
+            <td>${total}</td>
+            <td>${customerName}</td>
+            <td>${branchName}</td>
+            <td>${paymentMethod}</td>
+          </tr>
+        `;
+      }).join("");
+
+      ordersTable.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Order</th>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Total</th>
+              <th>Customer</th>
+              <th>Branch</th>
+              <th>Payment</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    }
+
+    function renderRecentOrdersTable() {
+      const branchFilter = getActiveBranchFilter();
+      let list = ordersList.slice();
+
+      if (branchFilter) {
+        list = list.filter(o => (o.branchId || null) === branchFilter);
+      }
+
+      // sort by createdAt / date descending
+      list.sort((a, b) => {
+        const dA = orderDate(a);
+        const dB = orderDate(b);
+        return dB.localeCompare(dA);
+      });
+
+      list = list.slice(0, 10);
+
+      if (!list.length) {
+        recentOrdersTable.innerHTML = `<div class="table-empty">No recent orders yet.</div>`;
+        return;
+      }
+
+      const rows = list.map(o => {
+        const id = o.orderId || o.id;
+        const dateStr = orderDate(o) || "-";
+        const isReturn = !!o.isReturn;
+        const total = Number(o.total || 0).toFixed(2);
+        const branchName = branches.find(b => b.id === o.branchId)?.name || "—";
+
+        return `
+          <tr>
+            <td>${id}</td>
+            <td>${dateStr}</td>
+            <td>${branchName}</td>
+            <td>${isReturn ? "Return" : "Sale"}</td>
+            <td>${total}</td>
+          </tr>
+        `;
+      }).join("");
+
+      recentOrdersTable.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Order</th>
+              <th>Date</th>
+              <th>Branch</th>
+              <th>Type</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    }
+
+    /* CASHIER ANALYTICS */
+    const topStaffTodayEl = qs("#top-staff-today");
+    const cashierPerformanceTableEl = qs("#cashier-performance-table");
+    const cashierReturnsTableEl = qs("#cashier-returns-table");
+    const cashierPaymentCanvas = document.getElementById("cashier-payment-chart");
+    let cashierPaymentChart = null;
+
+    function buildCashierAnalytics() {
+      const todayStr = todayDate();
+      const branchFilter = getActiveBranchFilter();
+      const byStaff = {};
+      const byStaffReturns = {};
+      const paymentSplit = { cash: 0, card: 0, other: 0 };
+
+      for (const o of ordersList) {
+        const d = orderDate(o);
+        if (d !== todayStr) continue;
+        if (branchFilter && (o.branchId || null) !== branchFilter) continue;
+
+        const staffId = o.cashierId || o.staffId || "unknown";
+        const staffName =
+          staffUsers.find(s => s.id === staffId)?.name ||
+          o.cashierName ||
+          "Unknown";
+
+        if (!byStaff[staffId]) {
+          byStaff[staffId] = { staffId, staffName, orders: 0, total: 0 };
+        }
+        if (!byStaffReturns[staffId]) {
+          byStaffReturns[staffId] = { staffId, staffName, returns: 0, totalRefunded: 0 };
+        }
+
+        const t = Number(o.total || 0);
+        const isReturn = !!o.isReturn;
+
+        if (isReturn) {
+          byStaffReturns[staffId].returns += 1;
+          byStaffReturns[staffId].totalRefunded += Math.abs(t);
+        } else {
+          byStaff[staffId].orders += 1;
+          byStaff[staffId].total += t;
+        }
+
+        const pm = (o.paymentMethod || "").toLowerCase();
+        if (pm.includes("cash")) {
+          paymentSplit.cash += Math.abs(t);
+        } else if (pm.includes("card") || pm.includes("visa") || pm.includes("master")) {
+          paymentSplit.card += Math.abs(t);
+        } else {
+          paymentSplit.other += Math.abs(t);
+        }
+      }
+
+      // find top staff
+      const arr = Object.values(byStaff);
+      arr.sort((a, b) => b.total - a.total);
+      const topStaff = arr[0] || null;
+
+      return {
+        topStaff,
+        byStaff,
+        byStaffReturns,
+        paymentSplit
+      };
+    }
+
+    function renderTopStaff(stats) {
+      if (!topStaffTodayEl) return;
+      if (!stats || !stats.topStaff) {
+        topStaffTodayEl.textContent = "No cashier data yet for today.";
+        return;
+      }
+      const s = stats.topStaff;
+      topStaffTodayEl.textContent = `${s.staffName} — ${s.total.toFixed(2)} EGP in sales`;
+    }
+
+    function renderCashierTables(stats) {
+      if (!stats) return;
+
+      const perfArr = Object.values(stats.byStaff);
+      if (!perfArr.length) {
+        cashierPerformanceTableEl.innerHTML = `<div class="table-empty">No sales from cashiers today.</div>`;
+      } else {
+        const rows = perfArr
+          .sort((a, b) => b.total - a.total)
+          .map(s => `
+            <tr>
+              <td>${s.staffName}</td>
+              <td>${s.orders}</td>
+              <td>${s.total.toFixed(2)}</td>
+            </tr>
+          `)
+          .join("");
+        cashierPerformanceTableEl.innerHTML = `
+          <table>
+            <thead>
+              <tr>
+                <th>Cashier</th>
+                <th>Orders</th>
+                <th>Sales Total</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        `;
+      }
+
+      const retArr = Object.values(stats.byStaffReturns);
+      const hasReturns = retArr.some(r => r.returns > 0);
+      if (!hasReturns) {
+        cashierReturnsTableEl.innerHTML = `<div class="table-empty">No returns from cashiers today.</div>`;
+      } else {
+        const rowsR = retArr
+          .filter(r => r.returns > 0)
+          .sort((a, b) => b.totalRefunded - a.totalRefunded)
+          .map(r => `
+            <tr>
+              <td>${r.staffName}</td>
+              <td>${r.returns}</td>
+              <td>${r.totalRefunded.toFixed(2)}</td>
+            </tr>
+          `)
+          .join("");
+        cashierReturnsTableEl.innerHTML = `
+          <table>
+            <thead>
+              <tr>
+                <th>Cashier</th>
+                <th>Returns</th>
+                <th>Refunded</th>
+              </tr>
+            </thead>
+            <tbody>${rowsR}</tbody>
+          </table>
+        `;
+      }
+    }
+
+    function renderCashierPaymentChart(stats) {
+      if (!cashierPaymentCanvas || !stats) return;
+      const data = stats.paymentSplit;
+      const total = data.cash + data.card + data.other;
+      if (!total) {
+        if (cashierPaymentChart) {
+          cashierPaymentChart.destroy();
+          cashierPaymentChart = null;
+        }
+        const ctx = cashierPaymentCanvas.getContext("2d");
+        ctx.clearRect(0, 0, cashierPaymentCanvas.width, cashierPaymentCanvas.height);
+        return;
+      }
+
+      const ctx = cashierPaymentCanvas.getContext("2d");
+      if (cashierPaymentChart) {
+        cashierPaymentChart.destroy();
+      }
+
+      cashierPaymentChart = new Chart(ctx, {
+        type: "doughnut",
+        data: {
+          labels: ["Cash", "Card", "Other"],
+          datasets: [
+            {
+              data: [data.cash, data.card, data.other]
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: "bottom" }
+          }
+        }
+      });
+    }
+
+    /* DISCOUNTS */
+    const discountsListEl = qs("#discounts-list");
+
+    function renderDiscounts() {
+      if (!discountsListEl) return;
+      if (!discounts.length) {
+        discountsListEl.innerHTML = `<div class="table-empty" style="border-radius:10px;border:1px dashed var(--border);padding:10px;">No discount codes yet.</div>`;
+        return;
+      }
+
+      discountsListEl.innerHTML = discounts
+        .map(d => {
+          const code = d.code || "";
+          const percent = d.percent || 0;
+          const scope = d.scope || "store_and_online";
+          const desc = d.description || "";
+          const active = d.isActive !== false;
+          const scopeLabel =
+            scope === "online_only" ? "Online only" : "POS + Online";
+
+          return `
+            <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding:6px 0;font-size:12px;">
+              <div>
+                <div><strong>${code}</strong> — ${percent}%</div>
+                <div style="font-size:11px;color:var(--muted);">
+                  ${scopeLabel}${desc ? " • " + desc : ""}
+                  ${!active ? " • Inactive" : ""}
+                </div>
+              </div>
+              <div style="display:flex;gap:6px;">
+                <button class="btn btn-ghost" data-action="toggle-discount" data-id="${d.id}">
+                  ${active ? "Disable" : "Enable"}
+                </button>
+                <button class="btn btn-danger" data-action="delete-discount" data-id="${d.id}">
+                  Delete
+                </button>
+              </div>
+            </div>
+          `;
+        })
+        .join("");
+
+      discountsListEl.querySelectorAll("button[data-action]").forEach(btn => {
+        const id = btn.getAttribute("data-id");
+        const action = btn.getAttribute("data-action");
+        btn.addEventListener("click", async () => {
+          if (!brandId) return;
+          const brandRef = doc(db, "brands", brandId);
+          const discRef = doc(brandRef, "discounts", id);
+
+          if (action === "toggle-discount") {
+            const d = discounts.find(x => x.id === id);
+            if (!d) return;
+            const newActive = d.isActive === false;
+            await updateDoc(discRef, { isActive: newActive });
+            await loadDiscounts();
+            renderDiscounts();
+          } else if (action === "delete-discount") {
+            if (!confirm("Delete this discount code?")) return;
+            await deleteDoc(discRef);
+            await loadDiscounts();
+            renderDiscounts();
+          }
+        });
+      });
+    }
+
+    qs("#btn-add-discount")?.addEventListener("click", async e => {
+      e.preventDefault();
+      if (!brandId) return;
+
+      const codeInput = qs("#disc-code");
+      const percentInput = qs("#disc-percent");
+      const scopeInput = qs("#disc-scope");
+      const descInput = qs("#disc-desc");
+
+      const rawCode = (codeInput?.value || "").trim().toUpperCase();
+      const percent = Number(percentInput?.value || 0);
+      const scope = scopeInput?.value || "store_and_online";
+      const description = (descInput?.value || "").trim();
+
+      if (!rawCode || !percent) {
+        alert("Enter discount code and percentage.");
+        return;
+      }
+
+      const brandRef = doc(db, "brands", brandId);
+      const colRef = collection(brandRef, "discounts");
+
+      // Try to find existing with same code
+      const existing = discounts.find(d => (d.code || "").toUpperCase() === rawCode);
+      if (existing) {
+        await updateDoc(doc(brandRef, "discounts", existing.id), {
+          code: rawCode,
+          percent,
+          scope,
+          description,
+          isActive: true
+        });
+      } else {
+        await addDoc(colRef, {
+          code: rawCode,
+          percent,
+          scope,
+          description,
+          isActive: true,
+          createdAt: serverTimestamp()
+        });
+      }
+
+      codeInput.value = "";
+      percentInput.value = "";
+      descInput.value = "";
+
+      await loadDiscounts();
+      renderDiscounts();
+    });
+
+    /* SETTINGS SAVE */
+    qs("#btn-save-brand-settings")?.addEventListener("click", async () => {
+      if (!brandId) return;
+      const nameInput = qs("#set-brand-name");
+      const countryInput = qs("#set-brand-country");
+      const logoInput = qs("#set-brand-logo");
+
+      const name = nameInput?.value.trim() || "Brand";
+      const country = countryInput?.value.trim() || null;
+
+      const brandRef = doc(db, "brands", brandId);
+      const updateData = { name, country };
+
+      if (logoInput && logoInput.files && logoInput.files[0]) {
+        const url = await uploadImageToStorage(logoInput.files[0], `brands/${brandId}/branding`);
+        updateData.logoUrl = url;
+      }
+
+      await updateDoc(brandRef, updateData);
+      await loadBrand();
+      alert("Brand settings saved.");
+    });
+
+    qs("#btn-save-financial-settings")?.addEventListener("click", async () => {
+      if (!brandId) return;
+      const vatVal = Number(qs("#set-vat")?.value || 0);
+      const serviceVal = Number(qs("#set-service-fee")?.value || 0);
+      const brandRef = doc(db, "brands", brandId);
+      await updateDoc(brandRef, { vat: vatVal, serviceFee: serviceVal });
+      await loadBrand();
+      alert("Financial settings saved.");
+    });
+
+    qs("#btn-save-receipt-settings")?.addEventListener("click", async () => {
+      if (!brandId) return;
+      const sendEmail = !!qs("#set-send-email")?.checked;
+      const brandRef = doc(db, "brands", brandId);
+      await updateDoc(brandRef, { sendEmail });
+      await loadBrand();
+      alert("Receipt settings saved.");
+    });
+
+    qs("#btn-delete-brand")?.addEventListener("click", async () => {
+      if (!brandId || !confirm("Are you sure you want to delete this brand? This cannot be undone.")) return;
+      await deleteDoc(doc(db, "brands", brandId));
+      alert("Brand deleted.");
+      await signOut(auth);
+    });
+
+    /* PRODUCT MODAL */
+    function openProductModal(product) {
+      const isEdit = !!product;
+      const title = isEdit ? "Edit Product" : "Add Product";
+
+      const branchOptions = branches
+        .map(b => `<option value="${b.id}">${b.name || "Branch"}</option>`)
+        .join("");
+
+      const selectedBranches = new Set(product?.branchIds || []);
+
+      openModal(`
+        <div class="modal-title">${title}</div>
+        <form id="product-form">
+          <div class="field">
+            <div class="field-label">Product Name</div>
+            <input id="prod-name" class="field-input" value="${product?.name || ""}" required />
+          </div>
+          <div class="field">
+            <div class="field-label">SKU (optional)</div>
+            <input id="prod-sku" class="field-input" value="${product?.sku || ""}" />
+          </div>
+          <div class="field">
+            <div class="field-label">Price</div>
+            <input id="prod-price" type="number" class="field-input" value="${product?.price ?? ""}" required />
+          </div>
+          <div class="field">
+            <div class="field-label">Stock</div>
+            <input id="prod-stock" type="number" class="field-input" value="${product?.stock ?? 0}" required />
+          </div>
+          <div class="field">
+            <div class="field-label">
+              Low Stock Threshold
+              <span class="low-stock-badge">Alert below this number</span>
+            </div>
+            <input id="prod-low-stock" type="number" class="field-input" value="${product?.lowStockThreshold ?? 8}" />
+          </div>
+          <div class="field">
+            <div class="field-label">Branches (optional)</div>
+            <select id="prod-branches" class="field-input" multiple size="4">
+              ${branchOptions}
+            </select>
+            <div class="field-hint">Leave empty to allow in all branches.</div>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+        </form>
+      `);
+
+      // preselect branches
+      const branchSelect = document.getElementById("prod-branches");
+      if (branchSelect && selectedBranches.size) {
+        Array.from(branchSelect.options).forEach(opt => {
+          if (selectedBranches.has(opt.value)) {
+            opt.selected = true;
+          }
+        });
+      }
+
+      document.getElementById("product-form").addEventListener("submit", async evt => {
+        evt.preventDefault();
+        if (!brandId) return;
+
+        const name = document.getElementById("prod-name").value.trim();
+        const sku = document.getElementById("prod-sku").value.trim();
+        const price = Number(document.getElementById("prod-price").value || 0);
+        const stock = Number(document.getElementById("prod-stock").value || 0);
+        const lowStockThreshold = Number(document.getElementById("prod-low-stock").value || 8);
+
+        const sel = Array.from(branchSelect?.selectedOptions || []).map(o => o.value);
+
+        const brandRef = doc(db, "brands", brandId);
+        const colRef = collection(brandRef, "products");
+        const data = {
+          name,
+          sku: sku || null,
+          price,
+          stock,
+          lowStockThreshold,
+          branchIds: sel.length ? sel : null,
+          updatedAt: serverTimestamp()
+        };
+
+        if (isEdit) {
+          await updateDoc(doc(brandRef, "products", product.id), data);
+        } else {
+          await addDoc(colRef, {
+            ...data,
+            createdAt: serverTimestamp()
+          });
+        }
+
+        closeModal();
+        await loadProducts();
+        renderProductsTable();
+      });
+    }
+
+    async function confirmDeleteProduct(id) {
+      if (!brandId || !confirm("Delete this product?")) return;
+      const brandRef = doc(db, "brands", brandId);
+      await deleteDoc(doc(brandRef, "products", id));
+      await loadProducts();
+      renderProductsTable();
+    }
+
+    /* BRANCH MODAL */
+    function openBranchModal(branch) {
+      const isEdit = !!branch;
+      const title = isEdit ? "Edit Booth / Branch" : "Add Booth / Branch";
+
+      openModal(`
+        <div class="modal-title">${title}</div>
+        <form id="branch-form">
+          <div class="field">
+            <div class="field-label">Name</div>
+            <input id="branch-name" class="field-input" value="${branch?.name || ""}" required />
+          </div>
+          <div class="field">
+            <div class="field-label">Code</div>
+            <input id="branch-code" class="field-input" value="${branch?.code || ""}" />
+          </div>
+          <div class="field">
+            <label>
+              <input id="branch-active" type="checkbox" ${branch?.isActive === false ? "" : "checked"} />
+              Active
+            </label>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+        </form>
+      `);
+
+      document.getElementById("branch-form").addEventListener("submit", async evt => {
+        evt.preventDefault();
+        if (!brandId) return;
+
+        const name = document.getElementById("branch-name").value.trim();
+        const code = document.getElementById("branch-code").value.trim();
+        const isActive = document.getElementById("branch-active").checked;
+
+        const brandRef = doc(db, "brands", brandId);
+        const colRef = collection(brandRef, "branches");
+        const data = {
+          name,
+          code: code || null,
+          isActive,
+          updatedAt: serverTimestamp()
+        };
+
+        if (isEdit) {
+          await updateDoc(doc(brandRef, "branches", branch.id), data);
+        } else {
+          await addDoc(colRef, {
+            ...data,
+            createdAt: serverTimestamp(),
+            eventId: eventId || null
+          });
+        }
+
+        closeModal();
+        await loadBranches();
+        renderBranchesTable();
+        updateDashboardUI();
+      });
+    }
+
+    async function confirmDeleteBranch(id) {
+      if (!brandId || !confirm("Delete this branch? POS sessions linked to it may be affected.")) return;
+      const brandRef = doc(db, "brands", brandId);
+      await deleteDoc(doc(brandRef, "branches", id));
+      await loadBranches();
+      renderBranchesTable();
+      updateDashboardUI();
+    }
+
+    /* STAFF MODAL */
+    function openStaffModal(staff) {
+      const isEdit = !!staff;
+      const title = isEdit ? "Edit Staff User" : "Add Staff User";
+
+      const branchOptions = branches
+        .map(b => {
+          const selected = staff && staff.branchId === b.id ? "selected" : "";
+          return `<option value="${b.id}" ${selected}>${b.name || "Branch"}</option>`;
+        })
+        .join("");
+
+      openModal(`
+        <div class="modal-title">${title}</div>
+        <form id="staff-form">
+          <div class="field">
+            <div class="field-label">Name</div>
+            <input id="staff-name" class="field-input" value="${staff?.name || ""}" required />
+          </div>
+          <div class="field">
+            <div class="field-label">Username</div>
+            <input id="staff-username" class="field-input" value="${staff?.username || ""}" required />
+          </div>
+          <div class="field">
+            <div class="field-label">PIN / Password (POS)</div>
+            <input id="staff-pin" class="field-input" value="${staff?.pin || ""}" />
+            <div class="field-hint">Used on the POS login screen for this event.</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Role</div>
+            <select id="staff-role" class="field-input">
+              <option value="cashier" ${staff?.role === "cashier" ? "selected" : ""}>Cashier</option>
+              <option value="manager" ${staff?.role === "manager" ? "selected" : ""}>Manager</option>
+              <option value="brand_owner" ${staff?.role === "brand_owner" ? "selected" : ""}>Brand Owner</option>
+            </select>
+          </div>
+          <div class="field">
+            <div class="field-label">Branch</div>
+            <select id="staff-branch" class="field-input">
+              <option value="">All branches</option>
+              ${branchOptions}
+            </select>
+          </div>
+          <div class="field">
+            <label>
+              <input id="staff-active" type="checkbox" ${staff?.isActive === false ? "" : "checked"} />
+              Active
+            </label>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+        </form>
+      `);
+
+      document.getElementById("staff-form").addEventListener("submit", async evt => {
+        evt.preventDefault();
+        if (!brandId) return;
+
+        const name = document.getElementById("staff-name").value.trim();
+        const username = document.getElementById("staff-username").value.trim();
+        const pin = document.getElementById("staff-pin").value.trim() || null;
+        const role = document.getElementById("staff-role").value || "cashier";
+        const branchIdSel = document.getElementById("staff-branch").value || null;
+        const isActive = document.getElementById("staff-active").checked;
+
+        const brandRef = doc(db, "brands", brandId);
+        const data = {
+          name,
+          username,
+          pin,
+          role,
+          branchId: branchIdSel,
+          isActive,
+          eventId: eventId || null,
+          updatedAt: serverTimestamp()
+        };
+
+        if (isEdit) {
+          await updateDoc(doc(brandRef, "staff", staff.id), data);
+        } else {
+          const stRef = collection(brandRef, "staff");
+          await addDoc(stRef, {
+            ...data,
+            createdAt: serverTimestamp()
+          });
+        }
+
+        closeModal();
+        await loadStaff();
+        renderStaffTable();
+      });
+    }
+
+    async function confirmDeleteStaff(id) {
+      if (!brandId || !confirm("Delete this staff user?")) return;
+      const brandRef = doc(db, "brands", brandId);
+      await deleteDoc(doc(brandRef, "staff", id));
+      await loadStaff();
+      renderStaffTable();
+    }
+
+    /* EXPORTS */
+    qs("#btn-export-products")?.addEventListener("click", () => {
+      if (!products.length) {
+        alert("No products to export.");
+        return;
+      }
+      const rows = [
+        ["Name", "SKU", "Price", "Stock", "LowStockThreshold"]
+      ];
+      products.forEach(p => {
+        rows.push([
+          p.name || "",
+          p.sku || "",
+          p.price || 0,
+          p.stock || 0,
+          p.lowStockThreshold ?? ""
+        ]);
+      });
+      downloadCsv("products.csv", rows);
+    });
+
+    qs("#btn-export-branches")?.addEventListener("click", () => {
+      if (!branches.length) {
+        alert("No branches to export.");
+        return;
+      }
+      const rows = [["Name", "Code", "Active"]];
+      branches.forEach(b => {
+        rows.push([b.name || "", b.code || "", b.isActive !== false ? "Yes" : "No"]);
+      });
+      downloadCsv("branches.csv", rows);
+    });
+
+    qs("#btn-export-staff")?.addEventListener("click", () => {
+      if (!staffUsers.length) {
+        alert("No staff to export.");
+        return;
+      }
+      const rows = [["Name", "Username", "Role", "Active"]];
+      staffUsers.forEach(s => {
+        rows.push([
+          s.name || "",
+          s.username || "",
+          s.role || "",
+          s.isActive !== false ? "Yes" : "No"
+        ]);
+      });
+      downloadCsv("staff.csv", rows);
+    });
+
+    qs("#btn-export-customers")?.addEventListener("click", () => {
+      if (!customersList.length) {
+        alert("No customers to export.");
+        return;
+      }
+      const rows = [["Name", "Phone", "Email", "Orders", "TotalSpent"]];
+      customersList.forEach(c => {
+        rows.push([
+          c.name || "",
+          c.phone || "",
+          c.email || "",
+          c.ordersCount || 0,
+          c.totalSpent || 0
+        ]);
+      });
+      downloadCsv("customers.csv", rows);
+    });
+
+    qs("#btn-export-orders")?.addEventListener("click", () => {
+      if (!ordersList.length) {
+        alert("No orders to export.");
+        return;
+      }
+      const rows = [
+        ["OrderId", "Date", "Type", "Total", "Customer", "Branch", "Payment"]
+      ];
+      ordersList.forEach(o => {
+        const id = o.orderId || o.id;
+        const dateStr = orderDate(o) || "";
+        const isReturn = !!o.isReturn;
+        const total = Number(o.total || 0);
+        const customerName = o.customerName || o.customer?.name || "";
+        const branchName = branches.find(b => b.id === o.branchId)?.name || "";
+        const paymentMethod = o.paymentMethod || "";
+
+        rows.push([
+          id,
+          dateStr,
+          isReturn ? "Return" : "Sale",
+          total,
+          customerName,
+          branchName,
+          paymentMethod
+        ]);
+      });
+      downloadCsv("orders.csv", rows);
+    });
+
+    /* SAMPLE CSV + IMPORT */
+    qs("#btn-download-sample")?.addEventListener("click", () => {
+      const rows = [
+        ["Name", "SKU", "Price", "Stock", "LowStockThreshold"],
+        ["T-Shirt", "TSHIRT001", "500", "20", "5"],
+        ["Hoodie", "HOODIE001", "800", "10", "3"]
+      ];
+      downloadCsv("products_sample.csv", rows);
+    });
+
+    qs("#btn-import-excel")?.addEventListener("click", () => {
+      if (!brandId) {
+        alert("No brand loaded.");
+        return;
+      }
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = ".xlsx,.xls,.csv";
+      input.onchange = async e => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async evt => {
+          const data = new Uint8Array(evt.target.result);
+          const workbook = XLSX.read(data, { type: "array" });
+          const sheetName = workbook.SheetNames[0];
+          const sheet = workbook.Sheets[sheetName];
+          const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+          const header = rows[0] || [];
+          const nameIdx = header.indexOf("Name");
+          const skuIdx = header.indexOf("SKU");
+          const priceIdx = header.indexOf("Price");
+          const stockIdx = header.indexOf("Stock");
+          const lowIdx = header.indexOf("LowStockThreshold");
+
+          if (nameIdx === -1) {
+            alert('Sheet must have "Name" column.');
+            return;
+          }
+
+          const brandRef = doc(db, "brands", brandId);
+          const colRef = collection(brandRef, "products");
+
+          for (let i = 1; i < rows.length; i++) {
+            const row = rows[i];
+            if (!row || !row.length) continue;
+            const name = (row[nameIdx] || "").toString().trim();
+            if (!name) continue;
+
+            const sku = skuIdx >= 0 ? (row[skuIdx] || "").toString().trim() : "";
+            const price = priceIdx >= 0 ? Number(row[priceIdx] || 0) : 0;
+            const stock = stockIdx >= 0 ? Number(row[stockIdx] || 0) : 0;
+            const lowStockThreshold =
+              lowIdx >= 0 ? Number(row[lowIdx] || 8) : 8;
+
+            await addDoc(colRef, {
+              name,
+              sku: sku || null,
+              price,
+              stock,
+              lowStockThreshold,
+              createdAt: serverTimestamp()
+            });
+          }
+
+          await loadProducts();
+          renderProductsTable();
+          alert("Products imported.");
+        };
+        reader.readAsArrayBuffer(file);
+      };
+      input.click();
+    });
+
+    /* NAVIGATION */
+    qsa(".nav-item[data-page]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const pageId = btn.getAttribute("data-page");
+        if (!pageId) return;
+
+        qsa(".nav-item[data-page]").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        qsa(".page").forEach(p => p.classList.remove("active"));
+        const pageEl = document.getElementById(pageId);
+        if (pageEl) pageEl.classList.add("active");
+      });
+    });
+
+    /* BRANCH FILTER CHANGE */
+    globalBranchSelect.addEventListener("change", () => {
+      updateDashboardUI();
+      renderProductsTable();
+      renderOrdersTable();
+      renderRecentOrdersTable();
+
+      const stats = buildCashierAnalytics();
+      renderTopStaff(stats);
+      renderCashierTables(stats);
+      renderCashierPaymentChart(stats);
+    });
+
+    /* SEARCH & SORT INPUTS */
+    qs("#search-products")?.addEventListener("input", renderProductsTable);
+    qs("#sort-products")?.addEventListener("change", renderProductsTable);
+
+    qs("#search-branches")?.addEventListener("input", renderBranchesTable);
+    qs("#sort-branches")?.addEventListener("change", renderBranchesTable);
+
+    qs("#search-staff")?.addEventListener("input", renderStaffTable);
+    qs("#sort-staff")?.addEventListener("change", renderStaffTable);
+
+    qs("#search-customers")?.addEventListener("input", renderCustomersTable);
+    qs("#sort-customers")?.addEventListener("change", renderCustomersTable);
+
+    qs("#search-orders")?.addEventListener("input", renderOrdersTable);
+    qs("#sort-orders")?.addEventListener("change", renderOrdersTable);
+
+    /* BUTTON HOOKS */
+    qs("#btn-add-product")?.addEventListener("click", () => openProductModal(null));
+    qs("#btn-add-branch")?.addEventListener("click", () => openBranchModal(null));
+    qs("#btn-add-staff")?.addEventListener("click", () => openStaffModal(null));
+
+    /* LOGOUT */
+    qs("#btn-logout")?.addEventListener("click", async () => {
+      await signOut(auth);
+    });
+  </script>
+</body>
+</html>
