@@ -472,7 +472,6 @@
     getFirestore,
     doc,
     collection,
-    collectionGroup,
     addDoc,
     setDoc,
     getDoc,
@@ -496,9 +495,6 @@
     signOut
   } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
-  // If you want Storage later (for event banners, etc.)
-  // import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
-
   const firebaseConfig = {
     apiKey: "AIzaSyA80bAAGPuyscnTVS-zwrxE9Jp3tPiS1gM",
     authDomain: "events-339ce.firebaseapp.com",
@@ -511,13 +507,10 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
   const auth = getAuth(app);
-  // const storage = getStorage(app);
 
   // -----------------------------
   // CONFIG — CHANGE ONLY THIS
   // -----------------------------
-  // Base URL of VENDOR signup page you will send to brands.
-  // Example: "https://luma-events.vercel.app/vendor.html"
   const VENDOR_SIGNUP_BASE_URL = window.location.origin + "/vendor.html";
 
   // -----------------------------
@@ -537,7 +530,6 @@
 
   // -----------------------------
   // AUTH DOM
-  // IDs must match Part 1
   // -----------------------------
   const authView = qs("#auth-view");
   const appView = qs("#app-view");
@@ -560,45 +552,40 @@
   const signupEventLocationEl = qs("#signup-event-location");
 
   // -----------------------------
-  // APP DOM
+  // APP DOM (matching your HTML)
   // -----------------------------
-  const sidebarOwnerNameEl = qs("#sidebar-owner-name");
-  const sidebarOwnerAvatarEl = qs("#sidebar-owner-avatar");
+  const sidebarEventLogoEl = qs("#sidebar-event-logo");
+  const sidebarEventNameEl = qs("#sidebar-event-name");
   const topbarTitleEl = qs("#topbar-title");
-  const topbarSubtitleEl = qs("#topbar-subtitle");
-  const eventSelectEl = qs("#event-switcher");
+  const topbarSubtitleEl = qs("#topbar-sub");
+  const eventSelectEl = qs("#event-select");
 
-  // Overview metrics
-  const metricTotalVendorsEl = qs("#metric-total-vendors");
-  const metricApprovedVendorsEl = qs("#metric-approved-vendors");
-  const metricPendingVendorsEl = qs("#metric-pending-vendors");
-  const metricStallsEl = qs("#metric-total-stalls");
-  const metricOrdersEl = qs("#metric-total-orders");
-  const metricRevenueEl = qs("#metric-estimated-revenue");
+  // KPIs (Overview cards)
+  const kpiVendorsEl = qs("#kpi-vendors");
+  const kpiStallsEl = qs("#kpi-stalls");
+  const kpiSalesTodayEl = qs("#kpi-sales-today");
+  const kpiCheckinsEl = qs("#kpi-checkins"); // will stay 0 until we hook tickets
 
-  // Tables & sections
+  // Tables / wrappers
+  const recentOrdersWrapperEl = qs("#table-recent-orders");
   const vendorsTableEl = qs("#vendors-table");
   const stallsTableEl = qs("#stalls-table");
   const ordersTableEl = qs("#orders-table");
-  const tasksTodayEl = qs("#tasks-today");
 
   // Buttons
-  const btnCreateEvent = qs("#btn-create-event");
   const btnCopyVendorLink = qs("#btn-copy-vendor-link");
-  const vendorLinkDisplayEl = qs("#vendor-link-display");
-
-  const btnExportVendors = qs("#btn-export-vendors");
+  const btnCopyVendorLink2 = qs("#btn-copy-vendor-link-2");
   const btnExportOrders = qs("#btn-export-orders");
-
   const logoutBtn = qs("#btn-logout");
 
   // Settings
   const setEventNameEl = qs("#set-event-name");
-  const setEventDateEl = qs("#set-event-date");
   const setEventLocationEl = qs("#set-event-location");
-  const setEventNotesEl = qs("#set-event-notes");
-  const btnSaveEventSettings = qs("#btn-save-event-settings");
-  const btnDeleteEvent = qs("#btn-delete-event");
+  const setEventDateEl = qs("#set-event-date");
+  // Optional notes (not in HTML now, safe to stay null)
+  const setEventNotesEl = null;
+  const btnSaveEventSettings = qs("#btn-save-event");
+  // No delete-event button in this HTML, so we skip that part entirely
 
   // Pages
   const navItems = qsa(".nav-item[data-page]");
@@ -658,7 +645,6 @@
     modalContainer.style.display = "none";
     modalContainer.innerHTML = "";
   }
-  // Make available in HTML
   window.closeModal = closeModal;
 
   // -----------------------------
@@ -737,6 +723,7 @@
 
     try {
       await signInWithEmailAndPassword(auth, email, pw);
+      // onAuthStateChanged will show the app
     } catch (err) {
       console.error("Login error:", err);
       let msg = "Login failed.";
@@ -811,7 +798,7 @@
         { merge: true }
       );
 
-      // After this, onAuthStateChanged will pick it up and load dashboard
+      // onAuthStateChanged will pick up and continue
     } catch (err) {
       console.error("Signup error:", err);
       let msg = "Signup failed.";
@@ -822,22 +809,15 @@
   });
 
   // -----------------------------
-  // AUTH STATE
-  // -----------------------------
-onAuthStateChanged(auth, async (user) =>
-  // -----------------------------
   // LOAD EVENTS FOR OWNER
   // -----------------------------
   async function loadEventsForOwner(uid) {
     eventsList = [];
-
-    // Option A: query events.ownerUserId == uid
     const qEvents = query(
       collection(db, "events"),
       where("ownerUserId", "==", uid),
       orderBy("createdAt", "desc")
     );
-
     const snap = await getDocs(qEvents);
     snap.forEach((d) => {
       eventsList.push({ id: d.id, ...d.data() });
@@ -862,12 +842,12 @@ onAuthStateChanged(auth, async (user) =>
       eventSelectEl.value = currentEventId;
     }
 
-    eventSelectEl.addEventListener("change", async () => {
+    // Avoid stacking multiple listeners
+    eventSelectEl.onchange = async () => {
       const val = eventSelectEl.value;
       if (!val) return;
       currentEventId = val;
 
-      // Save as primary event for this owner
       if (currentUser) {
         const ownerEventsRef = doc(db, "ownerEvents", currentUser.uid);
         const existingSnap = await getDoc(ownerEventsRef);
@@ -886,7 +866,7 @@ onAuthStateChanged(auth, async (user) =>
       }
 
       await selectEvent(val);
-    });
+    };
   }
 
   // -----------------------------
@@ -895,43 +875,37 @@ onAuthStateChanged(auth, async (user) =>
   async function selectEvent(eventId) {
     if (!eventId) return;
 
-    // Stop old listeners
-    if (unsubVendors) {
-      unsubVendors();
-      unsubVendors = null;
-    }
-    if (unsubOrders) {
-      unsubOrders();
-      unsubOrders = null;
-    }
-    if (unsubStalls) {
-      unsubStalls();
-      unsubStalls = null;
-    }
+    if (unsubVendors) { unsubVendors(); unsubVendors = null; }
+    if (unsubOrders) { unsubOrders(); unsubOrders = null; }
+    if (unsubStalls) { unsubStalls(); unsubStalls = null; }
 
-    // Load event doc
     const evSnap = await getDoc(doc(db, "events", eventId));
     if (!evSnap.exists()) {
       console.warn("Event not found:", eventId);
       return;
     }
     currentEventData = { id: eventId, ...evSnap.data() };
+    currentEventId = eventId;
 
-    // Update topbar / settings
     const name = currentEventData.name || "Event";
     const date = currentEventData.date || "";
     const location = currentEventData.location || "";
 
-    if (topbarTitleEl) topbarTitleEl.textContent = name;
-    if (topbarSubtitleEl) topbarSubtitleEl.textContent =
-      [date, location].filter(Boolean).join(" • ") || "Event overview";
+    if (topbarTitleEl) topbarTitleEl.textContent = "Event Overview";
+    if (topbarSubtitleEl) {
+      const subtitle = [name, date, location].filter(Boolean).join(" • ") || "Monitor vendors, stalls, and live sales";
+      topbarSubtitleEl.textContent = subtitle;
+    }
+    if (sidebarEventNameEl) sidebarEventNameEl.textContent = name;
+    if (sidebarEventLogoEl) {
+      const initial = name?.[0]?.toUpperCase() || "E";
+      sidebarEventLogoEl.textContent = initial;
+    }
 
     if (setEventNameEl) setEventNameEl.value = name;
     if (setEventDateEl) setEventDateEl.value = date;
     if (setEventLocationEl) setEventLocationEl.value = location;
-    if (setEventNotesEl) setEventNotesEl.value = currentEventData.notes || "";
 
-    // Vendor link display
     updateVendorSignupLinkDisplay();
 
     // Listen to vendors
@@ -942,10 +916,9 @@ onAuthStateChanged(auth, async (user) =>
       snap.forEach((d) => vendors.push({ id: d.id, ...d.data() }));
       renderVendorsTable();
       updateOverviewMetrics();
-      renderTasksToday();
     });
 
-    // Listen to stalls (optional; if you store separately)
+    // Listen to stalls
     const stallsRef = collection(db, "events", eventId, "stalls");
     unsubStalls = onSnapshot(stallsRef, (snap) => {
       stalls = [];
@@ -954,15 +927,22 @@ onAuthStateChanged(auth, async (user) =>
       updateOverviewMetrics();
     });
 
-    // Listen to orders (e.g., from event POS / brand POS writing eventId)
+    // Listen to orders
     const ordersRef = collection(db, "events", eventId, "orders");
     const qOrders = query(ordersRef, orderBy("createdAt", "desc"), limit(200));
-    unsubOrders = onSnapshot(qOrders, (snap) => {
-      orders = [];
-      snap.forEach((d) => orders.push({ id: d.id, ...d.data() }));
-      renderOrdersTable();
-      updateOverviewMetrics();
-    });
+    unsubOrders = onSnapshot(
+      qOrders,
+      (snap) => {
+        orders = [];
+        snap.forEach((d) => orders.push({ id: d.id, ...d.data() }));
+        renderOrdersTable();
+        renderRecentOrdersTable();
+        updateOverviewMetrics();
+      },
+      (err) => {
+        console.error("Orders listener error:", err);
+      }
+    );
   }
 
   // -----------------------------
@@ -979,12 +959,10 @@ onAuthStateChanged(auth, async (user) =>
   }
 
   function updateVendorSignupLinkDisplay() {
-    if (!vendorLinkDisplayEl) return;
-    const url = buildVendorSignupUrl();
-    vendorLinkDisplayEl.textContent = url || "No event selected.";
+    // Right now we only copy via button; if you later add a <div> to show it, wire it here.
   }
 
-  btnCopyVendorLink?.addEventListener("click", () => {
+  function handleCopyVendorLink() {
     const url = buildVendorSignupUrl();
     if (!url) {
       alert("No event selected.");
@@ -992,27 +970,38 @@ onAuthStateChanged(auth, async (user) =>
     }
     copyToClipboard(url);
     alert("Vendor signup link copied.");
-  });
+  }
+
+  btnCopyVendorLink?.addEventListener("click", handleCopyVendorLink);
+  btnCopyVendorLink2?.addEventListener("click", handleCopyVendorLink);
 
   // -----------------------------
   // OVERVIEW METRICS
   // -----------------------------
   function updateOverviewMetrics() {
     const totalVendors = vendors.length;
-    const approvedVendors = vendors.filter((v) => v.status === "approved").length;
-    const pendingVendors = vendors.filter((v) => !v.status || v.status === "pending").length;
-
     const stallsCount = stalls.length;
 
-    const totalOrders = orders.length;
-    const totalRevenue = orders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+    const today = new Date();
+    const isSameDay = (d1, d2) =>
+      d1.getFullYear() === d2.getFullYear() &&
+      d1.getMonth() === d2.getMonth() &&
+      d1.getDate() === d2.getDate();
 
-    if (metricTotalVendorsEl) metricTotalVendorsEl.textContent = String(totalVendors);
-    if (metricApprovedVendorsEl) metricApprovedVendorsEl.textContent = String(approvedVendors);
-    if (metricPendingVendorsEl) metricPendingVendorsEl.textContent = String(pendingVendors);
-    if (metricStallsEl) metricStallsEl.textContent = String(stallsCount);
-    if (metricOrdersEl) metricOrdersEl.textContent = String(totalOrders);
-    if (metricRevenueEl) metricRevenueEl.textContent = formatCurrency(totalRevenue);
+    let salesToday = 0;
+    orders.forEach((o) => {
+      const createdAt = o.createdAt && typeof o.createdAt.toDate === "function"
+        ? o.createdAt.toDate()
+        : null;
+      if (createdAt && isSameDay(createdAt, today)) {
+        salesToday += Number(o.total) || 0;
+      }
+    });
+
+    if (kpiVendorsEl) kpiVendorsEl.textContent = String(totalVendors);
+    if (kpiStallsEl) kpiStallsEl.textContent = String(stallsCount);
+    if (kpiSalesTodayEl) kpiSalesTodayEl.textContent = formatCurrency(salesToday);
+    if (kpiCheckinsEl) kpiCheckinsEl.textContent = "0"; // integrate tickets later
   }
 
   // -----------------------------
@@ -1040,7 +1029,6 @@ onAuthStateChanged(auth, async (user) =>
             <th>Status</th>
             <th>Stall</th>
             <th>POS Linked?</th>
-            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -1060,108 +1048,12 @@ onAuthStateChanged(auth, async (user) =>
           <td>${status}</td>
           <td>${v.stallCode || v.stallName || "—"}</td>
           <td>${posLinked}</td>
-          <td>
-            <button class="btn btn-ghost" data-view-vendor="${v.id}">View</button>
-            ${
-              status === "approved"
-                ? `<button class="btn btn-ghost" data-mark-pending="${v.id}">Mark pending</button>`
-                : `<button class="btn btn-primary" data-approve-vendor="${v.id}">Approve</button>`
-            }
-          </td>
         </tr>
       `;
     });
 
     html += `</tbody></table>`;
     vendorsTableEl.innerHTML = html;
-
-    // Bind actions
-    vendorsTableEl.querySelectorAll("[data-view-vendor]").forEach((btn) => {
-      const id = btn.getAttribute("data-view-vendor");
-      btn.addEventListener("click", () => openVendorDetails(id));
-    });
-    vendorsTableEl.querySelectorAll("[data-approve-vendor]").forEach((btn) => {
-      const id = btn.getAttribute("data-approve-vendor");
-      btn.addEventListener("click", () => approveVendor(id));
-    });
-    vendorsTableEl.querySelectorAll("[data-mark-pending]").forEach((btn) => {
-      const id = btn.getAttribute("data-mark-pending");
-      btn.addEventListener("click", () => markVendorPending(id));
-    });
-  }
-
-  function openVendorDetails(vendorId) {
-    const v = vendors.find((x) => x.id === vendorId);
-    if (!v) {
-      alert("Vendor not found.");
-      return;
-    }
-
-    const safe = (val) => (val == null ? "" : val);
-
-    openModal(`
-      <div class="modal-title">Vendor Details</div>
-
-      <div class="field">
-        <div class="field-label">Brand</div>
-        <div>${safe(v.brandName || v.vendorName)}</div>
-      </div>
-
-      <div class="field">
-        <div class="field-label">Contact</div>
-        <div>${safe(v.contactName)} — ${safe(v.phone)}</div>
-      </div>
-
-      <div class="field">
-        <div class="field-label">Email</div>
-        <div>${safe(v.email)}</div>
-      </div>
-
-      <div class="field">
-        <div class="field-label">Category</div>
-        <div>${safe(v.category || v.segment)}</div>
-      </div>
-
-      <div class="field">
-        <div class="field-label">Stall</div>
-        <div>${safe(v.stallCode || v.stallName)}</div>
-      </div>
-
-      <div class="field">
-        <div class="field-label">Notes</div>
-        <div>${safe(v.notes)}</div>
-      </div>
-
-      <div class="field">
-        <div class="field-label">POS Link Info</div>
-        <div>
-          Brand ID: ${safe(v.posBrandId)}<br/>
-          Branch ID: ${safe(v.posBranchId)}<br/>
-          POS URL: ${safe(v.posUrl)}
-        </div>
-      </div>
-
-      <div class="modal-actions">
-        <button class="btn btn-ghost" onclick="closeModal()">Close</button>
-      </div>
-    `);
-  }
-
-  async function approveVendor(vendorId) {
-    if (!currentEventId) return;
-    const vRef = doc(db, "events", currentEventId, "vendors", vendorId);
-    await updateDoc(vRef, {
-      status: "approved",
-      approvedAt: serverTimestamp()
-    });
-  }
-
-  async function markVendorPending(vendorId) {
-    if (!currentEventId) return;
-    const vRef = doc(db, "events", currentEventId, "vendors", vendorId);
-    await updateDoc(vRef, {
-      status: "pending"
-    });
   }
 
   // -----------------------------
@@ -1188,6 +1080,7 @@ onAuthStateChanged(auth, async (user) =>
         </thead>
         <tbody>
     `;
+
     stalls.forEach((s) => {
       const vendorName =
         s.vendorBrandName ||
@@ -1204,12 +1097,13 @@ onAuthStateChanged(auth, async (user) =>
         </tr>
       `;
     });
+
     html += `</tbody></table>`;
     stallsTableEl.innerHTML = html;
   }
 
   // -----------------------------
-  // ORDERS TABLE
+  // ORDERS TABLE (Sales page)
   // -----------------------------
   function renderOrdersTable() {
     if (!ordersTableEl) return;
@@ -1242,7 +1136,9 @@ onAuthStateChanged(auth, async (user) =>
       const createdAt = o.createdAt && typeof o.createdAt.toDate === "function"
         ? o.createdAt.toDate()
         : null;
-      const dateStr = createdAt ? createdAt.toLocaleString("en-EG", { timeZone: "Africa/Cairo" }) : "";
+      const dateStr = createdAt
+        ? createdAt.toLocaleString("en-EG", { timeZone: "Africa/Cairo" })
+        : "";
 
       html += `
         <tr>
@@ -1261,107 +1157,59 @@ onAuthStateChanged(auth, async (user) =>
   }
 
   // -----------------------------
-  // TODAY'S TASKS (OVERVIEW)
+  // RECENT ORDERS (Overview block)
   // -----------------------------
-  function renderTasksToday() {
-    if (!tasksTodayEl) return;
+  function renderRecentOrdersTable() {
+    if (!recentOrdersWrapperEl) return;
 
-    const pendingVendors = vendors.filter((v) => !v.status || v.status === "pending");
-    const stallsWithoutVendor = stalls.filter((s) => !s.vendorId && !s.vendorBrandName);
-
-    const items = [];
-
-    if (pendingVendors.length) {
-      items.push(`Review & approve <strong>${pendingVendors.length}</strong> pending vendors.`);
-    }
-    if (stallsWithoutVendor.length) {
-      items.push(`Assign vendors to <strong>${stallsWithoutVendor.length}</strong> free stalls.`);
-    }
     if (!orders.length) {
-      items.push("No sales yet — ensure POS links are enabled for vendors.");
-    }
-
-    if (!items.length) {
-      tasksTodayEl.innerHTML = `<div class="field-hint">No urgent tasks. All caught up 🎉</div>`;
+      recentOrdersWrapperEl.innerHTML = `<div class="table-empty">No orders yet.</div>`;
       return;
     }
 
-    tasksTodayEl.innerHTML = items.map((i) => `<div>• ${i}</div>`).join("");
+    const recent = orders.slice(0, 10);
+
+    let html = `
+      <table>
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Vendor</th>
+            <th>Total</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    recent.forEach((o) => {
+      const vendorName =
+        o.vendorBrandName ||
+        (o.vendorId && (vendors.find((v) => v.id === o.vendorId)?.brandName || "")) ||
+        "—";
+      const createdAt = o.createdAt && typeof o.createdAt.toDate === "function"
+        ? o.createdAt.toDate()
+        : null;
+      const dateStr = createdAt
+        ? createdAt.toLocaleString("en-EG", { timeZone: "Africa/Cairo" })
+        : "";
+
+      html += `
+        <tr>
+          <td>${o.orderId || o.id}</td>
+          <td>${vendorName}</td>
+          <td>${formatCurrency(o.total)}</td>
+          <td>${dateStr}</td>
+        </tr>
+      `;
+    });
+
+    html += `</tbody></table>`;
+    recentOrdersWrapperEl.innerHTML = html;
   }
 
   // -----------------------------
-  // CREATE EXTRA EVENT (MODAL)
-  // -----------------------------
-  btnCreateEvent?.addEventListener("click", () => {
-    openModal(`
-      <div class="modal-title">Create New Event</div>
-      <div class="field">
-        <div class="field-label">Event name</div>
-        <input id="m-event-name" class="field-input" placeholder="Lokamania 6, Soueast Owners Club…" />
-      </div>
-      <div class="field">
-        <div class="field-label">Date</div>
-        <input id="m-event-date" class="field-input" type="date" />
-      </div>
-      <div class="field">
-        <div class="field-label">Location</div>
-        <input id="m-event-location" class="field-input" placeholder="Cairo Festival City, etc." />
-      </div>
-
-      <div class="modal-actions">
-        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-        <button class="btn btn-primary" id="m-btn-save-event">Create</button>
-      </div>
-    `);
-
-    const saveBtn = qs("#m-btn-save-event");
-    saveBtn?.addEventListener("click", async () => {
-      const name = qs("#m-event-name").value.trim();
-      const date = qs("#m-event-date").value.trim();
-      const location = qs("#m-event-location").value.trim();
-      if (!name || !currentUser) {
-        alert("Event name required.");
-        return;
-      }
-
-      const vendorToken = randomToken(8);
-      const ref = await addDoc(collection(db, "events"), {
-        name,
-        date: date || null,
-        location: location || null,
-        ownerUserId: currentUser.uid,
-        status: "active",
-        vendorSignupToken: vendorToken,
-        createdAt: serverTimestamp()
-      });
-
-      // Update ownerEvents
-      const ownerEventsRef = doc(db, "ownerEvents", currentUser.uid);
-      const snap = await getDoc(ownerEventsRef);
-      const existing = snap.exists() ? snap.data() : {};
-      const ids = Array.isArray(existing.eventIds) ? existing.eventIds : [];
-      if (!ids.includes(ref.id)) ids.push(ref.id);
-      await setDoc(
-        ownerEventsRef,
-        {
-          primaryEventId: ref.id,
-          eventIds: ids
-        },
-        { merge: true }
-      );
-
-      // Reload events and select
-      await loadEventsForOwner(currentUser.uid);
-      currentEventId = ref.id;
-      renderEventSwitcher();
-      await selectEvent(ref.id);
-
-      closeModal();
-    });
-  });
-
-  // -----------------------------
-  // SETTINGS SAVE / DELETE EVENT
+  // SETTINGS SAVE
   // -----------------------------
   btnSaveEventSettings?.addEventListener("click", async () => {
     if (!currentEventId) {
@@ -1369,86 +1217,24 @@ onAuthStateChanged(auth, async (user) =>
       return;
     }
 
-    const name = setEventNameEl?.value.trim();
-    const date = setEventDateEl?.value.trim();
-    const location = setEventLocationEl?.value.trim();
-    const notes = setEventNotesEl?.value.trim();
+    const name = setEventNameEl ? setEventNameEl.value.trim() : "";
+    const date = setEventDateEl ? setEventDateEl.value.trim() : "";
+    const location = setEventLocationEl ? setEventLocationEl.value.trim() : "";
+    const notes = setEventNotesEl ? setEventNotesEl.value.trim() : "";
 
     const updates = {
       name: name || null,
       date: date || null,
-      location: location || null,
-      notes: notes || null
+      location: location || null
     };
+    if (notes) updates.notes = notes;
 
     await updateDoc(doc(db, "events", currentEventId), updates);
-
     alert("Event settings saved.");
   });
 
-  btnDeleteEvent?.addEventListener("click", async () => {
-    if (!currentEventId || !currentUser) {
-      alert("No event selected.");
-      return;
-    }
-    const sure = confirm("Delete this event and ALL its vendors, stalls & orders? This cannot be undone.");
-    if (!sure) return;
-
-    // Delete subcollections
-    // Vendors
-    const vSnap = await getDocs(collection(db, "events", currentEventId, "vendors"));
-    await Promise.all(vSnap.docs.map((d) => deleteDoc(d.ref)));
-
-    // Stalls
-    const sSnap = await getDocs(collection(db, "events", currentEventId, "stalls"));
-    await Promise.all(sSnap.docs.map((d) => deleteDoc(d.ref)));
-
-    // Orders
-    const oSnap = await getDocs(collection(db, "events", currentEventId, "orders"));
-    await Promise.all(oSnap.docs.map((d) => deleteDoc(d.ref)));
-
-    // Delete event doc
-    await deleteDoc(doc(db, "events", currentEventId));
-
-    // Update ownerEvents
-    const ownerEventsRef = doc(db, "ownerEvents", currentUser.uid);
-    const snap = await getDoc(ownerEventsRef);
-    if (snap.exists()) {
-      const data = snap.data();
-      const ids = Array.isArray(data.eventIds) ? data.eventIds.filter((id) => id !== currentEventId) : [];
-      const primaryEventId = data.primaryEventId === currentEventId ? (ids[0] || null) : data.primaryEventId;
-
-      if (!ids.length) {
-        await deleteDoc(ownerEventsRef);
-      } else {
-        await setDoc(
-          ownerEventsRef,
-          {
-            eventIds: ids,
-            primaryEventId: primaryEventId || null
-          },
-          { merge: true }
-        );
-      }
-    }
-
-    // Reload
-    await loadEventsForOwner(currentUser.uid);
-    if (eventsList.length) {
-      currentEventId = eventsList[0].id;
-      renderEventSwitcher();
-      await selectEvent(currentEventId);
-    } else {
-      currentEventId = null;
-      renderEventSwitcher();
-      // maybe show empty UI
-    }
-
-    alert("Event deleted.");
-  });
-
   // -----------------------------
-  // EXPORT CSV
+  // EXPORT ORDERS CSV
   // -----------------------------
   function downloadCsv(filename, rows) {
     const escapeVal = (v) => {
@@ -1466,42 +1252,6 @@ onAuthStateChanged(auth, async (user) =>
     a.click();
     document.body.removeChild(a);
   }
-
-  btnExportVendors?.addEventListener("click", () => {
-    if (!vendors.length) {
-      alert("No vendors to export.");
-      return;
-    }
-    const rows = [
-      [
-        "brandName",
-        "contactName",
-        "phone",
-        "email",
-        "category",
-        "status",
-        "stallCode",
-        "posBrandId",
-        "posBranchId",
-        "notes"
-      ]
-    ];
-    vendors.forEach((v) => {
-      rows.push([
-        v.brandName || v.vendorName || "",
-        v.contactName || "",
-        v.phone || "",
-        v.email || "",
-        v.category || v.segment || "",
-        v.status || "pending",
-        v.stallCode || v.stallName || "",
-        v.posBrandId || "",
-        v.posBranchId || "",
-        v.notes || ""
-      ]);
-    });
-    downloadCsv("event_vendors.csv", rows);
-  });
 
   btnExportOrders?.addEventListener("click", () => {
     if (!orders.length) {
@@ -1558,4 +1308,59 @@ onAuthStateChanged(auth, async (user) =>
     await signOut(auth);
     showAuthView();
   });
+
+  // -----------------------------
+  // AUTH STATE HANDLER (FIXED)
+  // -----------------------------
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      currentUser = null;
+      ownerProfile = null;
+      eventsList = [];
+      currentEventId = null;
+      currentEventData = null;
+
+      if (unsubVendors) unsubVendors();
+      if (unsubOrders) unsubOrders();
+      if (unsubStalls) unsubStalls();
+      unsubVendors = unsubOrders = unsubStalls = null;
+
+      showAuthView();
+      return;
+    }
+
+    currentUser = user;
+    showAppView();
+
+    // Load owner profile (optional)
+    const ownerRef = doc(db, "eventOwners", user.uid);
+    const ownerSnap = await getDoc(ownerRef);
+    ownerProfile = ownerSnap.exists() ? ownerSnap.data() : null;
+
+    // Sidebar avatar/name already using event name, so nothing extra needed
+
+    // Load events
+    await loadEventsForOwner(user.uid);
+
+    // Decide which event to open
+    const ownerEventsRef = doc(db, "ownerEvents", user.uid);
+    const ownSnap = await getDoc(ownerEventsRef);
+    if (ownSnap.exists()) {
+      const data = ownSnap.data();
+      if (data.primaryEventId) currentEventId = data.primaryEventId;
+    }
+    if (!currentEventId && eventsList.length) {
+      currentEventId = eventsList[0].id;
+    }
+
+    renderEventSwitcher();
+    if (currentEventId) {
+      await selectEvent(currentEventId);
+    }
+  });
+
+  // Start on auth view by default
+  showAuthView();
 </script>
+</body>
+</html>
