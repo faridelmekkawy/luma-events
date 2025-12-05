@@ -3,21 +3,9 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Event Owner — Dashboard</title>
+  <title>Luma Events — Owner Dashboard</title>
 
-  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- XLSX for Excel import/export -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
-  <!-- Firebase v10 Modular -->
-  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
   <style>
     :root{
@@ -27,17 +15,14 @@
       --ink:#111827;
       --muted:#6b7280;
       --border:#e5e7eb;
-      --accent:#f97316;    /* orange for events */
-      --accent-soft:#ffedd5;
-      --accent-strong:#ea580c;
+      --accent:#2563eb;
+      --accent-soft:#dbeafe;
+      --accent-strong:#1d4ed8;
+      --ok:#16a34a;
+      --danger:#ef4444;
       --radius:16px;
       --shadow:0 18px 40px rgba(15,23,42,.12);
-      --danger:#ef4444;
-      --ok:#16a34a;
-      --badge-bg:#f97316;
-      --badge-text:#fff;
     }
-
     *{box-sizing:border-box;margin:0;padding:0}
     html,body{
       height:100%;
@@ -45,1128 +30,428 @@
       background:var(--bg);
       color:var(--ink);
     }
-    body{
-      display:flex;
-      align-items:stretch;
-      justify-content:stretch;
-    }
 
-    /* LAYOUT */
-    .app-shell{
-      display:flex;
+    /* AUTH WRAPPER (same vibe as brand portal) */
+    .auth-wrapper{
       width:100%;
-      min-height:100vh;
-    }
-    .sidebar{
-      width:260px;
-      background:linear-gradient(180deg,#0f172a,#020617);
-      color:#e5e7eb;
-      padding:20px 16px;
-      display:flex;
-      flex-direction:column;
-      gap:20px;
-    }
-    .sidebar-header{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      padding:8px 10px 14px;
-      border-bottom:1px solid rgba(148,163,184,.3);
-      margin-bottom:6px;
-    }
-    .event-logo{
-      width:42px;
-      height:42px;
-      border-radius:999px;
-      background:radial-gradient(circle at 30% 20%,#f97316,#7c2d12);
-      color:white;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-weight:700;
-      font-size:18px;
-      overflow:hidden;
-    }
-    .event-logo img{
-      width:100%;
-      height:100%;
-      object-fit:cover;
-      display:block;
-    }
-    .sidebar-title-wrap{
-      display:flex;
-      flex-direction:column;
-      gap:2px;
-    }
-    .sidebar-title{
-      font-size:14px;
-      font-weight:600;
-    }
-    .sidebar-subtitle{
-      font-size:11px;
-      color:#9ca3af;
-    }
-    .sidebar-section-title{
-      font-size:11px;
-      letter-spacing:.08em;
-      text-transform:uppercase;
-      color:#6b7280;
-      margin:10px 8px 4px;
-    }
-    .nav-list{
-      display:flex;
-      flex-direction:column;
-      gap:4px;
-      margin-bottom:14px;
-    }
-    .nav-item{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      padding:8px 10px;
-      border-radius:10px;
-      font-size:13px;
-      color:#e5e7eb;
-      cursor:pointer;
-      border:1px solid transparent;
-      transition:background .16s ease,border-color .16s ease,transform .12s ease;
-    }
-    .nav-item span.icon{
-      font-size:16px;
-      opacity:.9;
-    }
-    .nav-item small{
-      margin-left:auto;
-      font-size:11px;
-      padding:2px 6px;
-      border-radius:999px;
-      background:rgba(15,23,42,.7);
-      color:#9ca3af;
-    }
-    .nav-item:hover{
-      background:rgba(15,23,42,.8);
-      border-color:rgba(148,163,184,.4);
-      transform:translateY(-1px);
-    }
-    .nav-item.active{
-      background:linear-gradient(90deg,#f97316,#ea580c);
-      border-color:#fed7aa;
-      color:#0f172a;
-      box-shadow:0 0 0 1px rgba(248,250,252,.08);
-    }
-    .nav-item.active small{
-      background:rgba(15,23,42,.9);
-      color:#f97316;
-    }
-    .sidebar-footer{
-      margin-top:auto;
-      padding-top:10px;
-      border-top:1px solid rgba(148,163,184,.35);
-      font-size:11px;
-      color:#6b7280;
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-    }
-    .sidebar-footer strong{
-      color:#e5e7eb;
-      font-weight:500;
-    }
-    .sidebar-footer-badge{
-      font-size:10px;
-      padding:2px 8px;
-      border-radius:999px;
-      border:1px solid rgba(148,163,184,.5);
-      color:#9ca3af;
-      width:max-content;
-    }
-    .sidebar-footer span.powered{
-      font-size:11px;
-      color:#9ca3af;
-    }
-
-    /* MAIN AREA */
-    .main{
-      flex:1;
-      display:flex;
-      flex-direction:column;
-      padding:18px 22px;
-      gap:14px;
-      max-width:calc(100% - 260px);
-    }
-    .topbar{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-    }
-    .topbar-left{
-      display:flex;
-      flex-direction:column;
-      gap:3px;
-    }
-    .topbar-title{
-      font-size:18px;
-      font-weight:600;
-      display:flex;
-      align-items:center;
-      gap:8px;
-    }
-    .topbar-pill{
-      font-size:11px;
-      padding:2px 8px;
-      border-radius:999px;
-      border:1px solid var(--border);
-      background:var(--panel-soft);
-      color:var(--muted);
-    }
-    .topbar-subtitle{
-      font-size:12px;
-      color:var(--muted);
-    }
-    .topbar-right{
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
-    .event-date-pill{
-      font-size:11px;
-      padding:4px 10px;
-      border-radius:999px;
-      background:var(--panel-soft);
-      border:1px dashed var(--border);
-      color:var(--muted);
-    }
-    .avatar-chip{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      padding:6px 10px;
-      border-radius:999px;
-      background:#0f172a;
-      color:#e5e7eb;
-      font-size:12px;
-    }
-    .avatar-circle{
-      width:22px;
-      height:22px;
-      border-radius:999px;
-      background:linear-gradient(135deg,#f97316,#ea580c);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:12px;
-      font-weight:600;
-    }
-    .btn{
-      border-radius:999px;
-      border:none;
-      font-size:12px;
-      padding:7px 12px;
-      cursor:pointer;
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      font-weight:500;
-      white-space:nowrap;
-    }
-    .btn-primary{
-      background:var(--accent);
-      color:white;
-      box-shadow:0 12px 25px rgba(234,88,12,.35);
-    }
-    .btn-ghost{
-      background:transparent;
-      border:1px solid var(--border);
-      color:var(--ink);
-    }
-    .btn-danger{
-      background:var(--danger);
-      color:white;
-    }
-
-    /* GRID / CARDS */
-    .grid{
-      display:grid;
-      gap:12px;
-    }
-    .grid-4{
-      grid-template-columns:repeat(4,minmax(0,1fr));
-    }
-    .grid-3{
-      grid-template-columns:repeat(3,minmax(0,1fr));
-    }
-    .grid-2{
-      grid-template-columns:repeat(2,minmax(0,1fr));
-    }
-    .panel{
+      max-width:460px;
       background:var(--panel);
       border-radius:var(--radius);
-      border:1px solid var(--border);
       box-shadow:var(--shadow);
-      padding:14px 16px;
-      display:flex;
-      flex-direction:column;
-      gap:8px;
+      border:1px solid rgba(148,163,184,.3);
+      padding:18px;
+      margin:40px auto;
     }
-    .panel-soft{
-      background:var(--panel-soft);
-      border-style:dashed;
-    }
-    .panel-header{
+    .auth-header{
       display:flex;
       align-items:center;
-      justify-content:space-between;
-      gap:8px;
-      margin-bottom:4px;
-    }
-    .panel-title{
-      font-size:13px;
-      font-weight:600;
-      display:flex;
-      align-items:center;
-      gap:6px;
-    }
-    .panel-title span.dot{
-      width:7px;
-      height:7px;
-      border-radius:999px;
-      background:var(--accent);
-    }
-    .panel-subtitle{
-      font-size:11px;
-      color:var(--muted);
-    }
-    .kpi-number{
-      font-size:22px;
-      font-weight:700;
-      letter-spacing:.02em;
-    }
-    .kpi-note{
-      font-size:11px;
-      color:var(--muted);
-    }
-    .kpi-chip{
-      font-size:11px;
-      padding:2px 6px;
-      border-radius:999px;
-      background:var(--accent-soft);
-      color:var(--accent-strong);
-      border:1px solid #fed7aa;
-    }
-
-    /* TABLES */
-    .table-wrapper{
-      width:100%;
-      overflow:auto;
-    }
-    table{
-      width:100%;
-      border-collapse:collapse;
-      font-size:12px;
-    }
-    thead{
-      background:var(--panel-soft);
-    }
-    th,td{
-      text-align:left;
-      padding:6px 8px;
-      border-bottom:1px solid var(--border);
-      white-space:nowrap;
-    }
-    th{
-      font-size:11px;
-      text-transform:uppercase;
-      letter-spacing:.06em;
-      color:var(--muted);
-    }
-    .table-empty{
-      font-size:12px;
-      color:var(--muted);
-      padding:8px 0;
-    }
-
-    .pill{
-      font-size:11px;
-      padding:2px 8px;
-      border-radius:999px;
-      background:var(--panel-soft);
-      border:1px solid var(--border);
-    }
-    .pill-success{
-      background:rgba(22,163,74,.1);
-      border-color:rgba(22,163,74,.3);
-      color:#15803d;
-    }
-    .pill-danger{
-      background:rgba(239,68,68,.08);
-      border-color:rgba(239,68,68,.4);
-      color:#b91c1c;
-    }
-
-    .badge{
-      font-size:10px;
-      padding:2px 6px;
-      border-radius:999px;
-      background:var(--badge-bg);
-      color:var(--badge-text);
-    }
-
-    /* SEARCH / SORT BAR */
-    .table-toolbar{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:8px;
-      margin-bottom:8px;
-      flex-wrap:wrap;
-    }
-    .input{
-      border-radius:999px;
-      border:1px solid var(--border);
-      padding:6px 10px;
-      font-size:12px;
-      background:white;
-      min-width:0;
-    }
-    .select{
-      border-radius:999px;
-      border:1px solid var(--border);
-      padding:6px 10px;
-      font-size:12px;
-      background:white;
-      min-width:0;
-    }
-
-    /* PAGES */
-    .page{
-      display:none;
-      flex-direction:column;
       gap:12px;
-    }
-    .page.active{
-      display:flex;
-    }
-
-    /* ALERT BAR */
-    .global-alert{
-      position:fixed;
-      top:12px;
-      right:18px;
-      padding:8px 12px;
-      border-radius:999px;
-      background:#0f172a;
-      color:#e5e7eb;
-      font-size:11px;
-      box-shadow:0 18px 40px rgba(15,23,42,.45);
-      display:flex;
-      align-items:center;
-      gap:8px;
-      z-index:40;
-      opacity:0;
-      pointer-events:none;
-      transform:translateY(-10px);
-      transition:opacity .18s ease,transform .18s ease;
-    }
-    .global-alert.visible{
-      opacity:1;
-      pointer-events:auto;
-      transform:translateY(0);
-    }
-    .global-alert span.dot{
-      width:7px;
-      height:7px;
-      border-radius:999px;
-      background:#22c55e;
-    }
-    .global-alert.error span.dot{
-      background:#ef4444;
-    }
-
-    /* MODAL */
-    .modal-backdrop{
-      position:fixed;
-      inset:0;
-      background:rgba(15,23,42,.58);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      z-index:50;
-    }
-    .modal-backdrop.visible{
-      display:flex;
-    }
-    .modal{
-      width:100%;
-      max-width:520px;
-      background:var(--panel);
-      border-radius:18px;
-      border:1px solid var(--border);
-      box-shadow:0 22px 60px rgba(15,23,42,.3);
-      padding:16px 18px;
-      max-height:90vh;
-      overflow:auto;
-    }
-    .modal-title{
-      font-size:15px;
-      font-weight:600;
-      margin-bottom:6px;
-    }
-    .modal-subtitle{
-      font-size:11px;
-      color:var(--muted);
       margin-bottom:10px;
-    }
-    .modal-actions{
-      margin-top:12px;
-      display:flex;
-      justify-content:flex-end;
-      gap:8px;
-    }
-
-    .field{
-      margin-bottom:10px;
-      display:flex;
-      flex-direction:column;
-      gap:4px;
-    }
-    .field-label{
-      font-size:12px;
-      font-weight:500;
-    }
-    .field-input{
-      border-radius:10px;
-      border:1px solid var(--border);
-      padding:6px 9px;
-      font-size:12px;
-      background:white;
-      width:100%;
-    }
-    .field-hint{
-      font-size:11px;
-      color:var(--muted);
-    }
-
-    /* AUTH VIEW */
-    .auth-shell{
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      width:100%;
-      min-height:100vh;
-      background:radial-gradient(circle at top left,#fed7aa,#f97316 15%,#0f172a 58%);
-      color:white;
-      padding:20px;
-    }
-    .auth-card{
-      width:100%;
-      max-width:720px;
-      background:rgba(15,23,42,.92);
-      border-radius:24px;
-      border:1px solid rgba(248,250,252,.12);
-      box-shadow:0 22px 70px rgba(15,23,42,.7);
-      display:grid;
-      grid-template-columns:1.2fr 1fr;
-      overflow:hidden;
-    }
-    .auth-main{
-      padding:18px 20px 16px;
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-    }
-    .auth-side{
-      padding:18px 16px;
-      background:radial-gradient(circle at top,#f97316,#7c2d12 40%,#020617 90%);
-      display:flex;
-      flex-direction:column;
-      justify-content:space-between;
-      color:#f9fafb;
     }
     .auth-logo{
-      width:44px;
-      height:44px;
-      border-radius:999px;
-      background:rgba(15,23,42,.9);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-weight:700;
-      font-size:18px;
-      margin-bottom:4px;
+      width:38px;height:38px;border-radius:999px;
+      background:linear-gradient(135deg,#2563eb,#a855f7);
+      display:flex;align-items:center;justify-content:center;
+      color:#fff;font-weight:700;font-size:18px;
+      overflow:hidden;
+      background-size:cover;
+      background-position:center;
     }
-    .auth-title{
-      font-size:18px;
-      font-weight:600;
-      margin-bottom:2px;
-    }
-    .auth-subtitle{
-      font-size:12px;
-      color:#cbd5f5;
-    }
-    .auth-form{
-      margin-top:8px;
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-    }
-    .auth-footer{
-      margin-top:auto;
-      font-size:10px;
-      color:#9ca3af;
-    }
-    .auth-kpis{
-      font-size:11px;
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-      margin-top:10px;
-    }
-    .auth-kpis strong{
-      font-size:12px;
-    }
+    .auth-title{font-size:17px;font-weight:700;}
+    .auth-subtitle{font-size:11px;color:var(--muted);margin-top:2px;}
 
-    .auth-alert{
-      font-size:11px;
-      color:#fecaca;
-      background:rgba(239,68,68,.18);
-      border-radius:12px;
+    .auth-tabs{
+      display:flex;gap:6px;margin:10px 0 12px;
+    }
+    .auth-tab{
+      flex:1;
       padding:6px 8px;
-      border:1px solid rgba(248,113,113,.4);
-      display:none;
-      margin-bottom:4px;
-    }
-
-    /* LOADER */
-    .loading-overlay{
-      position:fixed;
-      inset:0;
-      background:rgba(243,244,246,.85);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      z-index:30;
-      pointer-events:none;
-      opacity:0;
-      transition:opacity .2s ease;
-    }
-    .loading-overlay.visible{
-      opacity:1;
-      pointer-events:auto;
-    }
-    .spinner{
-      width:32px;
-      height:32px;
       border-radius:999px;
-      border:3px solid rgba(148,163,184,.4);
-      border-top-color:#f97316;
-      animation:spin .75s linear infinite;
+      border:1px solid var(--border);
+      background:var(--panel-soft);
+      color:var(--muted);
+      font-size:12px;
+      cursor:pointer;
+      text-align:center;
     }
-    @keyframes spin{
-      to{transform:rotate(360deg);}
+    .auth-tab.active{
+      background:var(--accent-soft);
+      border-color:var(--accent-soft);
+      color:var(--accent-strong);
+      font-weight:600;
+    }
+    .auth-alert{
+      padding:8px 10px;
+      border-radius:10px;
+      font-size:11px;
+      margin-bottom:10px;
+    }
+    .auth-alert-error{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;}
+    .auth-alert-info{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;}
+
+    .field{margin-bottom:10px;}
+    .field-label{font-size:11px;margin-bottom:4px;color:#4b5563;}
+    .field-input,.field-select{
+      width:100%;padding:8px;border-radius:9px;
+      border:1px solid var(--border);background:#f9fafb;font-size:12px;
+    }
+    .field-input:focus,.field-select:focus{
+      outline:none;border-color:var(--accent);box-shadow:0 0 0 1px var(--accent-soft);
+    }
+    .field-hint{font-size:10px;color:var(--muted);margin-top:3px;}
+
+    .btn{
+      border:none;border-radius:999px;
+      padding:8px 12px;font-size:12px;font-weight:600;
+      cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+      gap:6px;
+    }
+    .btn-primary{background:var(--accent);color:#fff;}
+    .btn-primary:hover{background:var(--accent-strong);}
+    .btn-ghost{
+      background:transparent;color:var(--accent-strong);
+      border:1px solid var(--accent-soft);
+    }
+    .btn-ghost:hover{background:var(--accent-soft);}
+    .btn-danger{background:var(--danger);color:#fff;}
+    .btn-danger:hover{background:#b91c1c;}
+
+    .auth-footer{text-align:center;margin-top:8px;font-size:10px;color:var(--muted);}
+
+    /* APP LAYOUT (same style as brand) */
+    .app-shell{
+      display:none;
+      height:100vh;width:100%;
+    }
+    .sidebar{
+      width:220px;background:var(--panel);
+      border-right:1px solid var(--border);
+      display:flex;flex-direction:column;
+      padding:20px 12px;
+    }
+    .sidebar-brand{
+      display:flex;align-items:center;gap:10px;margin-bottom:18px;
+    }
+    .sidebar-logo{
+      width:36px;height:36px;border-radius:999px;
+      background:linear-gradient(135deg,#2563eb,#a855f7);
+      display:flex;align-items:center;justify-content:center;
+      color:#fff;font-weight:700;
+      overflow:hidden;
+      background-size:cover;
+      background-position:center;
+    }
+    .sidebar-brand-name{font-size:15px;font-weight:700;}
+    .sidebar-nav{
+      display:flex;flex-direction:column;gap:6px;margin-top:10px;flex:1;
+    }
+    .nav-item{
+      padding:9px 12px;border-radius:10px;
+      cursor:pointer;font-size:13px;
+      border:none;background:transparent;text-align:left;color:var(--ink);
+    }
+    .nav-item:hover{background:var(--panel-soft);}
+    .nav-item.active{background:var(--accent-soft);color:var(--accent-strong);font-weight:600;}
+    .nav-item.logout{
+      margin-top:auto;
+      background:#fee2e2;
+      color:#b91c1c;
+      border:1px solid #fecaca;
+    }
+    .nav-item.logout:hover{background:#fecaca;}
+
+    .topbar{
+      height:70px;background:var(--panel);
+      border-bottom:1px solid var(--border);
+      padding:12px 18px;
+      display:flex;justify-content:space-between;align-items:center;
+    }
+    .topbar-title{font-size:16px;font-weight:700;}
+    .topbar-sub{font-size:11px;color:var(--muted);}
+    .topbar-filter{display:flex;align-items:center;gap:10px;font-size:12px;}
+    .topbar-filter select{
+      padding:6px 9px;border-radius:8px;
+      border:1px solid var(--border);background:var(--panel-soft);
     }
 
-    @media (max-width:980px){
-      .sidebar{
-        display:none;
-      }
-      .main{
-        max-width:100%;
-        padding:14px;
-      }
-      .auth-card{
-        grid-template-columns:1fr;
-      }
-      .auth-side{
-        display:none;
-      }
-      .grid-4{
-        grid-template-columns:repeat(2,minmax(0,1fr));
-      }
-      .grid-3{
-        grid-template-columns:repeat(2,minmax(0,1fr));
-      }
+    .content-area{flex:1;padding:20px;overflow-y:auto;background:var(--bg);}
+    .page{display:none;}
+    .page.active{display:block;}
+    .page-header{
+      display:flex;justify-content:space-between;
+      align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;
     }
-    @media (max-width:640px){
-      .grid-4,.grid-3,.grid-2{
-        grid-template-columns:1fr;
-      }
+    .page-title{font-size:18px;font-weight:700;}
+    .page-sub{font-size:12px;color:var(--muted);}
+    .page-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+
+    .cards-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:12px;margin-bottom:22px;
+    }
+    .card{
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:18px;
+      box-shadow:var(--shadow);
+    }
+    .card-title{font-size:13px;color:var(--muted);margin-bottom:4px;}
+    .card-number{font-size:20px;font-weight:700;}
+    .card-note{font-size:11px;color:var(--muted);margin-top:6px;}
+
+    .table-wrapper{
+      background:#fff;border-radius:12px;border:1px solid var(--border);
+      overflow-x:auto;
+    }
+    table{width:100%;border-collapse:collapse;font-size:12px;}
+    thead{background:var(--panel-soft);}
+    th,td{padding:9px 10px;border-bottom:1px solid var(--border);text-align:left;}
+    th{
+      font-size:11px;text-transform:uppercase;color:var(--muted);
+      letter-spacing:.04em;
+    }
+    tbody tr:hover{background:#f9fafb;}
+    .table-empty{text-align:center;padding:20px;font-size:12px;color:var(--muted);}
+
+    /* MODAL */
+    #modal-container{
+      position:fixed;inset:0;
+      display:none;justify-content:center;align-items:center;
+      background:rgba(0,0,0,.35);z-index:9999;
+    }
+    .modal{
+      background:var(--panel);
+      width:100%;max-width:520px;
+      border-radius:16px;
+      padding:18px;
+      box-shadow:var(--shadow);
+    }
+    .modal-title{font-size:16px;font-weight:700;margin-bottom:14px;}
+    .modal-actions{margin-top:16px;display:flex;justify-content:flex-end;gap:8px;}
+
+    @media(max-width:768px){
+      .app-shell{flex-direction:column;}
+      .sidebar{width:100%;flex-direction:row;overflow-x:auto;height:auto;}
+      .sidebar-nav{flex-direction:row;}
+      .topbar{flex-direction:column;align-items:flex-start;gap:8px;height:auto;}
     }
   </style>
 </head>
 <body>
 
-<!-- AUTH VIEW (Event Owner Login) -->
-<div id="authView" class="auth-shell">
-  <div class="auth-card">
-    <div class="auth-main">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-        <div>
-          <div class="auth-title">Event Owner Console</div>
-          <div class="auth-subtitle">
-            Sign in to manage <span id="auth-event-name">your event</span>, vendors, booths, and live sales.
-          </div>
+  <!-- AUTH VIEW: Sign in / Sign up for event owner -->
+  <div id="auth-view" class="auth-wrapper">
+    <div class="auth-header">
+      <div class="auth-logo">E</div>
+      <div>
+        <div class="auth-title">Luma Events — Owner Portal</div>
+        <div id="auth-subtitle" class="auth-subtitle">
+          Sign in to manage your events or create a new event.
         </div>
-        <div class="auth-logo" id="authEventLogo">E</div>
-      </div>
-
-      <div id="authAlert" class="auth-alert"></div>
-
-      <form id="authForm" class="auth-form">
-        <div class="field">
-          <div class="field-label">Email</div>
-          <input id="authEmail" type="email" class="field-input" placeholder="you@event.com" required/>
-        </div>
-        <div class="field">
-          <div class="field-label">Password</div>
-          <input id="authPassword" type="password" class="field-input" placeholder="••••••••" required/>
-        </div>
-        <button type="submit" class="btn btn-primary" style="margin-top:4px;">
-          <span>Sign in</span>
-        </button>
-      </form>
-
-      <div class="auth-footer">
-        Use the event admin account that we created for you.
       </div>
     </div>
 
-    <div class="auth-side">
-      <div>
-        <div class="sidebar-footer-badge">Live Event OS</div>
-        <h3 style="font-size:16px;font-weight:600;margin-top:8px;margin-bottom:4px;">
-          See your event like a live control room.
-        </h3>
-        <p style="font-size:12px;color:#fefce8;">
-          Track vendors, sales, refunds, and payment split in real time. One login for your whole event.
-        </p>
+    <div id="auth-alert-container"></div>
 
-        <div class="auth-kpis">
-          <div><strong>Vendor radar</strong> — Top vendors by sales, low activity alerts.</div>
-          <div><strong>Booth performance</strong> — Compare branches inside your event.</div>
-          <div><strong>Payment mix</strong> — Cash vs card vs other in real time.</div>
-        </div>
+    <div class="auth-tabs">
+      <button type="button" id="tab-login" class="auth-tab active">Sign in</button>
+      <button type="button" id="tab-signup" class="auth-tab">Create account &amp; event</button>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <form id="login-form">
+      <div class="field">
+        <div class="field-label">Email</div>
+        <input id="login-email" class="field-input" type="email" placeholder="you@example.com"/>
+      </div>
+      <div class="field">
+        <div class="field-label">Password</div>
+        <input id="login-password" class="field-input" type="password" placeholder="Your password"/>
+      </div>
+      <button type="submit" id="login-btn" class="btn btn-primary" style="width:100%;">Sign in</button>
+    </form>
+
+    <!-- SIGNUP FORM (creates owner + first event) -->
+    <form id="signup-form" style="display:none;">
+      <div class="field">
+        <div class="field-label">Your name</div>
+        <input id="signup-name" class="field-input" placeholder="Full name"/>
+      </div>
+      <div class="field">
+        <div class="field-label">Email</div>
+        <input id="signup-email" class="field-input" type="email" placeholder="you@example.com"/>
+      </div>
+      <div class="field">
+        <div class="field-label">Password</div>
+        <input id="signup-password" class="field-input" type="password" placeholder="Minimum 6 characters"/>
       </div>
 
-      <div class="auth-footer">
-        Powered by <strong>Luma Events</strong> • Built for festivals, bazaars, pop-ups, and more.
+      <div class="field">
+        <div class="field-label">Event name</div>
+        <input id="signup-event-name" class="field-input" placeholder="Lokamania 5, Soueast Owners, ..."/>
       </div>
+      <div class="field">
+        <div class="field-label">Event location</div>
+        <input id="signup-event-location" class="field-input" placeholder="Cairo Festival City, Dubai, ..."/>
+      </div>
+      <div class="field">
+        <div class="field-label">Event date</div>
+        <input id="signup-event-date" class="field-input" type="date"/>
+      </div>
+
+      <button type="submit" id="signup-btn" class="btn btn-primary" style="width:100%;">Create account &amp; event</button>
+      <div class="field-hint" style="margin-top:6px;">
+        This will create your owner account, first event document, and link everything automatically in Firestore.
+      </div>
+    </form>
+
+    <div class="auth-footer">
+      Once signed in, you’ll see your events dashboard, vendors, stalls & POS links.
     </div>
   </div>
-</div>
 
-<!-- MAIN APP -->
-<div id="appShell" class="app-shell" style="display:none;">
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <div class="sidebar-header">
-      <div class="event-logo" id="sidebarEventLogo">E</div>
-      <div class="sidebar-title-wrap">
-        <div class="sidebar-title" id="sidebarEventName">Event Name</div>
-        <div class="sidebar-subtitle" id="sidebarEventVenue">Venue • Dates</div>
+  <!-- APP VIEW -->
+  <div id="app-view" class="app-shell">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div id="sidebar-event-logo" class="sidebar-logo">E</div>
+        <div id="sidebar-event-name" class="sidebar-brand-name">Event</div>
       </div>
-    </div>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-page="page-overview">Overview</button>
+        <button class="nav-item" data-page="page-vendors">Vendors</button>
+        <button class="nav-item" data-page="page-stalls">Stalls &amp; Layout</button>
+        <button class="nav-item" data-page="page-orders">Sales &amp; POS</button>
+        <button class="nav-item" data-page="page-settings">Event Settings</button>
+      </nav>
+      <button id="btn-logout" class="nav-item logout">Logout</button>
+    </aside>
 
-    <div>
-      <div class="sidebar-section-title">Overview</div>
-      <div class="nav-list">
-        <div class="nav-item active" data-page="page-overview">
-          <span class="icon">📊</span>
-          <span>Live Overview</span>
-          <small>Today</small>
+    <!-- MAIN -->
+    <div style="flex:1;display:flex;flex-direction:column;">
+      <header class="topbar">
+        <div>
+          <div id="topbar-title" class="topbar-title">Event Overview</div>
+          <div id="topbar-sub" class="topbar-sub">Monitor vendors, stalls, and live sales</div>
         </div>
-      </div>
+        <div class="topbar-filter">
+          <span>Event:</span>
+          <select id="event-select">
+            <!-- filled by JS with owner’s events -->
+          </select>
+        </div>
+      </header>
 
-      <div class="sidebar-section-title">Operations</div>
-      <div class="nav-list">
-        <div class="nav-item" data-page="page-vendors">
-          <span class="icon">🧺</span>
-          <span>Vendors</span>
-          <small id="sidebarVendorsCount">0</small>
-        </div>
-        <div class="nav-item" data-page="page-booths">
-          <span class="icon">🏬</span>
-          <span>Booths / Branches</span>
-          <small id="sidebarBoothsCount">0</small>
-        </div>
-        <div class="nav-item" data-page="page-orders">
-          <span class="icon">🧾</span>
-          <span>Orders</span>
-          <small id="sidebarOrdersCount">0</small>
-        </div>
-        <div class="nav-item" data-page="page-customers">
-          <span class="icon">👥</span>
-          <span>Customers</span>
-          <small id="sidebarCustomersCount">0</small>
-        </div>
-      </div>
+      <main class="content-area">
+        <!-- OVERVIEW PAGE -->
+        <section id="page-overview" class="page active">
+          <div class="cards-grid">
+            <div class="card">
+              <div class="card-title">Vendors</div>
+              <div id="kpi-vendors" class="card-number">0</div>
+              <div class="card-note">Total approved vendors for this event.</div>
+            </div>
+            <div class="card">
+              <div class="card-title">Stalls</div>
+              <div id="kpi-stalls" class="card-number">0</div>
+              <div class="card-note">Total stalls (assigned + empty).</div>
+            </div>
+            <div class="card">
+              <div class="card-title">Live Sales (Today)</div>
+              <div id="kpi-sales-today" class="card-number">0</div>
+              <div class="card-note">Sum of all vendors’ POS totals today.</div>
+            </div>
+            <div class="card">
+              <div class="card-title">Tickets Checked-in</div>
+              <div id="kpi-checkins" class="card-number">0</div>
+              <div class="card-note">QR check-ins from Luma Tickets.</div>
+            </div>
+          </div>
 
-      <div class="sidebar-section-title">Configuration</div>
-      <div class="nav-list">
-        <div class="nav-item" data-page="page-settings">
-          <span class="icon">⚙️</span>
-          <span>Event Settings</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="sidebar-footer">
-      <span class="powered">Powered by <strong>Luma Events</strong></span>
-      <div class="sidebar-footer-badge">
-        Vendor mode: <strong>Linked</strong>
-      </div>
-      <span>From here you control the whole event, vendors & booths.</span>
-    </div>
-  </aside>
-
-  <!-- MAIN -->
-  <main class="main">
-    <!-- TOPBAR -->
-    <header class="topbar">
-      <div class="topbar-left">
-        <div class="topbar-title">
-          <span id="topbarTitle">Live Overview</span>
-          <span class="topbar-pill" id="topbarEventShort">Event</span>
-        </div>
-        <div class="topbar-subtitle" id="topbarSubtitle">
-          Today’s performance for all vendors, branches and orders.
-        </div>
-      </div>
-      <div class="topbar-right">
-        <div class="event-date-pill" id="topbarDateRange">Dates</div>
-        <div class="avatar-chip">
-          <div class="avatar-circle" id="topbarUserAvatar">EO</div>
-          <span id="topbarUserName">Event Owner</span>
-          <button id="btn-logout" class="btn btn-ghost" style="margin-left:4px;">Log out</button>
-        </div>
-      </div>
-    </header>
-
-    <!-- OVERVIEW PAGE -->
-    <section id="page-overview" class="page active">
-      <!-- KPI ROW -->
-      <div class="grid grid-4">
-        <div class="panel">
-          <div class="panel-header">
+          <div class="page-header" style="margin-top:4px;">
             <div>
-              <div class="panel-title">
-                <span class="dot"></span>
-                Total Sales (Today)
-              </div>
-              <div class="panel-subtitle">All vendors, all booths, net of returns.</div>
+              <div class="page-title" style="font-size:15px;">Recent Vendor Sales</div>
+              <div class="page-sub">Last 10 orders from all event vendors.</div>
             </div>
-            <span class="kpi-chip" id="kpiPaymentSplit">Cash / Card / Other</span>
+            <div class="page-actions">
+              <button id="btn-copy-vendor-link" class="btn btn-ghost">Copy vendor signup link</button>
+            </div>
           </div>
-          <div class="kpi-number" id="kpiSalesToday">0.00</div>
-          <div class="kpi-note" id="kpiSalesTodayNote">—</div>
-        </div>
+          <div id="table-recent-orders" class="table-wrapper"></div>
+        </section>
 
-        <div class="panel">
-          <div class="panel-header">
+        <!-- VENDORS PAGE -->
+        <section id="page-vendors" class="page">
+          <div class="page-header">
             <div>
-              <div class="panel-title">
-                <span class="dot"></span>
-                Orders (Today)
-              </div>
-              <div class="panel-subtitle">Completed checkouts processed today.</div>
+              <div class="page-title">Vendors</div>
+              <div class="page-sub">Manage vendor signup, approvals & POS access</div>
+            </div>
+            <div class="page-actions">
+              <button id="btn-open-manual-vendor" class="btn btn-primary">Add vendor manually</button>
+              <button id="btn-copy-vendor-link-2" class="btn btn-ghost">Copy vendor signup link</button>
             </div>
           </div>
-          <div class="kpi-number" id="kpiOrdersToday">0</div>
-          <div class="kpi-note">
-            Returns today: <strong id="kpiReturnsToday">0</strong>
-          </div>
-        </div>
+          <div id="vendors-analytics" class="cards-grid" style="margin-top:4px;"></div>
+          <div class="table-wrapper" id="vendors-table"></div>
+        </section>
 
-        <div class="panel">
-          <div class="panel-header">
+        <!-- STALLS PAGE -->
+        <section id="page-stalls" class="page">
+          <div class="page-header">
             <div>
-              <div class="panel-title">
-                <span class="dot"></span>
-                Active Vendors
-              </div>
-              <div class="panel-subtitle">Vendors with at least one order today.</div>
+              <div class="page-title">Stalls &amp; Layout</div>
+              <div class="page-sub">Assign stalls to vendors and track occupancy</div>
+            </div>
+            <div class="page-actions">
+              <button id="btn-add-stall" class="btn btn-primary">Add stall</button>
             </div>
           </div>
-          <div class="kpi-number" id="kpiActiveVendors">0</div>
-          <div class="kpi-note" id="kpiTotalVendorsNote">0 total vendors in event.</div>
-        </div>
+          <div id="stalls-analytics" class="cards-grid" style="margin-top:4px;"></div>
+          <div class="table-wrapper" id="stalls-table"></div>
+        </section>
 
-        <div class="panel">
-          <div class="panel-header">
+        <!-- ORDERS / SALES -->
+        <section id="page-orders" class="page">
+          <div class="page-header">
             <div>
-              <div class="panel-title">
-                <span class="dot"></span>
-                Booth Utilization
-              </div>
-              <div class="panel-subtitle">Active booths / total assigned booths.</div>
+              <div class="page-title">Sales &amp; POS</div>
+              <div class="page-sub">Track per-vendor POS sales for this event</div>
+            </div>
+            <div class="page-actions">
+              <button id="btn-export-orders" class="btn btn-ghost">Export CSV</button>
             </div>
           </div>
-          <div class="kpi-number" id="kpiActiveBooths">0</div>
-          <div class="kpi-note" id="kpiTotalBoothsNote">0 booths configured.</div>
-        </div>
-      </div>
+          <div id="orders-analytics" class="cards-grid" style="margin-top:4px;"></div>
+          <div class="table-wrapper" id="orders-table"></div>
+        </section>
 
-      <!-- ROW: CHART + TOP VENDORS -->
-      <div class="grid grid-2">
-        <div class="panel">
-          <div class="panel-header">
+        <!-- SETTINGS -->
+        <section id="page-settings" class="page">
+          <div class="page-header">
             <div>
-              <div class="panel-title">
-                <span class="dot"></span>
-                Sales Curve (Today)
+              <div class="page-title">Event Settings</div>
+              <div class="page-sub">Edit event name, dates & basic settings</div>
+            </div>
+          </div>
+          <div class="cards-grid">
+            <div class="card">
+              <div class="field">
+                <div class="field-label">Event name</div>
+                <input id="set-event-name" class="field-input"/>
               </div>
-              <div class="panel-subtitle">Cumulative sales by time of day.</div>
-            </div>
-          </div>
-          <canvas id="chartSalesTimeline" style="width:100%;height:220px;"></canvas>
-        </div>
-
-        <div class="panel">
-          <div class="panel-header">
-            <div>
-              <div class="panel-title">
-                <span class="dot"></span>
-                Top Vendors (Today)
+              <div class="field">
+                <div class="field-label">Location</div>
+                <input id="set-event-location" class="field-input"/>
               </div>
-              <div class="panel-subtitle">Ranked by total sales for this event.</div>
-            </div>
-            <button id="btn-go-vendors" class="btn btn-ghost" style="font-size:11px;">View vendors</button>
-          </div>
-          <div class="table-wrapper" id="topVendorsTable">
-            <div class="table-empty">No vendor sales yet today.</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ROW: PAYMENT SPLIT + RECENT ORDERS -->
-      <div class="grid grid-2">
-        <div class="panel">
-          <div class="panel-header">
-            <div>
-              <div class="panel-title">
-                <span class="dot"></span>
-                Payment Split
+              <div class="field">
+                <div class="field-label">Date</div>
+                <input id="set-event-date" class="field-input" type="date"/>
               </div>
-              <div class="panel-subtitle">Cash vs card vs other methods today.</div>
-            </div>
-          </div>
-          <canvas id="chartPaymentSplit" style="width:100%;height:220px;"></canvas>
-        </div>
-
-        <div class="panel">
-          <div class="panel-header">
-            <div>
-              <div class="panel-title">
-                <span class="dot"></span>
-                Recent Orders
-              </div>
-              <div class="panel-subtitle">Last 10 orders across all vendors.</div>
-            </div>
-          </div>
-          <div class="table-wrapper" id="recentOrdersTable">
-            <div class="table-empty">No orders yet.</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- VENDORS PAGE -->
-    <section id="page-vendors" class="page">
-      <div class="panel">
-        <div class="panel-header">
-          <div>
-            <div class="panel-title">
-              <span class="dot"></span>
-              Vendors in this Event
-            </div>
-            <div class="panel-subtitle">
-              Each vendor is linked to a Luma Store OS brand & its POS. You can open the vendor dashboard directly.
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <button id="btn-export-vendors" class="btn btn-ghost">Export</button>
-            <button id="btn-add-vendor" class="btn btn-primary">Add Vendor</button>
-          </div>
-        </div>
-
-        <div class="table-toolbar">
-          <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:180px;">
-            <input id="search-vendors" class="input" placeholder="Search vendors by name, brand, or booth..."/>
-          </div>
-          <div style="display:flex;align-items:center;gap:6px;">
-            <select id="filter-vendor-status" class="select">
-              <option value="all">All statuses</option>
-              <option value="active">Active only</option>
-              <option value="inactive">Inactive only</option>
-            </select>
-            <select id="sort-vendors" class="select">
-              <option value="name-asc">Name (A → Z)</option>
-              <option value="name-desc">Name (Z → A)</option>
-              <option value="sales-desc">Sales (High → Low)</option>
-              <option value="sales-asc">Sales (Low → High)</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="table-wrapper" id="vendorsTable">
-          <div class="table-empty">No vendors added yet.</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- BOOTHS / BRANCHES PAGE -->
-    <section id="page-booths" class="page">
-      <div class="panel">
-        <div class="panel-header">
-          <div>
-            <div class="panel-title">
-              <span class="dot"></span>
-              Booths / Branches
-            </div>
-            <div class="panel-subtitle">
-              All vendor booths connected to this event (branches from Luma Store OS).
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <button id="btn-export-booths" class="btn btn-ghost">Export</button>
-          </div>
-        </div>
-
-        <div class="table-toolbar">
-          <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:180px;">
-            <input id="search-booths" class="input" placeholder="Search by booth, vendor, or code..."/>
-          </div>
-          <div style="display:flex;align-items:center;gap:6px;">
-            <select id="sort-booths" class="select">
-              <option value="name-asc">Name (A → Z)</option>
-              <option value="name-desc">Name (Z → A)</option>
-              <option value="vendor-asc">Vendor (A → Z)</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="table-wrapper" id="boothsTable">
-          <div class="table-empty">No booths found for this event.</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ORDERS PAGE -->
-    <section id="page-orders" class="page">
-      <div class="panel">
-        <div class="panel-header">
-          <div>
-            <div class="panel-title">
-              <span class="dot"></span>
-              All Orders
-            </div>
-            <div class="panel-subtitle">
-              Orders for this event across all vendors & booths.
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <button id="btn-export-orders" class="btn btn-ghost">Export CSV</button>
-          </div>
-        </div>
-
-        <div class="table-toolbar">
-          <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:200px;">
-            <input id="search-orders" class="input" placeholder="Search by order ID, vendor, customer..."/>
-          </div>
-          <div style="display:flex;align-items:center;gap:6px;">
-            <select id="filter-order-type" class="select">
-              <option value="all">All types</option>
-              <option value="sale">Sales</option>
-              <option value="return">Returns</option>
-            </select>
-            <select id="sort-orders" class="select">
-              <option value="date-desc">Date (Newest → Oldest)</option>
-              <option value="date-asc">Date (Oldest → Newest)</option>
-              <option value="total-desc">Total (High → Low)</option>
-              <option value="total-asc">Total (Low → High)</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="table-wrapper" id="ordersTable">
-          <div class="table-empty">No orders yet.</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- CUSTOMERS PAGE -->
-    <section id="page-customers" class="page">
-      <div class="panel">
-        <div class="panel-header">
-          <div>
-            <div class="panel-title">
-              <span class="dot"></span>
-              Event Customers
-            </div>
-            <div class="panel-subtitle">
-              Customers who bought from any vendor in this event.
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <button id="btn-export-customers" class="btn btn-ghost">Export</button>
-          </div>
-        </div>
-
-        <div class="table-toolbar">
-          <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:180px;">
-            <input id="search-customers" class="input" placeholder="Search by name, phone, or email..."/>
-          </div>
-          <div style="display:flex;align-items:center;gap:6px;">
-            <select id="sort-customers" class="select">
-              <option value="name-asc">Name (A → Z)</option>
-              <option value="name-desc">Name (Z → A)</option>
-              <option value="total-desc">Total spent (High → Low)</option>
-              <option value="orders-desc">Orders count (High → Low)</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="table-wrapper" id="customersTable">
-          <div class="table-empty">No customers yet.</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- SETTINGS PAGE -->
-    <section id="page-settings" class="page">
-      <div class="grid grid-2">
-        <div class="panel">
-          <div class="panel-header">
-            <div>
-              <div class="panel-title">
-                <span class="dot"></span>
-                Event Details
-              </div>
-              <div class="panel-subtitle">
-                Update event name, venue, dates, and logo.
-              </div>
-            </div>
-          </div>
-
-          <div class="field">
-            <div class="field-label">Event Name</div>
-            <input id="set-event-name" class="field-input" placeholder="Lokamania 5" />
-          </div>
-          <div class="field">
-            <div class="field-label">Venue</div>
-            <input id="set-event-venue" class="field-input" placeholder="Mall / Club / University" />
-          </div>
-          <div class="field">
-            <div class="field-label">Date Range</div>
-            <input id="set-event-dates" class="field-input" placeholder="Dec 5–8, 2025" />
-          </div>
-          <div class="field">
-            <div class="field-label">Event Logo</div>
-            <input id="set-event-logo" type="file" class="field-input" />
-            <div class="field-hint">Used in sidebar, POS login, and reports.</div>
-          </div>
-          <div class="modal-actions" style="margin-top:8px;">
-            <button id="btn-save-event-settings" class="btn btn-primary">Save Event</button>
+              <button id="btn-save-event" class="btn btn-primary" style="margin-top:6px;">Save</button>
           </div>
         </div>
 
