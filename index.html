@@ -3,9 +3,21 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Luma Events — Owner Dashboard</title>
+  <title>Event Owner — Dashboard</title>
 
+  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- XLSX for Excel import/export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- Firebase v10 Modular -->
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
   <style>
     :root{
@@ -15,1135 +27,2655 @@
       --ink:#111827;
       --muted:#6b7280;
       --border:#e5e7eb;
-      --accent:#2563eb;
-      --accent-soft:#dbeafe;
-      --accent-strong:#1d4ed8;
-      --danger:#ef4444;
-      --ok:#16a34a;
+      --accent:#f97316;    /* orange for events */
+      --accent-soft:#ffedd5;
+      --accent-strong:#ea580c;
       --radius:16px;
       --shadow:0 18px 40px rgba(15,23,42,.12);
+      --danger:#ef4444;
+      --ok:#16a34a;
+      --badge-bg:#f97316;
+      --badge-text:#fff;
     }
+
     *{box-sizing:border-box;margin:0;padding:0}
     html,body{
       height:100%;
-      font-family:"Montserrat",system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+      font-family:"Montserrat",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
       background:var(--bg);
       color:var(--ink);
     }
     body{
-      padding:16px;
-    }
-    .shell{
-      max-width:1200px;
-      margin:0 auto;
-    }
-    .card{
-      background:var(--panel);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      padding:18px 18px 20px;
-      margin-bottom:16px;
+      display:flex;
+      align-items:stretch;
+      justify-content:stretch;
     }
 
-    .header-row{
+    /* LAYOUT */
+    .app-shell{
+      display:flex;
+      width:100%;
+      min-height:100vh;
+    }
+    .sidebar{
+      width:260px;
+      background:linear-gradient(180deg,#0f172a,#020617);
+      color:#e5e7eb;
+      padding:20px 16px;
+      display:flex;
+      flex-direction:column;
+      gap:20px;
+    }
+    .sidebar-header{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:8px 10px 14px;
+      border-bottom:1px solid rgba(148,163,184,.3);
+      margin-bottom:6px;
+    }
+    .event-logo{
+      width:42px;
+      height:42px;
+      border-radius:999px;
+      background:radial-gradient(circle at 30% 20%,#f97316,#7c2d12);
+      color:white;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:700;
+      font-size:18px;
+      overflow:hidden;
+    }
+    .event-logo img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+    .sidebar-title-wrap{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+    .sidebar-title{
+      font-size:14px;
+      font-weight:600;
+    }
+    .sidebar-subtitle{
+      font-size:11px;
+      color:#9ca3af;
+    }
+    .sidebar-section-title{
+      font-size:11px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:#6b7280;
+      margin:10px 8px 4px;
+    }
+    .nav-list{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      margin-bottom:14px;
+    }
+    .nav-item{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius:10px;
+      font-size:13px;
+      color:#e5e7eb;
+      cursor:pointer;
+      border:1px solid transparent;
+      transition:background .16s ease,border-color .16s ease,transform .12s ease;
+    }
+    .nav-item span.icon{
+      font-size:16px;
+      opacity:.9;
+    }
+    .nav-item small{
+      margin-left:auto;
+      font-size:11px;
+      padding:2px 6px;
+      border-radius:999px;
+      background:rgba(15,23,42,.7);
+      color:#9ca3af;
+    }
+    .nav-item:hover{
+      background:rgba(15,23,42,.8);
+      border-color:rgba(148,163,184,.4);
+      transform:translateY(-1px);
+    }
+    .nav-item.active{
+      background:linear-gradient(90deg,#f97316,#ea580c);
+      border-color:#fed7aa;
+      color:#0f172a;
+      box-shadow:0 0 0 1px rgba(248,250,252,.08);
+    }
+    .nav-item.active small{
+      background:rgba(15,23,42,.9);
+      color:#f97316;
+    }
+    .sidebar-footer{
+      margin-top:auto;
+      padding-top:10px;
+      border-top:1px solid rgba(148,163,184,.35);
+      font-size:11px;
+      color:#6b7280;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .sidebar-footer strong{
+      color:#e5e7eb;
+      font-weight:500;
+    }
+    .sidebar-footer-badge{
+      font-size:10px;
+      padding:2px 8px;
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,.5);
+      color:#9ca3af;
+      width:max-content;
+    }
+    .sidebar-footer span.powered{
+      font-size:11px;
+      color:#9ca3af;
+    }
+
+    /* MAIN AREA */
+    .main{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      padding:18px 22px;
+      gap:14px;
+      max-width:calc(100% - 260px);
+    }
+    .topbar{
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:10px;
-      margin-bottom:12px;
     }
-    .title{
-      font-size:20px;
+    .topbar-left{
+      display:flex;
+      flex-direction:column;
+      gap:3px;
+    }
+    .topbar-title{
+      font-size:18px;
       font-weight:600;
-    }
-    .subtitle{
-      font-size:13px;
-      color:var(--muted);
-    }
-
-    .pill{
-      display:inline-flex;
+      display:flex;
       align-items:center;
       gap:8px;
-      padding:4px 10px;
-      border-radius:999px;
+    }
+    .topbar-pill{
       font-size:11px;
-      border:1px solid rgba(148,163,184,.4);
-      background:rgba(255,255,255,.9);
-      color:var(--muted);
-    }
-    .pill-dot{
-      width:8px;height:8px;border-radius:999px;background:#22c55e;
-    }
-
-    .alert{
-      border-radius:12px;
-      padding:9px 11px;
-      font-size:12px;
-      display:flex;
-      align-items:flex-start;
-      gap:8px;
-      margin-bottom:10px;
+      padding:2px 8px;
+      border-radius:999px;
       border:1px solid var(--border);
       background:var(--panel-soft);
       color:var(--muted);
     }
-    .alert.ok{
-      border-color:#bbf7d0;
-      background:#dcfce7;
-      color:#166534;
+    .topbar-subtitle{
+      font-size:12px;
+      color:var(--muted);
     }
-    .alert.error{
-      border-color:#fecaca;
-      background:#fee2e2;
-      color:#b91c1c;
-    }
-    .alert.hidden{
-      display:none;
-    }
-
-    .row{
+    .topbar-right{
       display:flex;
-      flex-wrap:wrap;
-      gap:12px;
-    }
-    .col{
-      flex:1 1 280px;
-    }
-
-    form{
-      display:flex;
-      flex-direction:column;
+      align-items:center;
       gap:10px;
     }
-    .field{
-      display:flex;
-      flex-direction:column;
-      gap:4px;
-    }
-    .field-row{
-      display:flex;
-      gap:8px;
-    }
-    .field-row>.field{
-      flex:1;
-    }
-    label{
-      font-size:12px;
-      font-weight:500;
-      color:var(--muted);
-    }
-    input,select,textarea{
-      font-family:inherit;
-      font-size:13px;
-      padding:8px 9px;
-      border-radius:10px;
-      border:1px solid var(--border);
-      background:#f9fafb;
-      outline:none;
-      transition:border-color .15s, box-shadow .15s, background .15s;
-    }
-    textarea{
-      resize:vertical;
-      min-height:60px;
-    }
-    input:focus,select:focus,textarea:focus{
-      border-color:var(--accent);
-      box-shadow:0 0 0 1px rgba(37,99,235,.35);
-      background:#fff;
-    }
-    .helper{
+    .event-date-pill{
       font-size:11px;
+      padding:4px 10px;
+      border-radius:999px;
+      background:var(--panel-soft);
+      border:1px dashed var(--border);
       color:var(--muted);
     }
-
-    .btn{
-      border:none;
+    .avatar-chip{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
       border-radius:999px;
-      font-size:13px;
+      background:#0f172a;
+      color:#e5e7eb;
+      font-size:12px;
+    }
+    .avatar-circle{
+      width:22px;
+      height:22px;
+      border-radius:999px;
+      background:linear-gradient(135deg,#f97316,#ea580c);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:12px;
       font-weight:600;
-      padding:8px 13px;
+    }
+    .btn{
+      border-radius:999px;
+      border:none;
+      font-size:12px;
+      padding:7px 12px;
       cursor:pointer;
       display:inline-flex;
       align-items:center;
-      justify-content:center;
       gap:6px;
-      transition:transform .08s ease, box-shadow .08s ease, background .15s, opacity .12s;
+      font-weight:500;
+      white-space:nowrap;
     }
     .btn-primary{
       background:var(--accent);
-      color:#fff;
-      box-shadow:0 10px 24px rgba(37,99,235,.35);
+      color:white;
+      box-shadow:0 12px 25px rgba(234,88,12,.35);
     }
-    .btn-secondary{
-      background:var(--panel-soft);
-      color:var(--ink);
+    .btn-ghost{
+      background:transparent;
       border:1px solid var(--border);
+      color:var(--ink);
     }
     .btn-danger{
       background:var(--danger);
-      color:#fff;
-    }
-    .btn-sm{
-      font-size:11px;
-      padding:5px 10px;
-    }
-    .btn:active{
-      transform:translateY(1px);
-      box-shadow:0 4px 14px rgba(15,23,42,.18);
-    }
-    .btn[disabled]{
-      opacity:.7;
-      cursor:default;
-      transform:none;
-      box-shadow:none;
+      color:white;
     }
 
-    .auth-toggle{
-      font-size:11px;
-      color:var(--muted);
-      margin-top:6px;
+    /* GRID / CARDS */
+    .grid{
+      display:grid;
+      gap:12px;
     }
-    .auth-toggle button{
-      border:none;
-      background:none;
-      color:var(--accent-strong);
-      font-size:11px;
-      font-weight:600;
-      cursor:pointer;
-      padding:0;
-      margin-left:4px;
+    .grid-4{
+      grid-template-columns:repeat(4,minmax(0,1fr));
     }
-
-    .section-title{
-      font-size:14px;
-      font-weight:600;
+    .grid-3{
+      grid-template-columns:repeat(3,minmax(0,1fr));
+    }
+    .grid-2{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+    .panel{
+      background:var(--panel);
+      border-radius:var(--radius);
+      border:1px solid var(--border);
+      box-shadow:var(--shadow);
+      padding:14px 16px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .panel-soft{
+      background:var(--panel-soft);
+      border-style:dashed;
+    }
+    .panel-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
       margin-bottom:4px;
     }
-    .section-sub{
-      font-size:12px;
+    .panel-title{
+      font-size:13px;
+      font-weight:600;
+      display:flex;
+      align-items:center;
+      gap:6px;
+    }
+    .panel-title span.dot{
+      width:7px;
+      height:7px;
+      border-radius:999px;
+      background:var(--accent);
+    }
+    .panel-subtitle{
+      font-size:11px;
       color:var(--muted);
-      margin-bottom:10px;
+    }
+    .kpi-number{
+      font-size:22px;
+      font-weight:700;
+      letter-spacing:.02em;
+    }
+    .kpi-note{
+      font-size:11px;
+      color:var(--muted);
+    }
+    .kpi-chip{
+      font-size:11px;
+      padding:2px 6px;
+      border-radius:999px;
+      background:var(--accent-soft);
+      color:var(--accent-strong);
+      border:1px solid #fed7aa;
     }
 
-    .table{
+    /* TABLES */
+    .table-wrapper{
+      width:100%;
+      overflow:auto;
+    }
+    table{
       width:100%;
       border-collapse:collapse;
       font-size:12px;
     }
-    .table th,
-    .table td{
-      padding:7px 8px;
-      border-bottom:1px solid var(--border);
-      text-align:left;
-      vertical-align:middle;
+    thead{
+      background:var(--panel-soft);
     }
-    .table th{
+    th,td{
+      text-align:left;
+      padding:6px 8px;
+      border-bottom:1px solid var(--border);
+      white-space:nowrap;
+    }
+    th{
       font-size:11px;
       text-transform:uppercase;
-      letter-spacing:.03em;
+      letter-spacing:.06em;
       color:var(--muted);
     }
-    .badge-status{
-      display:inline-flex;
-      align-items:center;
-      gap:5px;
-      padding:2px 8px;
-      border-radius:999px;
-      font-size:11px;
-    }
-    .badge-status.pending{
-      background:#fef3c7;
-      color:#92400e;
-    }
-    .badge-status.approved{
-      background:#dcfce7;
-      color:#166534;
-    }
-    .badge-status.rejected{
-      background:#fee2e2;
-      color:#b91c1c;
+    .table-empty{
+      font-size:12px;
+      color:var(--muted);
+      padding:8px 0;
     }
 
-    .code-pill{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
+    .pill{
       font-size:11px;
-      padding:3px 8px;
+      padding:2px 8px;
       border-radius:999px;
       background:var(--panel-soft);
       border:1px solid var(--border);
     }
-    .link{
-      font-size:11px;
-      color:var(--accent-strong);
-      text-decoration:underline;
-      cursor:pointer;
-      word-break:break-all;
+    .pill-success{
+      background:rgba(22,163,74,.1);
+      border-color:rgba(22,163,74,.3);
+      color:#15803d;
+    }
+    .pill-danger{
+      background:rgba(239,68,68,.08);
+      border-color:rgba(239,68,68,.4);
+      color:#b91c1c;
     }
 
-    #dashboardSection{display:none;}
-    #authSection{display:block;}
+    .badge{
+      font-size:10px;
+      padding:2px 6px;
+      border-radius:999px;
+      background:var(--badge-bg);
+      color:var(--badge-text);
+    }
 
-    @media (max-width:700px){
-      .header-row{
-        flex-direction:column;
-        align-items:flex-start;
+    /* SEARCH / SORT BAR */
+    .table-toolbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      margin-bottom:8px;
+      flex-wrap:wrap;
+    }
+    .input{
+      border-radius:999px;
+      border:1px solid var(--border);
+      padding:6px 10px;
+      font-size:12px;
+      background:white;
+      min-width:0;
+    }
+    .select{
+      border-radius:999px;
+      border:1px solid var(--border);
+      padding:6px 10px;
+      font-size:12px;
+      background:white;
+      min-width:0;
+    }
+
+    /* PAGES */
+    .page{
+      display:none;
+      flex-direction:column;
+      gap:12px;
+    }
+    .page.active{
+      display:flex;
+    }
+
+    /* ALERT BAR */
+    .global-alert{
+      position:fixed;
+      top:12px;
+      right:18px;
+      padding:8px 12px;
+      border-radius:999px;
+      background:#0f172a;
+      color:#e5e7eb;
+      font-size:11px;
+      box-shadow:0 18px 40px rgba(15,23,42,.45);
+      display:flex;
+      align-items:center;
+      gap:8px;
+      z-index:40;
+      opacity:0;
+      pointer-events:none;
+      transform:translateY(-10px);
+      transition:opacity .18s ease,transform .18s ease;
+    }
+    .global-alert.visible{
+      opacity:1;
+      pointer-events:auto;
+      transform:translateY(0);
+    }
+    .global-alert span.dot{
+      width:7px;
+      height:7px;
+      border-radius:999px;
+      background:#22c55e;
+    }
+    .global-alert.error span.dot{
+      background:#ef4444;
+    }
+
+    /* MODAL */
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(15,23,42,.58);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:50;
+    }
+    .modal-backdrop.visible{
+      display:flex;
+    }
+    .modal{
+      width:100%;
+      max-width:520px;
+      background:var(--panel);
+      border-radius:18px;
+      border:1px solid var(--border);
+      box-shadow:0 22px 60px rgba(15,23,42,.3);
+      padding:16px 18px;
+      max-height:90vh;
+      overflow:auto;
+    }
+    .modal-title{
+      font-size:15px;
+      font-weight:600;
+      margin-bottom:6px;
+    }
+    .modal-subtitle{
+      font-size:11px;
+      color:var(--muted);
+      margin-bottom:10px;
+    }
+    .modal-actions{
+      margin-top:12px;
+      display:flex;
+      justify-content:flex-end;
+      gap:8px;
+    }
+
+    .field{
+      margin-bottom:10px;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    .field-label{
+      font-size:12px;
+      font-weight:500;
+    }
+    .field-input{
+      border-radius:10px;
+      border:1px solid var(--border);
+      padding:6px 9px;
+      font-size:12px;
+      background:white;
+      width:100%;
+    }
+    .field-hint{
+      font-size:11px;
+      color:var(--muted);
+    }
+
+    /* AUTH VIEW */
+    .auth-shell{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      width:100%;
+      min-height:100vh;
+      background:radial-gradient(circle at top left,#fed7aa,#f97316 15%,#0f172a 58%);
+      color:white;
+      padding:20px;
+    }
+    .auth-card{
+      width:100%;
+      max-width:720px;
+      background:rgba(15,23,42,.92);
+      border-radius:24px;
+      border:1px solid rgba(248,250,252,.12);
+      box-shadow:0 22px 70px rgba(15,23,42,.7);
+      display:grid;
+      grid-template-columns:1.2fr 1fr;
+      overflow:hidden;
+    }
+    .auth-main{
+      padding:18px 20px 16px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .auth-side{
+      padding:18px 16px;
+      background:radial-gradient(circle at top,#f97316,#7c2d12 40%,#020617 90%);
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      color:#f9fafb;
+    }
+    .auth-logo{
+      width:44px;
+      height:44px;
+      border-radius:999px;
+      background:rgba(15,23,42,.9);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:700;
+      font-size:18px;
+      margin-bottom:4px;
+    }
+    .auth-title{
+      font-size:18px;
+      font-weight:600;
+      margin-bottom:2px;
+    }
+    .auth-subtitle{
+      font-size:12px;
+      color:#cbd5f5;
+    }
+    .auth-form{
+      margin-top:8px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .auth-footer{
+      margin-top:auto;
+      font-size:10px;
+      color:#9ca3af;
+    }
+    .auth-kpis{
+      font-size:11px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      margin-top:10px;
+    }
+    .auth-kpis strong{
+      font-size:12px;
+    }
+
+    .auth-alert{
+      font-size:11px;
+      color:#fecaca;
+      background:rgba(239,68,68,.18);
+      border-radius:12px;
+      padding:6px 8px;
+      border:1px solid rgba(248,113,113,.4);
+      display:none;
+      margin-bottom:4px;
+    }
+
+    /* LOADER */
+    .loading-overlay{
+      position:fixed;
+      inset:0;
+      background:rgba(243,244,246,.85);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index:30;
+      pointer-events:none;
+      opacity:0;
+      transition:opacity .2s ease;
+    }
+    .loading-overlay.visible{
+      opacity:1;
+      pointer-events:auto;
+    }
+    .spinner{
+      width:32px;
+      height:32px;
+      border-radius:999px;
+      border:3px solid rgba(148,163,184,.4);
+      border-top-color:#f97316;
+      animation:spin .75s linear infinite;
+    }
+    @keyframes spin{
+      to{transform:rotate(360deg);}
+    }
+
+    @media (max-width:980px){
+      .sidebar{
+        display:none;
       }
-      .table{
-        font-size:11px;
+      .main{
+        max-width:100%;
+        padding:14px;
+      }
+      .auth-card{
+        grid-template-columns:1fr;
+      }
+      .auth-side{
+        display:none;
+      }
+      .grid-4{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+      }
+      .grid-3{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+      }
+    }
+    @media (max-width:640px){
+      .grid-4,.grid-3,.grid-2{
+        grid-template-columns:1fr;
       }
     }
   </style>
 </head>
 <body>
-  <div class="shell">
-    <!-- Auth Card -->
-    <section id="authSection" class="card">
-      <div class="header-row">
+
+<!-- AUTH VIEW (Event Owner Login) -->
+<div id="authView" class="auth-shell">
+  <div class="auth-card">
+    <div class="auth-main">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <div>
-          <div class="title">Luma Events — Owner Access</div>
-          <div class="subtitle">Sign up or log in to manage events, vendors, and POS links.</div>
+          <div class="auth-title">Event Owner Console</div>
+          <div class="auth-subtitle">
+            Sign in to manage <span id="auth-event-name">your event</span>, vendors, booths, and live sales.
+          </div>
         </div>
-        <div class="pill">
-          <div class="pill-dot"></div>
-          <span>Organizer portal</span>
+        <div class="auth-logo" id="authEventLogo">E</div>
+      </div>
+
+      <div id="authAlert" class="auth-alert"></div>
+
+      <form id="authForm" class="auth-form">
+        <div class="field">
+          <div class="field-label">Email</div>
+          <input id="authEmail" type="email" class="field-input" placeholder="you@event.com" required/>
+        </div>
+        <div class="field">
+          <div class="field-label">Password</div>
+          <input id="authPassword" type="password" class="field-input" placeholder="••••••••" required/>
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-top:4px;">
+          <span>Sign in</span>
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        Use the event admin account that we created for you.
+      </div>
+    </div>
+
+    <div class="auth-side">
+      <div>
+        <div class="sidebar-footer-badge">Live Event OS</div>
+        <h3 style="font-size:16px;font-weight:600;margin-top:8px;margin-bottom:4px;">
+          See your event like a live control room.
+        </h3>
+        <p style="font-size:12px;color:#fefce8;">
+          Track vendors, sales, refunds, and payment split in real time. One login for your whole event.
+        </p>
+
+        <div class="auth-kpis">
+          <div><strong>Vendor radar</strong> — Top vendors by sales, low activity alerts.</div>
+          <div><strong>Booth performance</strong> — Compare branches inside your event.</div>
+          <div><strong>Payment mix</strong> — Cash vs card vs other in real time.</div>
         </div>
       </div>
 
-      <div id="authAlert" class="alert hidden">
-        <span id="authAlertIcon">ℹ️</span>
-        <span id="authAlertText"></span>
+      <div class="auth-footer">
+        Powered by <strong>Luma Events</strong> • Built for festivals, bazaars, pop-ups, and more.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="appShell" class="app-shell" style="display:none;">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="event-logo" id="sidebarEventLogo">E</div>
+      <div class="sidebar-title-wrap">
+        <div class="sidebar-title" id="sidebarEventName">Event Name</div>
+        <div class="sidebar-subtitle" id="sidebarEventVenue">Venue • Dates</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="sidebar-section-title">Overview</div>
+      <div class="nav-list">
+        <div class="nav-item active" data-page="page-overview">
+          <span class="icon">📊</span>
+          <span>Live Overview</span>
+          <small>Today</small>
+        </div>
       </div>
 
-      <div class="row">
-        <div class="col">
-          <div id="loginCard">
-            <div class="section-title">Log in</div>
-            <div class="section-sub">Use your organizer email and password.</div>
-            <form id="loginForm">
-              <div class="field">
-                <label for="loginEmail">Email</label>
-                <input id="loginEmail" type="email" required autocomplete="email"/>
+      <div class="sidebar-section-title">Operations</div>
+      <div class="nav-list">
+        <div class="nav-item" data-page="page-vendors">
+          <span class="icon">🧺</span>
+          <span>Vendors</span>
+          <small id="sidebarVendorsCount">0</small>
+        </div>
+        <div class="nav-item" data-page="page-booths">
+          <span class="icon">🏬</span>
+          <span>Booths / Branches</span>
+          <small id="sidebarBoothsCount">0</small>
+        </div>
+        <div class="nav-item" data-page="page-orders">
+          <span class="icon">🧾</span>
+          <span>Orders</span>
+          <small id="sidebarOrdersCount">0</small>
+        </div>
+        <div class="nav-item" data-page="page-customers">
+          <span class="icon">👥</span>
+          <span>Customers</span>
+          <small id="sidebarCustomersCount">0</small>
+        </div>
+      </div>
+
+      <div class="sidebar-section-title">Configuration</div>
+      <div class="nav-list">
+        <div class="nav-item" data-page="page-settings">
+          <span class="icon">⚙️</span>
+          <span>Event Settings</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <span class="powered">Powered by <strong>Luma Events</strong></span>
+      <div class="sidebar-footer-badge">
+        Vendor mode: <strong>Linked</strong>
+      </div>
+      <span>From here you control the whole event, vendors & booths.</span>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title">
+          <span id="topbarTitle">Live Overview</span>
+          <span class="topbar-pill" id="topbarEventShort">Event</span>
+        </div>
+        <div class="topbar-subtitle" id="topbarSubtitle">
+          Today’s performance for all vendors, branches and orders.
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="event-date-pill" id="topbarDateRange">Dates</div>
+        <div class="avatar-chip">
+          <div class="avatar-circle" id="topbarUserAvatar">EO</div>
+          <span id="topbarUserName">Event Owner</span>
+          <button id="btn-logout" class="btn btn-ghost" style="margin-left:4px;">Log out</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- OVERVIEW PAGE -->
+    <section id="page-overview" class="page active">
+      <!-- KPI ROW -->
+      <div class="grid grid-4">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">
+                <span class="dot"></span>
+                Total Sales (Today)
               </div>
-              <div class="field">
-                <label for="loginPassword">Password</label>
-                <input id="loginPassword" type="password" required autocomplete="current-password"/>
+              <div class="panel-subtitle">All vendors, all booths, net of returns.</div>
+            </div>
+            <span class="kpi-chip" id="kpiPaymentSplit">Cash / Card / Other</span>
+          </div>
+          <div class="kpi-number" id="kpiSalesToday">0.00</div>
+          <div class="kpi-note" id="kpiSalesTodayNote">—</div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">
+                <span class="dot"></span>
+                Orders (Today)
               </div>
-              <button type="submit" class="btn btn-primary" id="loginBtn">
-                <span id="loginBtnText">Log in</span>
-              </button>
-            </form>
-            <div class="auth-toggle">
-              Don’t have an account?
-              <button type="button" id="goSignup">Create one</button>
+              <div class="panel-subtitle">Completed checkouts processed today.</div>
             </div>
           </div>
-
-          <div id="signupCard" style="display:none;">
-            <div class="section-title">Create organizer account</div>
-            <div class="section-sub">You’ll use this account to manage all your events and vendors.</div>
-            <form id="signupForm">
-              <div class="field">
-                <label for="signupName">Your name</label>
-                <input id="signupName" type="text" required autocomplete="name"/>
-              </div>
-              <div class="field">
-                <label for="signupEmail">Email</label>
-                <input id="signupEmail" type="email" required autocomplete="email"/>
-              </div>
-              <div class="field-row">
-                <div class="field">
-                  <label for="signupPassword">Password</label>
-                  <input id="signupPassword" type="password" required minlength="6" autocomplete="new-password"/>
-                </div>
-                <div class="field">
-                  <label for="signupPassword2">Confirm</label>
-                  <input id="signupPassword2" type="password" required minlength="6" autocomplete="new-password"/>
-                </div>
-              </div>
-              <button type="submit" class="btn btn-primary" id="signupBtn">
-                <span id="signupBtnText">Create account</span>
-              </button>
-            </form>
-            <div class="auth-toggle">
-              Already have an account?
-              <button type="button" id="goLogin">Log in</button>
-            </div>
+          <div class="kpi-number" id="kpiOrdersToday">0</div>
+          <div class="kpi-note">
+            Returns today: <strong id="kpiReturnsToday">0</strong>
           </div>
         </div>
 
-        <div class="col">
-          <div class="section-title">How it works</div>
-          <div class="section-sub">
-            1. Create an event<br/>
-            2. Get an auto-generated vendor signup link<br/>
-            3. Approve vendors and auto-generate POS links per brand<br/>
-            All saved directly in Firestore — no manual DB edits.
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">
+                <span class="dot"></span>
+                Active Vendors
+              </div>
+              <div class="panel-subtitle">Vendors with at least one order today.</div>
+            </div>
           </div>
-          <ul style="font-size:12px;color:var(--muted);padding-left:18px;line-height:1.5;">
-            <li>Events are stored under <code>events/{eventId}</code></li>
-            <li>Vendor applications under <code>events/{eventId}/vendors</code></li>
-            <li>Approved vendors get a branch under <code>brands/{brandId}/branches/{branchId}</code></li>
-            <li>POS URL is saved in the vendor doc for you to share</li>
+          <div class="kpi-number" id="kpiActiveVendors">0</div>
+          <div class="kpi-note" id="kpiTotalVendorsNote">0 total vendors in event.</div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">
+                <span class="dot"></span>
+                Booth Utilization
+              </div>
+              <div class="panel-subtitle">Active booths / total assigned booths.</div>
+            </div>
+          </div>
+          <div class="kpi-number" id="kpiActiveBooths">0</div>
+          <div class="kpi-note" id="kpiTotalBoothsNote">0 booths configured.</div>
+        </div>
+      </div>
+
+      <!-- ROW: CHART + TOP VENDORS -->
+      <div class="grid grid-2">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">
+                <span class="dot"></span>
+                Sales Curve (Today)
+              </div>
+              <div class="panel-subtitle">Cumulative sales by time of day.</div>
+            </div>
+          </div>
+          <canvas id="chartSalesTimeline" style="width:100%;height:220px;"></canvas>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">
+                <span class="dot"></span>
+                Top Vendors (Today)
+              </div>
+              <div class="panel-subtitle">Ranked by total sales for this event.</div>
+            </div>
+            <button id="btn-go-vendors" class="btn btn-ghost" style="font-size:11px;">View vendors</button>
+          </div>
+          <div class="table-wrapper" id="topVendorsTable">
+            <div class="table-empty">No vendor sales yet today.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROW: PAYMENT SPLIT + RECENT ORDERS -->
+      <div class="grid grid-2">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">
+                <span class="dot"></span>
+                Payment Split
+              </div>
+              <div class="panel-subtitle">Cash vs card vs other methods today.</div>
+            </div>
+          </div>
+          <canvas id="chartPaymentSplit" style="width:100%;height:220px;"></canvas>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">
+                <span class="dot"></span>
+                Recent Orders
+              </div>
+              <div class="panel-subtitle">Last 10 orders across all vendors.</div>
+            </div>
+          </div>
+          <div class="table-wrapper" id="recentOrdersTable">
+            <div class="table-empty">No orders yet.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VENDORS PAGE -->
+    <section id="page-vendors" class="page">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              <span class="dot"></span>
+              Vendors in this Event
+            </div>
+            <div class="panel-subtitle">
+              Each vendor is linked to a Luma Store OS brand & its POS. You can open the vendor dashboard directly.
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <button id="btn-export-vendors" class="btn btn-ghost">Export</button>
+            <button id="btn-add-vendor" class="btn btn-primary">Add Vendor</button>
+          </div>
+        </div>
+
+        <div class="table-toolbar">
+          <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:180px;">
+            <input id="search-vendors" class="input" placeholder="Search vendors by name, brand, or booth..."/>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <select id="filter-vendor-status" class="select">
+              <option value="all">All statuses</option>
+              <option value="active">Active only</option>
+              <option value="inactive">Inactive only</option>
+            </select>
+            <select id="sort-vendors" class="select">
+              <option value="name-asc">Name (A → Z)</option>
+              <option value="name-desc">Name (Z → A)</option>
+              <option value="sales-desc">Sales (High → Low)</option>
+              <option value="sales-asc">Sales (Low → High)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-wrapper" id="vendorsTable">
+          <div class="table-empty">No vendors added yet.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BOOTHS / BRANCHES PAGE -->
+    <section id="page-booths" class="page">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              <span class="dot"></span>
+              Booths / Branches
+            </div>
+            <div class="panel-subtitle">
+              All vendor booths connected to this event (branches from Luma Store OS).
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <button id="btn-export-booths" class="btn btn-ghost">Export</button>
+          </div>
+        </div>
+
+        <div class="table-toolbar">
+          <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:180px;">
+            <input id="search-booths" class="input" placeholder="Search by booth, vendor, or code..."/>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <select id="sort-booths" class="select">
+              <option value="name-asc">Name (A → Z)</option>
+              <option value="name-desc">Name (Z → A)</option>
+              <option value="vendor-asc">Vendor (A → Z)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-wrapper" id="boothsTable">
+          <div class="table-empty">No booths found for this event.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ORDERS PAGE -->
+    <section id="page-orders" class="page">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              <span class="dot"></span>
+              All Orders
+            </div>
+            <div class="panel-subtitle">
+              Orders for this event across all vendors & booths.
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <button id="btn-export-orders" class="btn btn-ghost">Export CSV</button>
+          </div>
+        </div>
+
+        <div class="table-toolbar">
+          <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:200px;">
+            <input id="search-orders" class="input" placeholder="Search by order ID, vendor, customer..."/>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <select id="filter-order-type" class="select">
+              <option value="all">All types</option>
+              <option value="sale">Sales</option>
+              <option value="return">Returns</option>
+            </select>
+            <select id="sort-orders" class="select">
+              <option value="date-desc">Date (Newest → Oldest)</option>
+              <option value="date-asc">Date (Oldest → Newest)</option>
+              <option value="total-desc">Total (High → Low)</option>
+              <option value="total-asc">Total (Low → High)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-wrapper" id="ordersTable">
+          <div class="table-empty">No orders yet.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CUSTOMERS PAGE -->
+    <section id="page-customers" class="page">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              <span class="dot"></span>
+              Event Customers
+            </div>
+            <div class="panel-subtitle">
+              Customers who bought from any vendor in this event.
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <button id="btn-export-customers" class="btn btn-ghost">Export</button>
+          </div>
+        </div>
+
+        <div class="table-toolbar">
+          <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:180px;">
+            <input id="search-customers" class="input" placeholder="Search by name, phone, or email..."/>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <select id="sort-customers" class="select">
+              <option value="name-asc">Name (A → Z)</option>
+              <option value="name-desc">Name (Z → A)</option>
+              <option value="total-desc">Total spent (High → Low)</option>
+              <option value="orders-desc">Orders count (High → Low)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-wrapper" id="customersTable">
+          <div class="table-empty">No customers yet.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SETTINGS PAGE -->
+    <section id="page-settings" class="page">
+      <div class="grid grid-2">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">
+                <span class="dot"></span>
+                Event Details
+              </div>
+              <div class="panel-subtitle">
+                Update event name, venue, dates, and logo.
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <div class="field-label">Event Name</div>
+            <input id="set-event-name" class="field-input" placeholder="Lokamania 5" />
+          </div>
+          <div class="field">
+            <div class="field-label">Venue</div>
+            <input id="set-event-venue" class="field-input" placeholder="Mall / Club / University" />
+          </div>
+          <div class="field">
+            <div class="field-label">Date Range</div>
+            <input id="set-event-dates" class="field-input" placeholder="Dec 5–8, 2025" />
+          </div>
+          <div class="field">
+            <div class="field-label">Event Logo</div>
+            <input id="set-event-logo" type="file" class="field-input" />
+            <div class="field-hint">Used in sidebar, POS login, and reports.</div>
+          </div>
+          <div class="modal-actions" style="margin-top:8px;">
+            <button id="btn-save-event-settings" class="btn btn-primary">Save Event</button>
+          </div>
+        </div>
+
+        <div class="panel panel-soft">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">
+                <span class="dot"></span>
+                Vendor Linking
+              </div>
+              <div class="panel-subtitle">
+                Make sure each vendor is linked to its brand (Store OS) and branches.
+              </div>
+            </div>
+          </div>
+          <p class="panel-subtitle" style="margin-bottom:8px;">
+            When a vendor is linked to a brand, their POS and products are automatically connected to this event.
+            Orders will carry both <strong>eventId</strong> and <strong>brandId</strong> so you can see everything here.
+          </p>
+          <ul style="font-size:11px;color:var(--muted);padding-left:16px;list-style:disc;">
+            <li>Use <strong>“Add Vendor”</strong> in the Vendors tab to link an existing brand to this event.</li>
+            <li>Each vendor can have one or more <strong>branches/booths</strong> inside the event.</li>
+            <li>Click <strong>“Open Vendor Dashboard”</strong> to jump to the vendor’s own brand.html (POS dashboard).</li>
           </ul>
         </div>
       </div>
     </section>
 
-    <!-- Dashboard -->
-    <section id="dashboardSection" class="card">
-      <div class="header-row">
-        <div>
-          <div class="title">Luma Events — Dashboard</div>
-          <div class="subtitle" id="userSubtitle">Signed in as …</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <div class="pill">
-            <div class="pill-dot"></div>
-            <span>Organizer</span>
-          </div>
-          <button id="logoutBtn" class="btn btn-secondary btn-sm">Log out</button>
-        </div>
-      </div>
+  </main>
+</div>
 
-      <div id="dashAlert" class="alert hidden">
-        <span id="dashAlertIcon">ℹ️</span>
-        <span id="dashAlertText"></span>
-      </div>
+<!-- MODAL ROOT -->
+<div id="modalBackdrop" class="modal-backdrop">
+  <div id="modalContent" class="modal"></div>
+</div>
 
-      <div class="row">
-        <!-- Create event -->
-        <div class="col">
-          <div class="section-title">Create new event</div>
-          <div class="section-sub">Fill the basic details. Vendor signup & POS links are handled automatically.</div>
-          <form id="eventForm">
-            <div class="field">
-              <label for="eventName">Event name</label>
-              <input id="eventName" type="text" required placeholder="e.g. Lokamania 7"/>
-            </div>
-            <div class="field-row">
-              <div class="field">
-                <label for="eventCode">Short code</label>
-                <input id="eventCode" type="text" placeholder="e.g. lok7"/>
-                <div class="helper">Optional, used for internal reference.</div>
-              </div>
-              <div class="field">
-                <label for="currency">Currency</label>
-                <input id="currency" type="text" value="EGP" />
-              </div>
-            </div>
-            <div class="field-row">
-              <div class="field">
-                <label for="startDate">Start date</label>
-                <input id="startDate" type="date" />
-              </div>
-              <div class="field">
-                <label for="endDate">End date</label>
-                <input id="endDate" type="date" />
-              </div>
-            </div>
-            <div class="field">
-              <label for="venue">Venue</label>
-              <input id="venue" type="text" placeholder="Mall / Exhibition name"/>
-            </div>
-            <div class="field-row">
-              <div class="field">
-                <label for="city">City</label>
-                <input id="city" type="text" value="Cairo"/>
-              </div>
-              <div class="field">
-                <label for="country">Country</label>
-                <input id="country" type="text" value="Egypt"/>
-              </div>
-            </div>
-            <div class="field-row">
-              <div class="field">
-                <label for="vat">VAT %</label>
-                <input id="vat" type="number" step="0.01" value="14"/>
-              </div>
-              <div class="field">
-                <label for="service">Service fee % (your cut)</label>
-                <input id="service" type="number" step="0.01" value="0"/>
-              </div>
-            </div>
-            <div class="field">
-              <label>
-                <input id="signupEnabled" type="checkbox" checked style="width:auto;margin-right:6px;"/>
-                Enable vendor signup for this event
-              </label>
-            </div>
+<!-- GLOBAL ALERT -->
+<div id="globalAlert" class="global-alert">
+  <span class="dot"></span>
+  <span id="globalAlertText">Saved.</span>
+</div>
 
-            <button type="submit" class="btn btn-primary" id="createEventBtn">
-              <span id="createEventBtnText">Create event</span>
-            </button>
-          </form>
+<!-- LOADING OVERLAY -->
+<div id="loadingOverlay" class="loading-overlay">
+  <div class="spinner"></div>
+</div>
 
-          <div id="createdEventInfo" style="margin-top:10px;display:none;">
-            <div class="section-sub" style="margin-bottom:6px;">Latest event created:</div>
-            <div class="code-pill" id="createdEventIdPill"></div>
-            <div class="helper" style="margin-top:5px;">
-              Vendor signup link:<br/>
-              <span class="link" id="createdEventSignupLink"></span>
-            </div>
-          </div>
-        </div>
+<script type="module">
+  // =========================
+  // FIREBASE INIT
+  // =========================
+  const firebaseConfig = {
+    // TODO: fill with your existing events project config
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_AUTH_DOMAIN",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_STORAGE_BUCKET",
+  };
 
-        <!-- Events + vendors -->
-        <div class="col">
-          <div class="section-title">Your events</div>
-          <div class="section-sub">Select an event to review vendor applications and get POS links.</div>
+  const app = firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+  const storage = firebase.storage();
 
-          <div id="eventsListContainer" style="max-height:260px;overflow:auto;margin-bottom:8px;border:1px solid var(--border);border-radius:12px;">
-            <table class="table" id="eventsTable">
-              <thead>
-                <tr>
-                  <th>Event</th>
-                  <th>Dates</th>
-                  <th>Vendors</th>
-                  <th>Link</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody id="eventsTbody">
-                <tr><td colspan="5" style="text-align:center;color:var(--muted);font-size:11px;padding:12px;">No events yet.</td></tr>
-              </tbody>
-            </table>
-          </div>
+  // =========================
+  // DOM HELPERS
+  // =========================
+  const qs = (s) => document.querySelector(s);
+  const qsa = (s) => Array.from(document.querySelectorAll(s));
 
-          <div id="selectedEventInfo" style="margin-top:10px;display:none;">
-            <div class="section-title" id="selectedEventTitle">Vendors</div>
-            <div class="section-sub" id="selectedEventSub">Pending and approved vendors for this event.</div>
+  const authView = qs("#authView");
+  const appShell = qs("#appShell");
+  const loadingOverlay = qs("#loadingOverlay");
+  const globalAlertEl = qs("#globalAlert");
+  const globalAlertText = qs("#globalAlertText");
 
-            <div style="border:1px solid var(--border);border-radius:12px;max-height:260px;overflow:auto;">
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Brand</th>
-                    <th>Contact</th>
-                    <th>Status</th>
-                    <th>POS</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="vendorsTbody">
-                  <tr><td colspan="5" style="text-align:center;color:var(--muted);font-size:11px;padding:12px;">Select an event to load vendors.</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
+  // Event meta elements
+  const sidebarEventLogo = qs("#sidebarEventLogo");
+  const sidebarEventName = qs("#sidebarEventName");
+  const sidebarEventVenue = qs("#sidebarEventVenue");
+  const authEventLogo = qs("#authEventLogo");
+  const authEventName = qs("#auth-event-name");
+  const topbarTitleEl = qs("#topbarTitle");
+  const topbarSubtitleEl = qs("#topbarSubtitle");
+  const topbarEventShortEl = qs("#topbarEventShort");
+  const topbarDateRangeEl = qs("#topbarDateRange");
+  const topbarUserAvatarEl = qs("#topbarUserAvatar");
+  const topbarUserNameEl = qs("#topbarUserName");
 
-        </div>
-      </div>
-    </section>
-  </div>
+  // KPIs
+  const kpiSalesTodayEl = qs("#kpiSalesToday");
+  const kpiSalesTodayNoteEl = qs("#kpiSalesTodayNote");
+  const kpiOrdersTodayEl = qs("#kpiOrdersToday");
+  const kpiReturnsTodayEl = qs("#kpiReturnsToday");
+  const kpiActiveVendorsEl = qs("#kpiActiveVendors");
+  const kpiTotalVendorsNoteEl = qs("#kpiTotalVendorsNote");
+  const kpiActiveBoothsEl = qs("#kpiActiveBooths");
+  const kpiTotalBoothsNoteEl = qs("#kpiTotalBoothsNote");
+  const kpiPaymentSplitEl = qs("#kpiPaymentSplit");
 
-  <script type="module">
-    // ---------- Firebase imports ----------
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import {
-      getFirestore,
-      doc,
-      getDoc,
-      setDoc,
-      addDoc,
-      collection,
-      query,
-      where,
-      onSnapshot,
-      serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import {
-      getAuth,
-      onAuthStateChanged,
-      signInWithEmailAndPassword,
-      createUserWithEmailAndPassword,
-      signOut
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  // Sidebar counters
+  const sidebarVendorsCountEl = qs("#sidebarVendorsCount");
+  const sidebarBoothsCountEl = qs("#sidebarBoothsCount");
+  const sidebarOrdersCountEl = qs("#sidebarOrdersCount");
+  const sidebarCustomersCountEl = qs("#sidebarCustomersCount");
 
-    // ---------- Your Firebase config ----------
-    const firebaseConfig = {
-      apiKey:"AIzaSyA80bAAGPuyscnTVS-zwrxE9Jp3tPiS1gM",
-      authDomain:"events-339ce.firebaseapp.com",
-      projectId:"events-339ce",
-      storageBucket:"events-339ce.firebasestorage.app",
-      messagingSenderId:"175601544315",
-      appId:"1:175601544315:web:00c94b4affa972b3a286de"
+  // Tables
+  const topVendorsTableEl = qs("#topVendorsTable");
+  const recentOrdersTableEl = qs("#recentOrdersTable");
+  const vendorsTableEl = qs("#vendorsTable");
+  const boothsTableEl = qs("#boothsTable");
+  const ordersTableEl = qs("#ordersTable");
+  const customersTableEl = qs("#customersTable");
+
+  // Settings inputs
+  const setEventNameInput = qs("#set-event-name");
+  const setEventVenueInput = qs("#set-event-venue");
+  const setEventDatesInput = qs("#set-event-dates");
+  const setEventLogoInput = qs("#set-event-logo");
+
+  // Auth
+  const authForm = qs("#authForm");
+  const authEmailInput = qs("#authEmail");
+  const authPasswordInput = qs("#authPassword");
+  const authAlert = qs("#authAlert");
+  const logoutBtn = qs("#btn-logout");
+
+  // Modal
+  const modalBackdrop = qs("#modalBackdrop");
+  const modalContent = qs("#modalContent");
+
+  // Filters/search
+  const searchVendorsInput = qs("#search-vendors");
+  const filterVendorStatusSelect = qs("#filter-vendor-status");
+  const sortVendorsSelect = qs("#sort-vendors");
+
+  const searchBoothsInput = qs("#search-booths");
+  const sortBoothsSelect = qs("#sort-booths");
+
+  const searchOrdersInput = qs("#search-orders");
+  const filterOrderTypeSelect = qs("#filter-order-type");
+  const sortOrdersSelect = qs("#sort-orders");
+
+  const searchCustomersInput = qs("#search-customers");
+  const sortCustomersSelect = qs("#sort-customers");
+
+  // Charts
+  let salesTimelineChart = null;
+  let paymentSplitChart = null;
+
+  // Data state
+  let currentUser = null;
+  let eventId = null;
+  let eventData = null;
+
+  let eventVendors = [];   // from /events/{eventId}/vendors (linked to brandId)
+  let eventBooths = [];    // aggregated from brand branches that match event
+  let eventOrders = [];    // from /orders with eventId
+  let eventCustomers = []; // aggregated customers
+
+  // =========================
+  // UTIL
+  // =========================
+  function showLoading(on){
+    if(on){
+      loadingOverlay.classList.add("visible");
+    }else{
+      loadingOverlay.classList.remove("visible");
+    }
+  }
+
+  function showAlert(msg, type="ok"){
+    globalAlertText.textContent = msg;
+    globalAlertEl.classList.toggle("error", type === "error");
+    globalAlertEl.classList.add("visible");
+    setTimeout(() => {
+      globalAlertEl.classList.remove("visible");
+    }, 2300);
+  }
+
+  function openModal(innerHtml){
+    modalContent.innerHTML = innerHtml;
+    modalBackdrop.classList.add("visible");
+  }
+
+  function closeModal(){
+    modalBackdrop.classList.remove("visible");
+    modalContent.innerHTML = "";
+  }
+
+  modalBackdrop.addEventListener("click", e => {
+    if(e.target === modalBackdrop){
+      closeModal();
+    }
+  });
+
+  function getTodayString(){
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth()+1).padStart(2,"0");
+    const d = String(now.getDate()).padStart(2,"0");
+    return `${y}-${m}-${d}`;
+  }
+
+  function money(v){
+    const n = Number(v) || 0;
+    return n.toFixed(2);
+  }
+
+  function orderDateString(o){
+    if(o.createdAt && o.createdAt.toDate){
+      const d = o.createdAt.toDate();
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,"0");
+      const da = String(d.getDate()).padStart(2,"0");
+      return `${y}-${m}-${da}`;
+    }
+    const fallback = o.createdAt || o.date || null;
+    if(!fallback) return getTodayString();
+    try{
+      const d = new Date(fallback);
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,"0");
+      const da = String(d.getDate()).padStart(2,"0");
+      return `${y}-${m}-${da}`;
+    }catch(e){
+      return getTodayString();
+    }
+  }
+
+  async function uploadImageToStorage(file, path){
+    const ref = storage.ref().child(path + "/" + file.name);
+    await ref.put(file);
+    return ref.getDownloadURL();
+  }
+
+  // =========================
+  // EVENT ID FROM URL
+  // =========================
+  const urlParams = new URLSearchParams(window.location.search);
+  eventId = urlParams.get("eventId") || null;
+  // If we want a fallback for testing
+  // if(!eventId) eventId = "lokamania5";
+
+   // =========================
+  // AUTH HANDLERS
+  // (Link event owner login to this dashboard)
+  // =========================
+
+  function showAuthError(msg){
+    authAlert.textContent = msg;
+    authAlert.style.display = "block";
+  }
+  function clearAuthError(){
+    authAlert.textContent = "";
+    authAlert.style.display = "none";
+  }
+
+  authForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearAuthError();
+    const email = authEmailInput.value.trim();
+    const password = authPasswordInput.value.trim();
+    if(!email || !password){
+      showAuthError("Please enter email and password.");
+      return;
+    }
+    try{
+      showLoading(true);
+      await auth.signInWithEmailAndPassword(email, password);
+    }catch(err){
+      console.error("Sign-in error", err);
+      showAuthError(err.message || "Could not sign in. Check credentials.");
+      showLoading(false);
+    }
+  });
+
+  logoutBtn.addEventListener("click", async () => {
+    try{
+      await auth.signOut();
+    }catch(e){
+      console.error("Logout error", e);
+    }
+  });
+
+  auth.onAuthStateChanged(async (user) => {
+    if(!eventId){
+      // No eventId in URL → force auth screen with message
+      authView.style.display = "flex";
+      appShell.style.display = "none";
+      showAuthError("Missing ?eventId= in the URL. Add eventId to open this dashboard.");
+      return;
+    }
+
+    if(user){
+      currentUser = user;
+      clearAuthError();
+      authView.style.display = "none";
+      appShell.style.display = "flex";
+      showLoading(true);
+      try{
+        await initForUser(user);
+      }catch(e){
+        console.error("Init error", e);
+        showAuthError("Could not load event data. Check event permissions.");
+      }finally{
+        showLoading(false);
+      }
+    }else{
+      currentUser = null;
+      appShell.style.display = "none";
+      authView.style.display = "flex";
+      showLoading(false);
+    }
+  });
+
+  // =========================
+  // LOAD EVENT & DATA
+  // =========================
+
+  async function loadEventMeta(){
+    if(!eventId) return;
+    const ref = db.collection("events").doc(eventId);
+    const snap = await ref.get();
+    if(!snap.exists){
+      throw new Error("Event not found: " + eventId);
+    }
+    eventData = snap.data() || {};
+
+    const name = eventData.name || "Event";
+    const venue = eventData.venue || "";
+    const dates = eventData.dateRange || "";
+    const shortName = eventData.shortName || (name.length > 16 ? name.slice(0,16)+"…" : name);
+
+    sidebarEventName.textContent = name;
+    sidebarEventVenue.textContent = venue && dates ? `${venue} • ${dates}` : (venue || dates || "Event venue & dates");
+    authEventName.textContent = name;
+    topbarEventShortEl.textContent = shortName;
+    topbarDateRangeEl.textContent = dates || "Event dates";
+    topbarSubtitleEl.textContent = `Today’s performance for ${name}.`;
+    
+    // Avatar / logo letter
+    const letter = name.charAt(0)?.toUpperCase() || "E";
+    sidebarEventLogo.textContent = letter;
+    authEventLogo.textContent = letter;
+
+    // If logoUrl exists, show image circle
+    if(eventData.logoUrl){
+      const logoHtml = `<img src="${eventData.logoUrl}" alt="${name} logo"/>`;
+      sidebarEventLogo.innerHTML = logoHtml;
+      authEventLogo.innerHTML = logoHtml;
+    }
+
+    // Settings form
+    setEventNameInput.value = name;
+    setEventVenueInput.value = venue;
+    setEventDatesInput.value = dates;
+  }
+
+  async function loadVendors(){
+    eventVendors = [];
+    try{
+      const ref = db.collection("events").doc(eventId).collection("vendors");
+      const snap = await ref.get();
+      eventVendors = snap.docs.map(d => ({
+        _id: d.id,
+        ...d.data()
+      }));
+    }catch(e){
+      console.error("Error loading event vendors", e);
+      eventVendors = [];
+    }
+  }
+
+  async function loadOrders(){
+    eventOrders = [];
+    try{
+      let query = db.collection("orders").where("eventId","==",eventId);
+      // try orderBy(createdAt) if index exists
+      try{
+        query = query.orderBy("createdAt","desc").limit(400);
+        const snap = await query.get();
+        eventOrders = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
+      }catch(inner){
+        console.warn("orders orderBy index missing, fallback without orderBy", inner);
+        const snap = await db.collection("orders").where("eventId","==",eventId).get();
+        eventOrders = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
+      }
+    }catch(e){
+      console.error("Error loading orders", e);
+      eventOrders = [];
+    }
+  }
+
+  async function deriveCustomersFromOrders(){
+    const map = new Map();
+    for(const o of eventOrders){
+      const customer = o.customer || {};
+      const phone = (customer.phone || customer.mobile || "").trim();
+      const email = (customer.email || "").trim().toLowerCase();
+      let key = phone || email;
+      if(!key){
+        key = o.customerId || o._id; // fallback
+      }
+      if(!key) continue;
+
+      const total = Number(o.total || 0);
+      const isReturn = o.isReturn === true;
+
+      if(!map.has(key)){
+        map.set(key,{
+          key,
+          name: customer.name || "Customer",
+          phone: phone || "-",
+          email: email || "",
+          ordersCount: 0,
+          totalSpent: 0
+        });
+      }
+      const item = map.get(key);
+      item.ordersCount += 1;
+      // Returns reduce spent
+      item.totalSpent += isReturn ? -Math.abs(total) : Math.abs(total);
+      map.set(key,item);
+    }
+    eventCustomers = Array.from(map.values());
+  }
+
+  function deriveBoothsFromVendors(){
+    const booths = [];
+    for(const v of eventVendors){
+      const vendorName = v.name || v.vendorName || "Vendor";
+      const vendorId = v._id;
+      const boothLabel = v.boothLabel || v.booth || "";
+      const brandId = v.brandId || null;
+
+      // Many events: 1 vendor = 1 booth (or multiple branches). We support:
+      // - v.branchIds: array of branchId
+      // - v.branches: array of {branchId, boothLabel}
+      if(Array.isArray(v.branchIds) && v.branchIds.length){
+        for(const bId of v.branchIds){
+          booths.push({
+            vendorId,
+            vendorName,
+            brandId,
+            branchId: bId,
+            boothLabel: boothLabel || bId
+          });
+        }
+      }else if(Array.isArray(v.branches) && v.branches.length){
+        for(const b of v.branches){
+          booths.push({
+            vendorId,
+            vendorName,
+            brandId,
+            branchId: b.branchId || b.id,
+            boothLabel: b.boothLabel || boothLabel || (b.branchId || b.id || "Booth")
+          });
+        }
+      }else{
+        booths.push({
+          vendorId,
+          vendorName,
+          brandId,
+          branchId: null,
+          boothLabel: boothLabel || "Booth"
+        });
+      }
+    }
+    eventBooths = booths;
+  }
+
+  async function initForUser(user){
+    // Optionally: check that user is allowed on this event
+    // e.g., events/{eventId}.ownerUids includes user.uid
+    try{
+      await loadEventMeta();
+    }catch(e){
+      console.error("loadEventMeta failed", e);
+      throw e;
+    }
+
+    // Set owner avatar/name
+    const email = user.email || "";
+    const name = email.split("@")[0] || "Event Owner";
+    topbarUserNameEl.textContent = name;
+    topbarUserAvatarEl.textContent = (name.charAt(0) || "E").toUpperCase();
+
+    // Load all event-related collections
+    await Promise.all([
+      loadVendors(),
+      loadOrders()
+    ]);
+
+    await deriveCustomersFromOrders();
+    deriveBoothsFromVendors();
+    computeAnalyticsAndRender();
+  }
+
+  // =========================
+  // ANALYTICS
+  // =========================
+
+  function computeAnalyticsAndRender(){
+    const todayStr = getTodayString();
+
+    let netSalesToday = 0;
+    let ordersTodayCount = 0;
+    let returnsTodayCount = 0;
+
+    const paymentBuckets = {
+      cash: 0,
+      card: 0,
+      other: 0
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
+    // For ranking vendors and booths
+    const vendorStats = new Map(); // vendorId -> {sales, orders}
+    const boothStats = new Map();  // branchId or boothLabel
 
-    const POS_BASE_URL = "https://luma-pos-eight.vercel.app";
+    // For sales curve: group by hour
+    const hourBuckets = {};
+    for(let h=0;h<24;h++){
+      const label = `${String(h).padStart(2,"0")}:00`;
+      hourBuckets[label] = 0;
+    }
 
-    // ---------- UI helpers ----------
-    const authSection = document.getElementById("authSection");
-    const dashboardSection = document.getElementById("dashboardSection");
+    for(const o of eventOrders){
+      const dStr = orderDateString(o);
+      const isReturn = o.isReturn === true;
+      const total = Math.abs(Number(o.total || 0));
 
-    const authAlert = document.getElementById("authAlert");
-    const authAlertIcon = document.getElementById("authAlertIcon");
-    const authAlertText = document.getElementById("authAlertText");
-    const dashAlert = document.getElementById("dashAlert");
-    const dashAlertIcon = document.getElementById("dashAlertIcon");
-    const dashAlertText = document.getElementById("dashAlertText");
+      // Payment method from multiple possible fields:
+      const p = o.payment || {};
+      const pm = (o.paymentMethod || p.method || p.type || "").toLowerCase();
+      let pmKey = "other";
+      if(pm.includes("cash")) pmKey = "cash";
+      else if(pm.includes("card") || pm.includes("visa") || pm.includes("master")) pmKey = "card";
 
-    function showAuthAlert(msg, type="info"){
-      authAlert.classList.remove("hidden","ok","error");
-      if(type==="ok"){
-        authAlert.classList.add("ok");
-        authAlertIcon.textContent = "✅";
-      }else if(type==="error"){
-        authAlert.classList.add("error");
-        authAlertIcon.textContent = "⚠️";
+      // Vendor link: we assume your POS writes vendorId on order, fallback to brandId
+      const vendorId = o.vendorId || o.vendorRef || o.brandId || "unknown";
+      const branchId = o.branchId || o.boothId || null;
+
+      if(dStr === todayStr){
+        // Sales metrics
+        const signed = isReturn ? -total : total;
+        netSalesToday += signed;
+
+        if(isReturn) returnsTodayCount += 1;
+        else ordersTodayCount += 1;
+
+        paymentBuckets[pmKey] += signed;
+
+        // Hour bucket if createdAt exists
+        let hourLabel = null;
+        if(o.createdAt && o.createdAt.toDate){
+          const d = o.createdAt.toDate();
+          const h = d.getHours();
+          hourLabel = `${String(h).padStart(2,"0")}:00`;
+        }
+        if(hourLabel && hourBuckets.hasOwnProperty(hourLabel)){
+          hourBuckets[hourLabel] += signed;
+        }
+      }
+
+      // Vendor stats (whole event, not just today)
+      if(!vendorStats.has(vendorId)){
+        vendorStats.set(vendorId,{sales:0,orders:0});
+      }
+      const vItem = vendorStats.get(vendorId);
+      vItem.sales += isReturn ? -total : total;
+      vItem.orders += 1;
+      vendorStats.set(vendorId,vItem);
+
+      // Booth stats
+      if(branchId){
+        if(!boothStats.has(branchId)){
+          boothStats.set(branchId,{sales:0,orders:0});
+        }
+        const bItem = boothStats.get(branchId);
+        bItem.sales += isReturn ? -total : total;
+        bItem.orders += 1;
+        boothStats.set(branchId,bItem);
+      }
+    }
+
+    // Save stats to global so renderers can use them
+    window.__eventVendorStats = vendorStats;
+    window.__eventBoothStats = boothStats;
+
+    // KPIs
+    kpiSalesTodayEl.textContent = money(netSalesToday);
+    const salesNote = ordersTodayCount > 0
+      ? `${ordersTodayCount} orders · ${returnsTodayCount} returns`
+      : "No orders yet today.";
+    kpiSalesTodayNoteEl.textContent = salesNote;
+    kpiOrdersTodayEl.textContent = ordersTodayCount;
+    kpiReturnsTodayEl.textContent = returnsTodayCount;
+
+    const activeVendorIdsToday = new Set();
+    for(const [vendorId, stats] of vendorStats.entries()){
+      if(stats.orders > 0){
+        activeVendorIdsToday.add(vendorId);
+      }
+    }
+    kpiActiveVendorsEl.textContent = activeVendorIdsToday.size;
+    kpiTotalVendorsNoteEl.textContent = `${eventVendors.length} total vendors in event.`;
+    sidebarVendorsCountEl.textContent = String(eventVendors.length);
+
+    // Booth metrics
+    const activeBoothIds = new Set();
+    for(const [bId, stats] of boothStats.entries()){
+      if(stats.orders > 0){
+        activeBoothIds.add(bId);
+      }
+    }
+    kpiActiveBoothsEl.textContent = activeBoothIds.size;
+    kpiTotalBoothsNoteEl.textContent = `${eventBooths.length} booths configured.`;
+    sidebarBoothsCountEl.textContent = String(eventBooths.length);
+
+    // Orders & customers counts in sidebar
+    sidebarOrdersCountEl.textContent = String(eventOrders.length);
+    sidebarCustomersCountEl.textContent = String(eventCustomers.length);
+
+    // Payment split label
+    const cash = paymentBuckets.cash;
+    const card = paymentBuckets.card;
+    const other = paymentBuckets.other;
+    const totalSplit = cash + card + other;
+    if(totalSplit > 0){
+      const pct = (v) => Math.round((v/totalSplit)*100);
+      kpiPaymentSplitEl.textContent = `Cash ${pct(cash)}% • Card ${pct(card)}% • Other ${pct(other)}%`;
+    }else{
+      kpiPaymentSplitEl.textContent = "No payments yet today.";
+    }
+
+    // Render tables & charts
+    renderTopVendorsTable();
+    renderRecentOrdersTable();
+    renderVendorsTable();
+    renderBoothsTable();
+    renderOrdersTable();
+    renderCustomersTable();
+    renderSalesTimelineChart(hourBuckets);
+    renderPaymentSplitChart(paymentBuckets);
+  }
+
+  // =========================
+  // RENDERERS
+  // =========================
+
+  function renderTopVendorsTable(){
+    const vendorStats = window.__eventVendorStats || new Map();
+    if(!eventVendors.length || vendorStats.size === 0){
+      topVendorsTableEl.innerHTML = `<div class="table-empty">No vendor sales yet today.</div>`;
+      return;
+    }
+
+    const rows = eventVendors.map(v => {
+      const id = v._id;
+      const stats = vendorStats.get(id) || {sales:0,orders:0};
+      return {
+        vendor: v,
+        sales: stats.sales,
+        orders: stats.orders
+      };
+    }).sort((a,b) => b.sales - a.sales).slice(0,5);
+
+    if(!rows.length || rows.every(r => r.sales === 0 && r.orders === 0)){
+      topVendorsTableEl.innerHTML = `<div class="table-empty">No vendor sales yet today.</div>`;
+      return;
+    }
+
+    let html = `<table><thead>
+      <tr>
+        <th>Vendor</th>
+        <th>Booth</th>
+        <th>Brand</th>
+        <th>Orders</th>
+        <th>Sales</th>
+      </tr>
+    </thead><tbody>`;
+
+    for(const r of rows){
+      const v = r.vendor;
+      const name = v.name || v.vendorName || "Vendor";
+      const booth = v.boothLabel || v.booth || "-";
+      const brand = v.brandName || v.brandId || "-";
+      html += `<tr>
+        <td>${name}</td>
+        <td>${booth}</td>
+        <td>${brand}</td>
+        <td>${r.orders}</td>
+        <td>${money(r.sales)}</td>
+      </tr>`;
+    }
+
+    html += `</tbody></table>`;
+    topVendorsTableEl.innerHTML = html;
+  }
+
+  function renderRecentOrdersTable(){
+    if(!eventOrders.length){
+      recentOrdersTableEl.innerHTML = `<div class="table-empty">No orders yet.</div>`;
+      return;
+    }
+    const sorted = [...eventOrders].sort((a,b) => {
+      const da = a.createdAt && a.createdAt.toDate ? a.createdAt.toDate().getTime() : 0;
+      const db = b.createdAt && b.createdAt.toDate ? b.createdAt.toDate().getTime() : 0;
+      return db - da;
+    }).slice(0,10);
+
+    let html = `<table><thead>
+      <tr>
+        <th>Time</th>
+        <th>Order</th>
+        <th>Vendor</th>
+        <th>Booth</th>
+        <th>Type</th>
+        <th>Total</th>
+      </tr>
+    </thead><tbody>`;
+
+    for(const o of sorted){
+      let timeStr = "-";
+      if(o.createdAt && o.createdAt.toDate){
+        const d = o.createdAt.toDate();
+        timeStr = d.toLocaleTimeString("en-EG",{hour:"2-digit",minute:"2-digit"});
+      }
+      const isReturn = o.isReturn === true;
+      const vendor = o.vendorName || o.vendor || o.brandName || o.brandId || "-";
+      const booth = o.boothLabel || o.branchName || o.branchId || "-";
+      const typePill = isReturn
+        ? `<span class="pill pill-danger">Return</span>`
+        : `<span class="pill pill-success">Sale</span>`;
+      html += `<tr>
+        <td>${timeStr}</td>
+        <td>#${o.orderNumber || o._id}</td>
+        <td>${vendor}</td>
+        <td>${booth}</td>
+        <td>${typePill}</td>
+        <td>${money(o.total)}</td>
+      </tr>`;
+    }
+
+    html += `</tbody></table>`;
+    recentOrdersTableEl.innerHTML = html;
+  }
+
+  function renderVendorsTable(){
+    if(!eventVendors.length){
+      vendorsTableEl.innerHTML = `<div class="table-empty">No vendors added yet.</div>`;
+      return;
+    }
+
+    const vendorStats = window.__eventVendorStats || new Map();
+    const search = (searchVendorsInput.value || "").toLowerCase();
+    const statusFilter = filterVendorStatusSelect.value;
+
+    let rows = eventVendors.map(v => {
+      const stats = vendorStats.get(v._id) || {sales:0,orders:0};
+      return { vendor: v, sales: stats.sales, orders: stats.orders };
+    });
+
+    if(search){
+      rows = rows.filter(r => {
+        const v = r.vendor;
+        const name = (v.name || v.vendorName || "").toLowerCase();
+        const brand = (v.brandName || v.brandId || "").toLowerCase();
+        const booth = (v.boothLabel || v.booth || "").toLowerCase();
+        return name.includes(search) || brand.includes(search) || booth.includes(search);
+      });
+    }
+
+    if(statusFilter !== "all"){
+      rows = rows.filter(r => {
+        const v = r.vendor;
+        const st = (v.status || "").toLowerCase();
+        if(statusFilter === "active") return st === "active";
+        if(statusFilter === "inactive") return st && st !== "active";
+        return true;
+      });
+    }
+
+    const sortValue = sortVendorsSelect.value;
+    rows.sort((a,b) => {
+      const vA = a.vendor;
+      const vB = b.vendor;
+      if(sortValue === "name-asc"){
+        return (vA.name || vA.vendorName || "").localeCompare(vB.name || vB.vendorName || "");
+      }
+      if(sortValue === "name-desc"){
+        return (vB.name || vB.vendorName || "").localeCompare(vA.name || vA.vendorName || "");
+      }
+      if(sortValue === "sales-desc"){
+        return b.sales - a.sales;
+      }
+      if(sortValue === "sales-asc"){
+        return a.sales - b.sales;
+      }
+      return 0;
+    });
+
+    if(!rows.length){
+      vendorsTableEl.innerHTML = `<div class="table-empty">No vendors match your filters.</div>`;
+      return;
+    }
+
+    let html = `<table><thead>
+      <tr>
+        <th>Vendor</th>
+        <th>Booth</th>
+        <th>Brand</th>
+        <th>Status</th>
+        <th>Orders</th>
+        <th>Sales</th>
+        <th>Dashboard</th>
+      </tr>
+    </thead><tbody>`;
+
+    for(const r of rows){
+      const v = r.vendor;
+      const name = v.name || v.vendorName || "Vendor";
+      const booth = v.boothLabel || v.booth || "-";
+      const brand = v.brandName || v.brandId || "-";
+      const st = (v.status || "active").toLowerCase();
+      const pillClass = st === "active" ? "pill-success" : "pill";
+      const statusLabel = st === "active" ? "Active" : "Inactive";
+      const brandId = v.brandId || "";
+      const vendorId = v._id;
+
+      html += `<tr>
+        <td>${name}</td>
+        <td>${booth}</td>
+        <td>${brand}</td>
+        <td><span class="pill ${pillClass}">${statusLabel}</span></td>
+        <td>${r.orders}</td>
+        <td>${money(r.sales)}</td>
+        <td>
+          ${brandId ? `<button class="btn btn-ghost" data-act="open-vendor" data-brand-id="${brandId}" data-vendor-id="${vendorId}" style="font-size:11px;padding:4px 8px;">Open Vendor</button>` : `<span class="panel-subtitle">Not linked</span>`}
+        </td>
+      </tr>`;
+    }
+
+    html += `</tbody></table>`;
+    vendorsTableEl.innerHTML = html;
+  }
+
+  function renderBoothsTable(){
+    if(!eventBooths.length){
+      boothsTableEl.innerHTML = `<div class="table-empty">No booths found for this event.</div>`;
+      return;
+    }
+    const search = (searchBoothsInput.value || "").toLowerCase();
+    const sortValue = sortBoothsSelect.value;
+
+    let rows = [...eventBooths];
+
+    if(search){
+      rows = rows.filter(b => {
+        const booth = (b.boothLabel || "").toLowerCase();
+        const vendor = (b.vendorName || "").toLowerCase();
+        const id = (b.branchId || "").toLowerCase();
+        return booth.includes(search) || vendor.includes(search) || id.includes(search);
+      });
+    }
+
+    const vendorStats = window.__eventVendorStats || new Map();
+    const boothStats = window.__eventBoothStats || new Map();
+
+    rows.sort((a,b) => {
+      if(sortValue === "name-asc"){
+        return (a.boothLabel || "").localeCompare(b.boothLabel || "");
+      }
+      if(sortValue === "name-desc"){
+        return (b.boothLabel || "").localeCompare(a.boothLabel || "");
+      }
+      if(sortValue === "vendor-asc"){
+        return (a.vendorName || "").localeCompare(b.vendorName || "");
+      }
+      return 0;
+    });
+
+    let html = `<table><thead>
+      <tr>
+        <th>Booth</th>
+        <th>Vendor</th>
+        <th>Branch ID</th>
+        <th>Orders</th>
+        <th>Sales</th>
+      </tr>
+    </thead><tbody>`;
+
+    for(const b of rows){
+      const stats = b.branchId ? (boothStats.get(b.branchId) || {sales:0,orders:0}) : {sales:0,orders:0};
+      html += `<tr>
+        <td>${b.boothLabel || "-"}</td>
+        <td>${b.vendorName || "-"}</td>
+        <td>${b.branchId || "-"}</td>
+        <td>${stats.orders}</td>
+        <td>${money(stats.sales)}</td>
+      </tr>`;
+    }
+
+    html += `</tbody></table>`;
+    boothsTableEl.innerHTML = html;
+  }
+
+  function renderOrdersTable(){
+    if(!eventOrders.length){
+      ordersTableEl.innerHTML = `<div class="table-empty">No orders yet.</div>`;
+      return;
+    }
+
+    const search = (searchOrdersInput.value || "").toLowerCase();
+    const typeFilter = filterOrderTypeSelect.value;
+    const sortValue = sortOrdersSelect.value;
+
+    let rows = [...eventOrders];
+
+    if(search){
+      rows = rows.filter(o => {
+        const id = (o.orderNumber || o._id || "").toString().toLowerCase();
+        const vendor = (o.vendorName || o.vendor || o.brandName || o.brandId || "").toLowerCase();
+        const customer = ((o.customer && o.customer.name) || "").toLowerCase();
+        return id.includes(search) || vendor.includes(search) || customer.includes(search);
+      });
+    }
+
+    if(typeFilter !== "all"){
+      rows = rows.filter(o => {
+        const isReturn = o.isReturn === true;
+        if(typeFilter === "sale") return !isReturn;
+        if(typeFilter === "return") return isReturn;
+        return true;
+      });
+    }
+
+    rows.sort((a,b) => {
+      if(sortValue === "date-desc"){
+        const da = a.createdAt && a.createdAt.toDate ? a.createdAt.toDate().getTime() : 0;
+        const db = b.createdAt && b.createdAt.toDate ? b.createdAt.toDate().getTime() : 0;
+        return db - da;
+      }
+      if(sortValue === "date-asc"){
+        const da = a.createdAt && a.createdAt.toDate ? a.createdAt.toDate().getTime() : 0;
+        const db = b.createdAt && b.createdAt.toDate ? b.createdAt.toDate().getTime() : 0;
+        return da - db;
+      }
+      if(sortValue === "total-desc"){
+        return (Number(b.total || 0) - Number(a.total || 0));
+      }
+      if(sortValue === "total-asc"){
+        return (Number(a.total || 0) - Number(b.total || 0));
+      }
+      return 0;
+    });
+
+    if(!rows.length){
+      ordersTableEl.innerHTML = `<div class="table-empty">No orders match your filters.</div>`;
+      return;
+    }
+
+    let html = `<table><thead>
+      <tr>
+        <th>Date</th>
+        <th>Order</th>
+        <th>Vendor</th>
+        <th>Booth</th>
+        <th>Type</th>
+        <th>Total</th>
+        <th>Payment</th>
+      </tr>
+    </thead><tbody>`;
+
+    for(const o of rows){
+      let dateStr = "-";
+      if(o.createdAt && o.createdAt.toDate){
+        const d = o.createdAt.toDate();
+        dateStr = d.toLocaleString("en-EG",{month:"short",day:"2-digit",hour:"2-digit",minute:"2-digit"});
       }else{
-        authAlertIcon.textContent = "ℹ️";
+        dateStr = orderDateString(o);
       }
-      authAlertText.textContent = msg;
-    }
-    function hideAuthAlert(){
-      authAlert.classList.add("hidden");
-    }
-    function showDashAlert(msg, type="info"){
-      dashAlert.classList.remove("hidden","ok","error");
-      if(type==="ok"){
-        dashAlert.classList.add("ok");
-        dashAlertIcon.textContent = "✅";
-      }else if(type==="error"){
-        dashAlert.classList.add("error");
-        dashAlertIcon.textContent = "⚠️";
-      }else{
-        dashAlertIcon.textContent = "ℹ️";
-      }
-      dashAlertText.textContent = msg;
-    }
-    function hideDashAlert(){
-      dashAlert.classList.add("hidden");
+      const isReturn = o.isReturn === true;
+      const vendor = o.vendorName || o.vendor || o.brandName || o.brandId || "-";
+      const booth = o.boothLabel || o.branchName || o.branchId || "-";
+      const typePill = isReturn
+        ? `<span class="pill pill-danger">Return</span>`
+        : `<span class="pill pill-success">Sale</span>`;
+      const p = o.payment || {};
+      const pm = o.paymentMethod || p.method || p.type || "-";
+      html += `<tr>
+        <td>${dateStr}</td>
+        <td>#${o.orderNumber || o._id}</td>
+        <td>${vendor}</td>
+        <td>${booth}</td>
+        <td>${typePill}</td>
+        <td>${money(o.total)}</td>
+        <td>${pm}</td>
+      </tr>`;
     }
 
-    function setBtnLoading(btn, textEl, isLoading, normalText, loadingText){
-      if(isLoading){
-        btn.disabled = true;
-        textEl.textContent = loadingText;
-      }else{
-        btn.disabled = false;
-        textEl.textContent = normalText;
-      }
+    html += `</tbody></table>`;
+    ordersTableEl.innerHTML = html;
+  }
+
+  function renderCustomersTable(){
+    if(!eventCustomers.length){
+      customersTableEl.innerHTML = `<div class="table-empty">No customers yet.</div>`;
+      return;
     }
 
-    function formatDateRange(startStr, endStr){
-      if(!startStr && !endStr) return "";
-      try{
-        const opts = { day:"2-digit", month:"short" };
-        if(startStr && endStr){
-          const s = new Date(startStr);
-          const e = new Date(endStr);
-          if(!isNaN(s) && !isNaN(e)){
-            return `${s.toLocaleDateString("en-GB",opts)} – ${e.toLocaleDateString("en-GB",opts)}`;
-          }
-        }else if(startStr){
-          const s = new Date(startStr);
-          if(!isNaN(s)){
-            return s.toLocaleDateString("en-GB",{ day:"2-digit", month:"short", year:"numeric" });
-          }
+    const search = (searchCustomersInput.value || "").toLowerCase();
+    const sortValue = sortCustomersSelect.value;
+
+    let rows = [...eventCustomers];
+
+    if(search){
+      rows = rows.filter(c => {
+        return (
+          (c.name || "").toLowerCase().includes(search) ||
+          (c.phone || "").toLowerCase().includes(search) ||
+          (c.email || "").toLowerCase().includes(search)
+        );
+      });
+    }
+
+    rows.sort((a,b) => {
+      if(sortValue === "name-asc"){
+        return (a.name || "").localeCompare(b.name || "");
+      }
+      if(sortValue === "name-desc"){
+        return (b.name || "").localeCompare(a.name || "");
+      }
+      if(sortValue === "total-desc"){
+        return b.totalSpent - a.totalSpent;
+      }
+      if(sortValue === "orders-desc"){
+        return b.ordersCount - a.ordersCount;
+      }
+      return 0;
+    });
+
+    if(!rows.length){
+      customersTableEl.innerHTML = `<div class="table-empty">No customers match your filters.</div>`;
+      return;
+    }
+
+    let html = `<table><thead>
+      <tr>
+        <th>Name</th>
+        <th>Phone</th>
+        <th>Email</th>
+        <th>Orders</th>
+        <th>Total spent</th>
+      </tr>
+    </thead><tbody>`;
+
+    for(const c of rows){
+      html += `<tr>
+        <td>${c.name}</td>
+        <td>${c.phone}</td>
+        <td>${c.email || "-"}</td>
+        <td>${c.ordersCount}</td>
+        <td>${money(c.totalSpent)}</td>
+      </tr>`;
+    }
+
+    html += `</tbody></table>`;
+    customersTableEl.innerHTML = html;
+  }
+
+  // =========================
+  // CHARTS
+  // =========================
+
+  function renderSalesTimelineChart(hourBuckets){
+    const ctx = document.getElementById("chartSalesTimeline");
+    if(!ctx) return;
+
+    const labels = Object.keys(hourBuckets);
+    const values = labels.map(l => hourBuckets[l]);
+
+    if(salesTimelineChart){
+      salesTimelineChart.destroy();
+    }
+    salesTimelineChart = new Chart(ctx,{
+      type:"line",
+      data:{
+        labels,
+        datasets:[{
+          label:"Sales (today)",
+          data:values,
+          borderWidth:2,
+          fill:false,
+          tension:0.25
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        plugins:{
+          legend:{display:false}
+        },
+        scales:{
+          x:{grid:{display:false}},
+          y:{grid:{color:"#e5e7eb"}}
         }
-      }catch(e){
-        console.warn("Date parse error", e);
-      }
-      return "";
-    }
-
-    // ---------- Auth toggle ----------
-    const loginCard = document.getElementById("loginCard");
-    const signupCard = document.getElementById("signupCard");
-    document.getElementById("goSignup").addEventListener("click", ()=>{
-      loginCard.style.display = "none";
-      signupCard.style.display = "block";
-      hideAuthAlert();
-    });
-    document.getElementById("goLogin").addEventListener("click", ()=>{
-      signupCard.style.display = "none";
-      loginCard.style.display = "block";
-      hideAuthAlert();
-    });
-
-    // ---------- Auth: login/signup/logout ----------
-    const loginForm = document.getElementById("loginForm");
-    const loginBtn = document.getElementById("loginBtn");
-    const loginBtnText = document.getElementById("loginBtnText");
-
-    loginForm.addEventListener("submit", async (e)=>{
-      e.preventDefault();
-      hideAuthAlert();
-
-      const email = document.getElementById("loginEmail").value.trim();
-      const password = document.getElementById("loginPassword").value;
-
-      if(!email || !password){
-        showAuthAlert("Please fill your email and password.","error");
-        return;
-      }
-
-      setBtnLoading(loginBtn, loginBtnText, true, "Log in", "Logging in…");
-      try{
-        await signInWithEmailAndPassword(auth, email, password);
-      }catch(err){
-        console.error("Login error", err);
-        let msg = "Error logging in. Please check your credentials.";
-        if(err.code === "auth/user-not-found"){
-          msg = "No organizer found with this email.";
-        }else if(err.code === "auth/wrong-password"){
-          msg = "Incorrect password. Please try again.";
-        }
-        showAuthAlert(msg, "error");
-      }finally{
-        setBtnLoading(loginBtn, loginBtnText, false, "Log in", "Logging in…");
       }
     });
+  }
 
-    const signupForm = document.getElementById("signupForm");
-    const signupBtn = document.getElementById("signupBtn");
-    const signupBtnText = document.getElementById("signupBtnText");
+  function renderPaymentSplitChart(paymentBuckets){
+    const ctx = document.getElementById("chartPaymentSplit");
+    if(!ctx) return;
 
-    signupForm.addEventListener("submit", async (e)=>{
-      e.preventDefault();
-      hideAuthAlert();
+    const labels = ["Cash","Card","Other"];
+    const values = [
+      paymentBuckets.cash || 0,
+      paymentBuckets.card || 0,
+      paymentBuckets.other || 0
+    ];
 
-      const name = document.getElementById("signupName").value.trim();
-      const email = document.getElementById("signupEmail").value.trim();
-      const pw1 = document.getElementById("signupPassword").value;
-      const pw2 = document.getElementById("signupPassword2").value;
-
-      if(!name || !email || !pw1 || !pw2){
-        showAuthAlert("Please fill all fields.","error");
-        return;
-      }
-      if(pw1 !== pw2){
-        showAuthAlert("Passwords do not match.","error");
-        return;
-      }
-      if(pw1.length < 6){
-        showAuthAlert("Password must be at least 6 characters.","error");
-        return;
-      }
-
-      setBtnLoading(signupBtn, signupBtnText, true, "Create account", "Creating…");
-
-      try{
-        const cred = await createUserWithEmailAndPassword(auth, email, pw1);
-        const uid = cred.user.uid;
-
-        // Create /users/{uid} with role organizer
-        const userRef = doc(db,"users",uid);
-        await setDoc(userRef, {
-          name,
-          email,
-          role: "event_owner",
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        }, { merge:true });
-
-        showAuthAlert("Account created successfully. You are logged in.","ok");
-      }catch(err){
-        console.error("Signup error", err);
-        let msg = "Error creating account. Please try again.";
-        if(err.code === "auth/email-already-in-use"){
-          msg = "This email is already in use. Try logging in.";
-        }else if(err.code === "auth/invalid-email"){
-          msg = "Invalid email address.";
-        }
-        showAuthAlert(msg,"error");
-      }finally{
-        setBtnLoading(signupBtn, signupBtnText, false, "Create account", "Creating…");
+    if(paymentSplitChart){
+      paymentSplitChart.destroy();
+    }
+    paymentSplitChart = new Chart(ctx,{
+      type:"doughnut",
+      data:{
+        labels,
+        datasets:[{
+          data:values
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        plugins:{
+          legend:{position:"bottom"}
+        },
+        cutout:"60%"
       }
     });
+  }
 
-    document.getElementById("logoutBtn").addEventListener("click", async ()=>{
-      try{
-        await signOut(auth);
-      }catch(e){
-        console.error("Logout error", e);
-      }
+  // =========================
+  // NAVIGATION
+  // =========================
+
+  const pages = qsa(".page");
+  const navItems = qsa(".nav-item");
+  const goVendorsBtn = qs("#btn-go-vendors");
+
+  function setActivePage(pageId){
+    pages.forEach(p => {
+      p.classList.toggle("active", p.id === pageId);
+    });
+    navItems.forEach(n => {
+      n.classList.toggle("active", n.dataset.page === pageId);
     });
 
-    // ---------- State: user + events + vendors ----------
-    let currentUser = null;
-    let eventsUnsub = null;
-    let vendorsUnsub = null;
-    let selectedEventId = null;
-    let eventsMap = new Map(); // eventId -> data
-
-    const userSubtitle = document.getElementById("userSubtitle");
-    const eventsTbody = document.getElementById("eventsTbody");
-    const selectedEventInfo = document.getElementById("selectedEventInfo");
-    const selectedEventTitle = document.getElementById("selectedEventTitle");
-    const selectedEventSub = document.getElementById("selectedEventSub");
-    const vendorsTbody = document.getElementById("vendorsTbody");
-    const createdEventInfo = document.getElementById("createdEventInfo");
-    const createdEventIdPill = document.getElementById("createdEventIdPill");
-    const createdEventSignupLink = document.getElementById("createdEventSignupLink");
-
-    function clearVendorsTable(message){
-      vendorsTbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--muted);font-size:11px;padding:12px;">${message}</td></tr>`;
+    if(pageId === "page-overview"){
+      topbarTitleEl.textContent = "Live Overview";
+      topbarSubtitleEl.textContent = `Today’s performance for ${eventData?.name || "the event"}.`;
+    }else if(pageId === "page-vendors"){
+      topbarTitleEl.textContent = "Vendors";
+      topbarSubtitleEl.textContent = "Manage vendors linked to this event and open their dashboards.";
+    }else if(pageId === "page-booths"){
+      topbarTitleEl.textContent = "Booths / Branches";
+      topbarSubtitleEl.textContent = "All booths inside the event mapped to vendor branches.";
+    }else if(pageId === "page-orders"){
+      topbarTitleEl.textContent = "Orders";
+      topbarSubtitleEl.textContent = "All sales and returns made inside this event.";
+    }else if(pageId === "page-customers"){
+      topbarTitleEl.textContent = "Customers";
+      topbarSubtitleEl.textContent = "Customers who bought from any vendor in this event.";
+    }else if(pageId === "page-settings"){
+      topbarTitleEl.textContent = "Event Settings";
+      topbarSubtitleEl.textContent = "Edit event details and understand vendor linking.";
     }
+  }
 
-    function renderEventsTable(){
-      if(eventsMap.size === 0){
-        eventsTbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--muted);font-size:11px;padding:12px;">No events yet.</td></tr>`;
-        return;
-      }
+  navItems.forEach(item => {
+    item.addEventListener("click", () => {
+      const pageId = item.dataset.page;
+      if(!pageId) return;
+      setActivePage(pageId);
+    });
+  });
 
-      const rows = [];
-      const origin = window.location.origin;
-      const vendorSignupPath = "/vendor-signup.html";
+  if(goVendorsBtn){
+    goVendorsBtn.addEventListener("click", () => {
+      setActivePage("page-vendors");
+    });
+  }
 
-      eventsMap.forEach((data, id)=>{
-        const dateStr = formatDateRange(data.startDate, data.endDate) || "TBA";
-        const vendorsCount = data._vendorCounts?.total ?? "-";
-        const link = `${origin}${vendorSignupPath}?eventId=${encodeURIComponent(id)}`;
-        rows.push(`
-          <tr>
-            <td>${data.name || "Untitled"}</td>
-            <td>${dateStr}</td>
-            <td>${vendorsCount}</td>
-            <td><span class="link" data-signup-link="${id}">Copy link</span></td>
-            <td><button class="btn btn-secondary btn-sm" data-select-event="${id}">Open</button></td>
-          </tr>
-        `);
-      });
+  // =========================
+  // MODALS (ADD VENDOR etc.)
+  // =========================
 
-      eventsTbody.innerHTML = rows.join("");
+  const addVendorBtn = qs("#btn-add-vendor");
+  const exportVendorsBtn = qs("#btn-export-vendors");
+  const exportBoothsBtn = qs("#btn-export-booths");
+  const exportOrdersBtn = qs("#btn-export-orders");
+  const exportCustomersBtn = qs("#btn-export-customers");
 
-      // attach events
-      eventsTbody.querySelectorAll("[data-select-event]").forEach(btn=>{
-        btn.addEventListener("click", ()=>{
-          const eid = btn.getAttribute("data-select-event");
-          selectEvent(eid);
-        });
-      });
-      eventsTbody.querySelectorAll("[data-signup-link]").forEach(el=>{
-        el.addEventListener("click", ()=>{
-          const id = el.getAttribute("data-signup-link");
-          const signupUrl = `${origin}${vendorSignupPath}?eventId=${encodeURIComponent(id)}`;
-          navigator.clipboard?.writeText(signupUrl).catch(()=>{});
-          showDashAlert("Vendor signup link copied to clipboard.","ok");
-        });
-      });
-    }
+  if(addVendorBtn){
+    addVendorBtn.addEventListener("click", () => {
+      const html = `
+        <div class="modal-title">Add Vendor to Event</div>
+        <div class="modal-subtitle">
+          Link a vendor to this event. This will create a record under
+          <strong>/events/${eventId}/vendors</strong> and connect it to its brand in Store OS.
+        </div>
+        <form id="addVendorForm">
+          <div class="field">
+            <div class="field-label">Vendor Name</div>
+            <input id="vendorName" class="field-input" placeholder="Oudies, Nizu, ..." required/>
+          </div>
+          <div class="field">
+            <div class="field-label">Brand ID (Store OS)</div>
+            <input id="brandId" class="field-input" placeholder="brands/{brandId}" required/>
+            <div class="field-hint">Use the brandId from the Luma Store OS Brand Dashboard.</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Brand Name (optional)</div>
+            <input id="brandName" class="field-input" placeholder="If different from vendor name"/>
+          </div>
+          <div class="field">
+            <div class="field-label">Booth Label</div>
+            <input id="boothLabel" class="field-input" placeholder="Booth A12, Tent C3, ..." />
+          </div>
+          <div class="field">
+            <div class="field-label">Branch IDs (optional)</div>
+            <input id="branchIds" class="field-input" placeholder="branch1, branch2, ..." />
+            <div class="field-hint">
+              If you use multiple branches for the same vendor, enter the branch IDs (comma separated).
+            </div>
+          </div>
+          <div class="field">
+            <div class="field-label">Status</div>
+            <select id="vendorStatus" class="field-input">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+          <div class="field">
+            <div class="field-label">Contact Phone (optional)</div>
+            <input id="vendorPhone" class="field-input" placeholder="+20..." />
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-ghost" id="btnCancelAddVendor">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Vendor</button>
+          </div>
+        </form>
+      `;
+      openModal(html);
 
-    function renderVendorsTable(vendors){
-      if(!vendors || vendors.length === 0){
-        clearVendorsTable("No vendors yet for this event.");
-        return;
-      }
-      const rows = vendors.map(v=>{
-        const statusClass = `badge-status ${v.status || "pending"}`;
-        const statusLabel = (v.status || "pending").replace(/^\w/, c=>c.toUpperCase());
-        const posLinkHtml = v.posUrl
-          ? `<span class="link" data-pos-url="${v.posUrl}">Copy POS</span>`
-          : `<span style="font-size:11px;color:var(--muted);">Not generated</span>`;
+      const form = modalContent.querySelector("#addVendorForm");
+      const cancelBtn = modalContent.querySelector("#btnCancelAddVendor");
 
-        const actionsHtml = v.status === "pending"
-          ? `
-            <button class="btn btn-primary btn-sm" data-approve="${v._id}">Approve</button>
-            <button class="btn btn-danger btn-sm" data-reject="${v._id}">Reject</button>
-          `
-          : `<span style="font-size:11px;color:var(--muted);">—</span>`;
+      cancelBtn.addEventListener("click", () => closeModal());
 
-        return `
-          <tr>
-            <td>
-              <div style="font-size:12px;font-weight:600;">${v.brandName || "Brand"}</div>
-              <div style="font-size:11px;color:var(--muted);">
-                Booth: ${v.boothNumber || "-"} | Category: ${v.category || "-"}
-              </div>
-            </td>
-            <td>
-              <div style="font-size:12px;">${v.contactName || "-"}</div>
-              <div style="font-size:11px;color:var(--muted);">
-                ${v.contactPhone || ""}<br/>
-                ${v.contactEmail || ""}
-              </div>
-            </td>
-            <td>
-              <span class="${statusClass}">${statusLabel}</span>
-            </td>
-            <td>${posLinkHtml}</td>
-            <td>${actionsHtml}</td>
-          </tr>
-        `;
-      }).join("");
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const name = form.querySelector("#vendorName").value.trim();
+        const brandId = form.querySelector("#brandId").value.trim();
+        const brandName = form.querySelector("#brandName").value.trim();
+        const boothLabel = form.querySelector("#boothLabel").value.trim();
+        const branchIdsRaw = form.querySelector("#branchIds").value.trim();
+        const status = form.querySelector("#vendorStatus").value;
+        const phone = form.querySelector("#vendorPhone").value.trim();
 
-      vendorsTbody.innerHTML = rows;
-
-      // attach POS copy
-      vendorsTbody.querySelectorAll("[data-pos-url]").forEach(el=>{
-        el.addEventListener("click", ()=>{
-          const url = el.getAttribute("data-pos-url");
-          navigator.clipboard?.writeText(url).catch(()=>{});
-          showDashAlert("POS link copied to clipboard.","ok");
-        });
-      });
-
-      // approve / reject
-      vendorsTbody.querySelectorAll("[data-approve]").forEach(btn=>{
-        btn.addEventListener("click", ()=>{
-          const vid = btn.getAttribute("data-approve");
-          approveVendor(selectedEventId, vid);
-        });
-      });
-      vendorsTbody.querySelectorAll("[data-reject]").forEach(btn=>{
-        btn.addEventListener("click", ()=>{
-          const vid = btn.getAttribute("data-reject");
-          rejectVendor(selectedEventId, vid);
-        });
-      });
-    }
-
-    async function selectEvent(eventId){
-      selectedEventId = eventId;
-      if(vendorsUnsub) vendorsUnsub();
-      clearVendorsTable("Loading vendors…");
-      selectedEventInfo.style.display = "block";
-
-      const data = eventsMap.get(eventId);
-      selectedEventTitle.textContent = `Vendors — ${data?.name || "Event"}`;
-      selectedEventSub.textContent = "Review pending vendors and share POS links for approved brands.";
-
-      // listen to vendors in real time
-      const vendorsCol = collection(db,"events",eventId,"vendors");
-      vendorsUnsub = onSnapshot(vendorsCol, (snap)=>{
-        const vendors = [];
-        snap.forEach(docSnap=>{
-          vendors.push({ _id: docSnap.id, ...docSnap.data() });
-        });
-        renderVendorsTable(vendors);
-
-        // also update vendor count in eventsMap
-        const info = eventsMap.get(eventId);
-        if(info){
-          info._vendorCounts = {
-            total: vendors.length,
-            pending: vendors.filter(v=>v.status==="pending" || !v.status).length
-          };
-          eventsMap.set(eventId, info);
-          renderEventsTable();
-        }
-      }, (err)=>{
-        console.error("Vendors snapshot error", err);
-        clearVendorsTable("Error loading vendors.");
-      });
-    }
-
-    // ---------- Approve / Reject Vendor ----------
-    async function approveVendor(eventId, vendorId){
-      if(!eventId || !vendorId) return;
-      hideDashAlert();
-
-      try{
-        showDashAlert("Approving vendor and generating POS link…","info");
-
-        const vendorRef = doc(db,"events",eventId,"vendors",vendorId);
-        const vendorSnap = await getDoc(vendorRef);
-        if(!vendorSnap.exists()){
-          showDashAlert("Vendor not found.","error");
+        if(!name || !brandId){
+          showAlert("Vendor name and brand ID are required.","error");
           return;
         }
-        const vendor = vendorSnap.data();
-        if(!vendor.brandId){
-          showDashAlert("Vendor is missing brandId. This should not happen.","error");
-          return;
+
+        const branchIds = branchIdsRaw
+          ? branchIdsRaw.split(",").map(s => s.trim()).filter(Boolean)
+          : [];
+
+        try{
+          showLoading(true);
+          const ref = db.collection("events").doc(eventId).collection("vendors");
+          await ref.add({
+            name,
+            brandId,
+            brandName: brandName || name,
+            boothLabel: boothLabel || "",
+            branchIds,
+            status,
+            phone,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          showAlert("Vendor added & linked to event.");
+          closeModal();
+          await loadVendors();
+          deriveBoothsFromVendors();
+          computeAnalyticsAndRender();
+          setActivePage("page-vendors");
+        }catch(e){
+          console.error("Error adding vendor", e);
+          showAlert("Could not add vendor. Check console.","error");
+        }finally{
+          showLoading(false);
         }
+      });
+    });
+  }
 
-        const eventRef = doc(db,"events",eventId);
-        const eventSnap = await getDoc(eventRef);
-        if(!eventSnap.exists()){
-          showDashAlert("Event not found.","error");
-          return;
-        }
-        const event = eventSnap.data();
-
-        // 1) Create branch under brands/{brandId}/branches
-        const brandId = vendor.brandId;
-        const branchesCol = collection(db,"brands",brandId,"branches");
-        const branchDocRef = await addDoc(branchesCol, {
-          name: `${event.name || "Event"} Booth`,
-          type: "event",
-          eventId,
-          eventCode: event.code || null,
-          eventName: event.name || null,
-          venue: event.venue || null,
-          city: event.city || null,
-          country: event.country || null,
-          vatPercent: typeof event.vatPercent === "number" ? event.vatPercent : 14,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        });
-        const branchId = branchDocRef.id;
-
-        // 2) POS URL
-        const posUrl = `${POS_BASE_URL}/?brandId=${encodeURIComponent(brandId)}&branchId=${encodeURIComponent(branchId)}&eventId=${encodeURIComponent(eventId)}`;
-
-        // 3) Update branch with POS URL
-        await setDoc(branchDocRef, {
-          posUrl,
-          eventVendorId: vendorId
-        }, { merge:true });
-
-        // 4) Update vendor doc
-        await setDoc(vendorRef, {
-          status: "approved",
-          branchId,
-          posUrl,
-          updatedAt: serverTimestamp()
-        }, { merge:true });
-
-        showDashAlert("Vendor approved and POS link generated.","ok");
-      }catch(err){
-        console.error("Approve vendor error", err);
-        showDashAlert("Error approving vendor. Check console for details.","error");
-      }
+  // Export helpers
+  function exportToXlsx(filename, rows, headers){
+    if(!rows || !rows.length){
+      showAlert("Nothing to export.","error");
+      return;
     }
-
-    async function rejectVendor(eventId, vendorId){
-      if(!eventId || !vendorId) return;
-      const reason = prompt("Optional: reason for rejection (will be saved in vendor record).") || null;
-      try{
-        const vendorRef = doc(db,"events",eventId,"vendors",vendorId);
-        await setDoc(vendorRef, {
-          status: "rejected",
-          rejectionReason: reason,
-          updatedAt: serverTimestamp()
-        }, { merge:true });
-        showDashAlert("Vendor marked as rejected.","ok");
-      }catch(err){
-        console.error("Reject vendor error", err);
-        showDashAlert("Error rejecting vendor.","error");
-      }
+    const sheetData = [headers.map(h => h.label)];
+    for(const r of rows){
+      sheetData.push(headers.map(h => (r[h.key] ?? "")));
     }
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(sheetData);
+    XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+    XLSX.writeFile(wb, filename);
+  }
 
-    // ---------- Create Event ----------
-    const eventForm = document.getElementById("eventForm");
-    const createEventBtn = document.getElementById("createEventBtn");
-    const createEventBtnText = document.getElementById("createEventBtnText");
-
-    eventForm.addEventListener("submit", async (e)=>{
-      e.preventDefault();
-      hideDashAlert();
-      createdEventInfo.style.display = "none";
-
-      if(!currentUser){
-        showDashAlert("You must be logged in to create an event.","error");
-        return;
-      }
-
-      const name = document.getElementById("eventName").value.trim();
-      const code = document.getElementById("eventCode").value.trim() || null;
-      const currency = document.getElementById("currency").value.trim() || "EGP";
-      const startDate = document.getElementById("startDate").value || null;
-      const endDate = document.getElementById("endDate").value || null;
-      const venue = document.getElementById("venue").value.trim() || null;
-      const city = document.getElementById("city").value.trim() || null;
-      const country = document.getElementById("country").value.trim() || null;
-      const vatPercent = parseFloat(document.getElementById("vat").value || "14");
-      const servicePercent = parseFloat(document.getElementById("service").value || "0");
-      const signupEnabled = document.getElementById("signupEnabled").checked;
-
-      if(!name){
-        showDashAlert("Please enter an event name.","error");
-        return;
-      }
-
-      setBtnLoading(createEventBtn, createEventBtnText, true, "Create event", "Creating…");
-
-      try{
-        const eventsCol = collection(db,"events");
-        const docRef = await addDoc(eventsCol, {
-          name,
-          code,
-          currency,
-          startDate,
-          endDate,
-          venue,
-          city,
-          country,
-          vatPercent: isNaN(vatPercent) ? 14 : vatPercent,
-          servicePercent: isNaN(servicePercent) ? 0 : servicePercent,
-          brandSignupEnabled: signupEnabled,
-          organizerId: currentUser.uid,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        });
-
-        const eventId = docRef.id;
-        const origin = window.location.origin;
-        const vendorSignupPath = "/vendor-signup.html";
-        const signupUrl = `${origin}${vendorSignupPath}?eventId=${encodeURIComponent(eventId)}`;
-
-        createdEventIdPill.textContent = `ID: ${eventId}`;
-        createdEventSignupLink.textContent = signupUrl;
-        createdEventSignupLink.onclick = ()=>{
-          navigator.clipboard?.writeText(signupUrl).catch(()=>{});
-          showDashAlert("Vendor signup link copied to clipboard.","ok");
+  if(exportVendorsBtn){
+    exportVendorsBtn.addEventListener("click", () => {
+      const vendorStats = window.__eventVendorStats || new Map();
+      const rows = eventVendors.map(v => {
+        const stats = vendorStats.get(v._id) || {sales:0,orders:0};
+        return {
+          name: v.name || v.vendorName || "",
+          brandId: v.brandId || "",
+          brandName: v.brandName || "",
+          boothLabel: v.boothLabel || v.booth || "",
+          status: v.status || "active",
+          phone: v.phone || "",
+          orders: stats.orders,
+          sales: stats.sales
         };
-        createdEventInfo.style.display = "block";
-
-        // Clear form lightly
-        document.getElementById("eventName").value = "";
-        document.getElementById("eventCode").value = "";
-        document.getElementById("venue").value = "";
-        document.getElementById("startDate").value = "";
-        document.getElementById("endDate").value = "";
-        showDashAlert("Event created successfully.","ok");
-      }catch(err){
-        console.error("Create event error", err);
-        showDashAlert("Error creating event. Check console.","error");
-      }finally{
-        setBtnLoading(createEventBtn, createEventBtnText, false, "Create event", "Creating…");
-      }
-    });
-
-    // ---------- Listen to events for this organizer ----------
-    function subscribeToEvents(uid){
-      if(eventsUnsub) eventsUnsub();
-      eventsMap.clear();
-      renderEventsTable();
-
-      const qEvents = query(collection(db,"events"), where("organizerId","==",uid));
-      eventsUnsub = onSnapshot(qEvents, (snap)=>{
-        eventsMap.clear();
-        snap.forEach(docSnap=>{
-          eventsMap.set(docSnap.id, docSnap.data());
-        });
-        renderEventsTable();
-      }, (err)=>{
-        console.error("Events snapshot error", err);
-        showDashAlert("Error loading events. Check console.","error");
       });
+      exportToXlsx("event-vendors.xlsx", rows, [
+        {key:"name",label:"Vendor Name"},
+        {key:"brandId",label:"Brand ID"},
+        {key:"brandName",label:"Brand Name"},
+        {key:"boothLabel",label:"Booth"},
+        {key:"status",label:"Status"},
+        {key:"phone",label:"Phone"},
+        {key:"orders",label:"Orders"},
+        {key:"sales",label:"Sales"}
+      ]);
+    });
+  }
+
+  if(exportBoothsBtn){
+    exportBoothsBtn.addEventListener("click", () => {
+      const boothStats = window.__eventBoothStats || new Map();
+      const rows = eventBooths.map(b => {
+        const stats = b.branchId ? (boothStats.get(b.branchId) || {sales:0,orders:0}) : {sales:0,orders:0};
+        return {
+          booth: b.boothLabel || "",
+          vendor: b.vendorName || "",
+          branchId: b.branchId || "",
+          sales: stats.sales,
+          orders: stats.orders
+        };
+      });
+      exportToXlsx("event-booths.xlsx", rows, [
+        {key:"booth",label:"Booth"},
+        {key:"vendor",label:"Vendor"},
+        {key:"branchId",label:"Branch ID"},
+        {key:"orders",label:"Orders"},
+        {key:"sales",label:"Sales"}
+      ]);
+    });
+  }
+
+  if(exportOrdersBtn){
+    exportOrdersBtn.addEventListener("click", () => {
+      const rows = eventOrders.map(o => {
+        let dateStr = "-";
+        if(o.createdAt && o.createdAt.toDate){
+          const d = o.createdAt.toDate();
+          dateStr = d.toISOString();
+        }else{
+          dateStr = orderDateString(o);
+        }
+        const isReturn = o.isReturn === true;
+        const p = o.payment || {};
+        const pm = o.paymentMethod || p.method || p.type || "";
+        return {
+          id: o._id,
+          orderNumber: o.orderNumber || "",
+          date: dateStr,
+          vendor: o.vendorName || o.vendor || o.brandName || o.brandId || "",
+          booth: o.boothLabel || o.branchName || o.branchId || "",
+          type: isReturn ? "Return" : "Sale",
+          total: o.total || 0,
+          paymentMethod: pm
+        };
+      });
+      exportToXlsx("event-orders.xlsx", rows, [
+        {key:"date",label:"Date"},
+        {key:"orderNumber",label:"Order #"},
+        {key:"vendor",label:"Vendor"},
+        {key:"booth",label:"Booth"},
+        {key:"type",label:"Type"},
+        {key:"total",label:"Total"},
+        {key:"paymentMethod",label:"Payment Method"},
+        {key:"id",label:"Order ID"}
+      ]);
+    });
+  }
+
+  if(exportCustomersBtn){
+    exportCustomersBtn.addEventListener("click", () => {
+      const rows = eventCustomers.map(c => ({
+        name: c.name,
+        phone: c.phone,
+        email: c.email,
+        orders: c.ordersCount,
+        totalSpent: c.totalSpent
+      }));
+      exportToXlsx("event-customers.xlsx", rows, [
+        {key:"name",label:"Name"},
+        {key:"phone",label:"Phone"},
+        {key:"email",label:"Email"},
+        {key:"orders",label:"Orders"},
+        {key:"totalSpent",label:"Total Spent"}
+      ]);
+    });
+  }
+
+  // Link "Open Vendor" button → brand dashboard (THIS LINKS TO CURRENT VENDOR)
+  vendorsTableEl.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-act='open-vendor']");
+    if(!btn) return;
+    const brandId = btn.dataset.brandId;
+    const vendorId = btn.dataset.vendorId;
+    if(!brandId){
+      showAlert("This vendor is not linked to a brand yet.","error");
+      return;
     }
 
-    // ---------- Auth state listener ----------
-    onAuthStateChanged(auth, async (user)=>{
-      currentUser = user;
-      if(user){
-        authSection.style.display = "none";
-        dashboardSection.style.display = "block";
-        userSubtitle.textContent = `Signed in as ${user.email || user.uid}`;
-        hideAuthAlert();
-        subscribeToEvents(user.uid);
-      }else{
-        authSection.style.display = "block";
-        dashboardSection.style.display = "none";
-        if(eventsUnsub) eventsUnsub();
-        if(vendorsUnsub) vendorsUnsub();
-        eventsMap.clear();
-        selectedEventId = null;
-        renderEventsTable();
-        clearVendorsTable("Select an event to load vendors.");
-        selectedEventInfo.style.display = "none";
+    // TODO: change this URL to your actual brand dashboard path (e.g. /brand.html)
+    const url = `/brand.html?brandId=${encodeURIComponent(brandId)}&eventId=${encodeURIComponent(eventId)}&vendorId=${encodeURIComponent(vendorId)}`;
+    window.open(url,"_blank");
+  });
+
+  // =========================
+  // SETTINGS SAVE
+  // =========================
+
+  const saveEventSettingsBtn = qs("#btn-save-event-settings");
+  if(saveEventSettingsBtn){
+    saveEventSettingsBtn.addEventListener("click", async () => {
+      if(!eventId) return;
+      const name = setEventNameInput.value.trim();
+      const venue = setEventVenueInput.value.trim();
+      const dates = setEventDatesInput.value.trim();
+      const file = setEventLogoInput.files?.[0];
+
+      try{
+        showLoading(true);
+        const ref = db.collection("events").doc(eventId);
+        const update = {
+          name,
+          venue,
+          dateRange: dates
+        };
+        if(file){
+          const url = await uploadImageToStorage(file, `events/${eventId}/logo`);
+          update.logoUrl = url;
+        }
+        await ref.set(update,{merge:true});
+        showAlert("Event settings saved.");
+        await loadEventMeta();
+      }catch(e){
+        console.error("Save event settings error", e);
+        showAlert("Could not save event settings.","error");
+      }finally{
+        showLoading(false);
       }
     });
-  </script>
+  }
+
+  // =========================
+  // FILTER HANDLERS
+  // =========================
+
+  if(searchVendorsInput) searchVendorsInput.addEventListener("input", () => renderVendorsTable());
+  if(filterVendorStatusSelect) filterVendorStatusSelect.addEventListener("change", () => renderVendorsTable());
+  if(sortVendorsSelect) sortVendorsSelect.addEventListener("change", () => renderVendorsTable());
+
+  if(searchBoothsInput) searchBoothsInput.addEventListener("input", () => renderBoothsTable());
+  if(sortBoothsSelect) sortBoothsSelect.addEventListener("change", () => renderBoothsTable());
+
+  if(searchOrdersInput) searchOrdersInput.addEventListener("input", () => renderOrdersTable());
+  if(filterOrderTypeSelect) filterOrderTypeSelect.addEventListener("change", () => renderOrdersTable());
+  if(sortOrdersSelect) sortOrdersSelect.addEventListener("change", () => renderOrdersTable());
+
+  if(searchCustomersInput) searchCustomersInput.addEventListener("input", () => renderCustomersTable());
+  if(sortCustomersSelect) sortCustomersSelect.addEventListener("change", () => renderCustomersTable());
+
+  // Initial page
+  setActivePage("page-overview");
+
+</script>
 </body>
 </html>
