@@ -119,10 +119,12 @@
     .auth-footer{text-align:center;margin-top:8px;font-size:10px;color:var(--muted);}
 
     /* APP LAYOUT (same style as brand) */
-    .app-shell{
-      display:none;
-      height:100vh;width:100%;
-    }
+   .app-shell{
+  height:100vh;
+  width:100%;
+  display:flex; /* JS will still override when needed */
+}
+
     .sidebar{
       width:220px;background:var(--panel);
       border-right:1px solid var(--border);
@@ -651,14 +653,15 @@
   // AUTH VIEW TOGGLING
   // -----------------------------
   function showAuthView() {
-    show(authView);
-    hide(appView);
-  }
+  if (authView) authView.style.display = "block"; // normal block container
+  if (appView)  appView.style.display = "none";
+}
 
-  function showAppView() {
-    hide(authView);
-    show(appView);
-  }
+function showAppView() {
+  if (authView) authView.style.display = "none";
+  if (appView)  appView.style.display = "flex";  // app-shell layout is flex
+}
+
 
   tabLogin?.addEventListener("click", () => {
     tabLogin.classList.add("active");
