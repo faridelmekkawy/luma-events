@@ -452,1515 +452,1183 @@
                 <input id="set-event-date" class="field-input" type="date"/>
               </div>
               <button id="btn-save-event" class="btn btn-primary" style="margin-top:6px;">Save</button>
-          </div>
-        </div>
-
-        <div class="panel panel-soft">
-          <div class="panel-header">
-            <div>
-              <div class="panel-title">
-                <span class="dot"></span>
-                Vendor Linking
-              </div>
-              <div class="panel-subtitle">
-                Make sure each vendor is linked to its brand (Store OS) and branches.
-              </div>
             </div>
           </div>
-          <p class="panel-subtitle" style="margin-bottom:8px;">
-            When a vendor is linked to a brand, their POS and products are automatically connected to this event.
-            Orders will carry both <strong>eventId</strong> and <strong>brandId</strong> so you can see everything here.
-          </p>
-          <ul style="font-size:11px;color:var(--muted);padding-left:16px;list-style:disc;">
-            <li>Use <strong>“Add Vendor”</strong> in the Vendors tab to link an existing brand to this event.</li>
-            <li>Each vendor can have one or more <strong>branches/booths</strong> inside the event.</li>
-            <li>Click <strong>“Open Vendor Dashboard”</strong> to jump to the vendor’s own brand.html (POS dashboard).</li>
-          </ul>
-        </div>
-      </div>
-    </section>
+        </section>
+      </main>
+    </div>
+  </div>
 
-  </main>
-</div>
+  <!-- MODALS -->
+  <div id="modal-container"></div>
 
-<!-- MODAL ROOT -->
-<div id="modalBackdrop" class="modal-backdrop">
-  <div id="modalContent" class="modal"></div>
-</div>
-
-<!-- GLOBAL ALERT -->
-<div id="globalAlert" class="global-alert">
-  <span class="dot"></span>
-  <span id="globalAlertText">Saved.</span>
-</div>
-
-<!-- LOADING OVERLAY -->
-<div id="loadingOverlay" class="loading-overlay">
-  <div class="spinner"></div>
-</div>
-
+  <!-- JS (Firebase + logic) will go here in Part 2 -->
 <script type="module">
-  // =========================
-  // FIREBASE INIT
-  // =========================
+  // -----------------------------
+  // FIREBASE IMPORTS + CONFIG
+  // -----------------------------
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import {
+    getFirestore,
+    doc,
+    collection,
+    collectionGroup,
+    addDoc,
+    setDoc,
+    getDoc,
+    getDocs,
+    updateDoc,
+    deleteDoc,
+    query,
+    where,
+    orderBy,
+    limit,
+    serverTimestamp,
+    onSnapshot
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+  import {
+    getAuth,
+    onAuthStateChanged,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    updateProfile,
+    signOut
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+  // If you want Storage later (for event banners, etc.)
+  // import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+
   const firebaseConfig = {
-    // TODO: fill with your existing events project config
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
+    apiKey: "AIzaSyA80bAAGPuyscnTVS-zwrxE9Jp3tPiS1gM",
+    authDomain: "events-339ce.firebaseapp.com",
+    projectId: "events-339ce",
+    storageBucket: "events-339ce.firebasestorage.app",
+    messagingSenderId: "175601544315",
+    appId: "1:175601544315:web:00c94b4affa972b3a286de"
   };
 
-  const app = firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
-  const storage = firebase.storage();
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+  // const storage = getStorage(app);
 
-  // =========================
+  // -----------------------------
+  // CONFIG — CHANGE ONLY THIS
+  // -----------------------------
+  // Base URL of VENDOR signup page you will send to brands.
+  // Example: "https://luma-events.vercel.app/vendor.html"
+  const VENDOR_SIGNUP_BASE_URL = window.location.origin + "/vendor.html";
+
+  // -----------------------------
   // DOM HELPERS
-  // =========================
+  // -----------------------------
   const qs = (s) => document.querySelector(s);
-  const qsa = (s) => Array.from(document.querySelectorAll(s));
+  const qsa = (s) => document.querySelectorAll(s);
 
-  const authView = qs("#authView");
-  const appShell = qs("#appShell");
-  const loadingOverlay = qs("#loadingOverlay");
-  const globalAlertEl = qs("#globalAlert");
-  const globalAlertText = qs("#globalAlertText");
+  function show(el) {
+    if (!el) return;
+    el.style.display = "";
+  }
+  function hide(el) {
+    if (!el) return;
+    el.style.display = "none";
+  }
 
-  // Event meta elements
-  const sidebarEventLogo = qs("#sidebarEventLogo");
-  const sidebarEventName = qs("#sidebarEventName");
-  const sidebarEventVenue = qs("#sidebarEventVenue");
-  const authEventLogo = qs("#authEventLogo");
-  const authEventName = qs("#auth-event-name");
-  const topbarTitleEl = qs("#topbarTitle");
-  const topbarSubtitleEl = qs("#topbarSubtitle");
-  const topbarEventShortEl = qs("#topbarEventShort");
-  const topbarDateRangeEl = qs("#topbarDateRange");
-  const topbarUserAvatarEl = qs("#topbarUserAvatar");
-  const topbarUserNameEl = qs("#topbarUserName");
+  // -----------------------------
+  // AUTH DOM
+  // IDs must match Part 1
+  // -----------------------------
+  const authView = qs("#auth-view");
+  const appView = qs("#app-view");
 
-  // KPIs
-  const kpiSalesTodayEl = qs("#kpiSalesToday");
-  const kpiSalesTodayNoteEl = qs("#kpiSalesTodayNote");
-  const kpiOrdersTodayEl = qs("#kpiOrdersToday");
-  const kpiReturnsTodayEl = qs("#kpiReturnsToday");
-  const kpiActiveVendorsEl = qs("#kpiActiveVendors");
-  const kpiTotalVendorsNoteEl = qs("#kpiTotalVendorsNote");
-  const kpiActiveBoothsEl = qs("#kpiActiveBooths");
-  const kpiTotalBoothsNoteEl = qs("#kpiTotalBoothsNote");
-  const kpiPaymentSplitEl = qs("#kpiPaymentSplit");
+  const tabLogin = qs("#tab-login");
+  const tabSignup = qs("#tab-signup");
+  const loginForm = qs("#login-form");
+  const signupForm = qs("#signup-form");
+  const authAlertContainer = qs("#auth-alert-container");
+  const authSubtitle = qs("#auth-subtitle");
 
-  // Sidebar counters
-  const sidebarVendorsCountEl = qs("#sidebarVendorsCount");
-  const sidebarBoothsCountEl = qs("#sidebarBoothsCount");
-  const sidebarOrdersCountEl = qs("#sidebarOrdersCount");
-  const sidebarCustomersCountEl = qs("#sidebarCustomersCount");
+  const loginEmailEl = qs("#login-email");
+  const loginPasswordEl = qs("#login-password");
 
-  // Tables
-  const topVendorsTableEl = qs("#topVendorsTable");
-  const recentOrdersTableEl = qs("#recentOrdersTable");
-  const vendorsTableEl = qs("#vendorsTable");
-  const boothsTableEl = qs("#boothsTable");
-  const ordersTableEl = qs("#ordersTable");
-  const customersTableEl = qs("#customersTable");
+  const signupNameEl = qs("#signup-name");
+  const signupEmailEl = qs("#signup-email");
+  const signupPasswordEl = qs("#signup-password");
+  const signupEventNameEl = qs("#signup-event-name");
+  const signupEventDateEl = qs("#signup-event-date");
+  const signupEventLocationEl = qs("#signup-event-location");
 
-  // Settings inputs
-  const setEventNameInput = qs("#set-event-name");
-  const setEventVenueInput = qs("#set-event-venue");
-  const setEventDatesInput = qs("#set-event-dates");
-  const setEventLogoInput = qs("#set-event-logo");
+  // -----------------------------
+  // APP DOM
+  // -----------------------------
+  const sidebarOwnerNameEl = qs("#sidebar-owner-name");
+  const sidebarOwnerAvatarEl = qs("#sidebar-owner-avatar");
+  const topbarTitleEl = qs("#topbar-title");
+  const topbarSubtitleEl = qs("#topbar-subtitle");
+  const eventSelectEl = qs("#event-switcher");
 
-  // Auth
-  const authForm = qs("#authForm");
-  const authEmailInput = qs("#authEmail");
-  const authPasswordInput = qs("#authPassword");
-  const authAlert = qs("#authAlert");
+  // Overview metrics
+  const metricTotalVendorsEl = qs("#metric-total-vendors");
+  const metricApprovedVendorsEl = qs("#metric-approved-vendors");
+  const metricPendingVendorsEl = qs("#metric-pending-vendors");
+  const metricStallsEl = qs("#metric-total-stalls");
+  const metricOrdersEl = qs("#metric-total-orders");
+  const metricRevenueEl = qs("#metric-estimated-revenue");
+
+  // Tables & sections
+  const vendorsTableEl = qs("#vendors-table");
+  const stallsTableEl = qs("#stalls-table");
+  const ordersTableEl = qs("#orders-table");
+  const tasksTodayEl = qs("#tasks-today");
+
+  // Buttons
+  const btnCreateEvent = qs("#btn-create-event");
+  const btnCopyVendorLink = qs("#btn-copy-vendor-link");
+  const vendorLinkDisplayEl = qs("#vendor-link-display");
+
+  const btnExportVendors = qs("#btn-export-vendors");
+  const btnExportOrders = qs("#btn-export-orders");
+
   const logoutBtn = qs("#btn-logout");
 
-  // Modal
-  const modalBackdrop = qs("#modalBackdrop");
-  const modalContent = qs("#modalContent");
+  // Settings
+  const setEventNameEl = qs("#set-event-name");
+  const setEventDateEl = qs("#set-event-date");
+  const setEventLocationEl = qs("#set-event-location");
+  const setEventNotesEl = qs("#set-event-notes");
+  const btnSaveEventSettings = qs("#btn-save-event-settings");
+  const btnDeleteEvent = qs("#btn-delete-event");
 
-  // Filters/search
-  const searchVendorsInput = qs("#search-vendors");
-  const filterVendorStatusSelect = qs("#filter-vendor-status");
-  const sortVendorsSelect = qs("#sort-vendors");
+  // Pages
+  const navItems = qsa(".nav-item[data-page]");
+  const pages = qsa(".page");
 
-  const searchBoothsInput = qs("#search-booths");
-  const sortBoothsSelect = qs("#sort-booths");
+  // Modals
+  const modalContainer = qs("#modal-container");
 
-  const searchOrdersInput = qs("#search-orders");
-  const filterOrderTypeSelect = qs("#filter-order-type");
-  const sortOrdersSelect = qs("#sort-orders");
-
-  const searchCustomersInput = qs("#search-customers");
-  const sortCustomersSelect = qs("#sort-customers");
-
-  // Charts
-  let salesTimelineChart = null;
-  let paymentSplitChart = null;
-
-  // Data state
+  // -----------------------------
+  // STATE
+  // -----------------------------
   let currentUser = null;
-  let eventId = null;
-  let eventData = null;
+  let ownerProfile = null;
 
-  let eventVendors = [];   // from /events/{eventId}/vendors (linked to brandId)
-  let eventBooths = [];    // aggregated from brand branches that match event
-  let eventOrders = [];    // from /orders with eventId
-  let eventCustomers = []; // aggregated customers
+  let eventsList = [];
+  let currentEventId = null;
+  let currentEventData = null;
 
-  // =========================
-  // UTIL
-  // =========================
-  function showLoading(on){
-    if(on){
-      loadingOverlay.classList.add("visible");
-    }else{
-      loadingOverlay.classList.remove("visible");
-    }
+  let vendors = [];
+  let stalls = [];
+  let orders = [];
+
+  let unsubVendors = null;
+  let unsubStalls = null;
+  let unsubOrders = null;
+
+  let isSignupFlowInProgress = false;
+
+  // -----------------------------
+  // ALERTS & MODALS
+  // -----------------------------
+  function showAuthAlert(message, type = "error") {
+    const cls = type === "error" ? "auth-alert-error" : "auth-alert-info";
+    authAlertContainer.innerHTML = `
+      <div class="auth-alert ${cls}">
+        ${message}
+      </div>
+    `;
   }
 
-  function showAlert(msg, type="ok"){
-    globalAlertText.textContent = msg;
-    globalAlertEl.classList.toggle("error", type === "error");
-    globalAlertEl.classList.add("visible");
-    setTimeout(() => {
-      globalAlertEl.classList.remove("visible");
-    }, 2300);
+  function clearAuthAlert() {
+    authAlertContainer.innerHTML = "";
   }
 
-  function openModal(innerHtml){
-    modalContent.innerHTML = innerHtml;
-    modalBackdrop.classList.add("visible");
+  function openModal(innerHtml) {
+    if (!modalContainer) return;
+    modalContainer.style.display = "flex";
+    modalContainer.innerHTML = `
+      <div class="modal">
+        ${innerHtml}
+      </div>
+    `;
   }
 
-  function closeModal(){
-    modalBackdrop.classList.remove("visible");
-    modalContent.innerHTML = "";
+  function closeModal() {
+    if (!modalContainer) return;
+    modalContainer.style.display = "none";
+    modalContainer.innerHTML = "";
+  }
+  // Make available in HTML
+  window.closeModal = closeModal;
+
+  // -----------------------------
+  // AUTH VIEW TOGGLING
+  // -----------------------------
+  function showAuthView() {
+    show(authView);
+    hide(appView);
   }
 
-  modalBackdrop.addEventListener("click", e => {
-    if(e.target === modalBackdrop){
-      closeModal();
-    }
+  function showAppView() {
+    hide(authView);
+    show(appView);
+  }
+
+  tabLogin?.addEventListener("click", () => {
+    tabLogin.classList.add("active");
+    tabSignup.classList.remove("active");
+    show(loginForm);
+    hide(signupForm);
+    authSubtitle.textContent = "Sign in to manage your events";
   });
 
-  function getTodayString(){
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth()+1).padStart(2,"0");
-    const d = String(now.getDate()).padStart(2,"0");
-    return `${y}-${m}-${d}`;
+  tabSignup?.addEventListener("click", () => {
+    tabSignup.classList.add("active");
+    tabLogin.classList.remove("active");
+    hide(loginForm);
+    show(signupForm);
+    authSubtitle.textContent = "Create your first event and dashboard";
+  });
+
+  // -----------------------------
+  // SMALL HELPERS
+  // -----------------------------
+  function formatCurrency(num) {
+    const v = Number(num) || 0;
+    return v.toFixed(2);
   }
 
-  function money(v){
-    const n = Number(v) || 0;
-    return n.toFixed(2);
-  }
-
-  function orderDateString(o){
-    if(o.createdAt && o.createdAt.toDate){
-      const d = o.createdAt.toDate();
-      const y = d.getFullYear();
-      const m = String(d.getMonth()+1).padStart(2,"0");
-      const da = String(d.getDate()).padStart(2,"0");
-      return `${y}-${m}-${da}`;
+  function randomToken(len = 10) {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let out = "";
+    for (let i = 0; i < len; i++) {
+      out += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-    const fallback = o.createdAt || o.date || null;
-    if(!fallback) return getTodayString();
-    try{
-      const d = new Date(fallback);
-      const y = d.getFullYear();
-      const m = String(d.getMonth()+1).padStart(2,"0");
-      const da = String(d.getDate()).padStart(2,"0");
-      return `${y}-${m}-${da}`;
-    }catch(e){
-      return getTodayString();
+    return out;
+  }
+
+  function copyToClipboard(text) {
+    if (!navigator.clipboard) {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+      return;
     }
+    navigator.clipboard.writeText(text).catch(() => {});
   }
 
-  async function uploadImageToStorage(file, path){
-    const ref = storage.ref().child(path + "/" + file.name);
-    await ref.put(file);
-    return ref.getDownloadURL();
-  }
-
-  // =========================
-  // EVENT ID FROM URL
-  // =========================
-  const urlParams = new URLSearchParams(window.location.search);
-  eventId = urlParams.get("eventId") || null;
-  // If we want a fallback for testing
-  // if(!eventId) eventId = "lokamania5";
-
-   // =========================
-  // AUTH HANDLERS
-  // (Link event owner login to this dashboard)
-  // =========================
-
-  function showAuthError(msg){
-    authAlert.textContent = msg;
-    authAlert.style.display = "block";
-  }
-  function clearAuthError(){
-    authAlert.textContent = "";
-    authAlert.style.display = "none";
-  }
-
-  authForm.addEventListener("submit", async (e) => {
+  // -----------------------------
+  // AUTH: LOGIN
+  // -----------------------------
+  loginForm?.addEventListener("submit", async (e) => {
     e.preventDefault();
-    clearAuthError();
-    const email = authEmailInput.value.trim();
-    const password = authPasswordInput.value.trim();
-    if(!email || !password){
-      showAuthError("Please enter email and password.");
-      return;
-    }
-    try{
-      showLoading(true);
-      await auth.signInWithEmailAndPassword(email, password);
-    }catch(err){
-      console.error("Sign-in error", err);
-      showAuthError(err.message || "Could not sign in. Check credentials.");
-      showLoading(false);
-    }
-  });
+    clearAuthAlert();
 
-  logoutBtn.addEventListener("click", async () => {
-    try{
-      await auth.signOut();
-    }catch(e){
-      console.error("Logout error", e);
-    }
-  });
+    const email = loginEmailEl?.value.trim();
+    const pw = loginPasswordEl?.value;
 
-  auth.onAuthStateChanged(async (user) => {
-    if(!eventId){
-      // No eventId in URL → force auth screen with message
-      authView.style.display = "flex";
-      appShell.style.display = "none";
-      showAuthError("Missing ?eventId= in the URL. Add eventId to open this dashboard.");
+    if (!email || !pw) {
+      showAuthAlert("Enter email and password.");
       return;
     }
 
-    if(user){
+    try {
+      await signInWithEmailAndPassword(auth, email, pw);
+    } catch (err) {
+      console.error("Login error:", err);
+      let msg = "Login failed.";
+      if (err.code === "auth/user-not-found") msg = "User not found.";
+      if (err.code === "auth/wrong-password") msg = "Wrong password.";
+      showAuthAlert(msg);
+    }
+  });
+
+  // -----------------------------
+  // AUTH: SIGNUP (CREATE OWNER + EVENT)
+  // -----------------------------
+  signupForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearAuthAlert();
+
+    const fullName = signupNameEl?.value.trim();
+    const email = signupEmailEl?.value.trim();
+    const pw = signupPasswordEl?.value;
+    const eventName = signupEventNameEl?.value.trim();
+    const eventDate = signupEventDateEl?.value.trim();
+    const eventLocation = signupEventLocationEl?.value.trim();
+
+    if (!fullName || !email || !pw || !eventName) {
+      showAuthAlert("Fill all required fields (name, email, password, event name).");
+      return;
+    }
+    if (pw.length < 6) {
+      showAuthAlert("Password must be at least 6 characters.");
+      return;
+    }
+
+    try {
+      isSignupFlowInProgress = true;
+
+      // 1) Create auth user
+      const cred = await createUserWithEmailAndPassword(auth, email, pw);
+      const user = cred.user;
+      await updateProfile(user, { displayName: fullName });
+
+      // 2) Create owner profile
+      const ownerRef = doc(db, "eventOwners", user.uid);
+      await setDoc(ownerRef, {
+        uid: user.uid,
+        name: fullName,
+        email,
+        createdAt: serverTimestamp()
+      });
+
+      // 3) Create first event
+      const vendorToken = randomToken(8);
+      const eventRef = await addDoc(collection(db, "events"), {
+        name: eventName,
+        date: eventDate || null,
+        location: eventLocation || null,
+        ownerUserId: user.uid,
+        status: "active",
+        vendorSignupToken: vendorToken,
+        createdAt: serverTimestamp()
+      });
+
+      const eventId = eventRef.id;
+
+      // 4) Link owner -> events
+      const ownerEventsRef = doc(db, "ownerEvents", user.uid);
+      await setDoc(
+        ownerEventsRef,
+        {
+          primaryEventId: eventId,
+          eventIds: [eventId]
+        },
+        { merge: true }
+      );
+
+      // After this, onAuthStateChanged will pick it up and load dashboard
+    } catch (err) {
+      console.error("Signup error:", err);
+      let msg = "Signup failed.";
+      if (err.code === "auth/email-already-in-use") msg = "Email already in use.";
+      showAuthAlert(msg);
+      isSignupFlowInProgress = false;
+    }
+  });
+
+  // -----------------------------
+  // AUTH STATE
+  // -----------------------------
+  onAuthStateChanged(auth, async (user) => {
+    try {
+      if (isSignupFlowInProgress) {
+        // Wait until signup flow finishes
+        return;
+      }
+
+      clearAuthAlert();
+
+      if (!user) {
+        currentUser = null;
+        ownerProfile = null;
+        eventsList = [];
+        currentEventId = null;
+        currentEventData = null;
+        showAuthView();
+        return;
+      }
+
       currentUser = user;
-      clearAuthError();
-      authView.style.display = "none";
-      appShell.style.display = "flex";
-      showLoading(true);
-      try{
-        await initForUser(user);
-      }catch(e){
-        console.error("Init error", e);
-        showAuthError("Could not load event data. Check event permissions.");
-      }finally{
-        showLoading(false);
+
+      // Load owner profile
+      const ownerSnap = await getDoc(doc(db, "eventOwners", user.uid));
+      if (ownerSnap.exists()) {
+        ownerProfile = ownerSnap.data();
+      } else {
+        ownerProfile = {
+          uid: user.uid,
+          name: user.displayName || "Owner",
+          email: user.email || ""
+        };
       }
-    }else{
-      currentUser = null;
-      appShell.style.display = "none";
-      authView.style.display = "flex";
-      showLoading(false);
+
+      // Update sidebar owner avatar/name
+      if (sidebarOwnerNameEl) sidebarOwnerNameEl.textContent = ownerProfile.name || "Owner";
+      if (sidebarOwnerAvatarEl) {
+        const letter = (ownerProfile.name || "O").charAt(0).toUpperCase();
+        sidebarOwnerAvatarEl.textContent = letter;
+      }
+
+      // Load events
+      await loadEventsForOwner(user.uid);
+
+      // If no events -> force Settings/empty state maybe
+      if (!eventsList.length) {
+        // nothing yet, show small info
+        showAuthView(); // OR show a special UI
+        showAuthAlert("No events created yet. Use Sign up form to create your first event.", "info");
+        return;
+      }
+
+      // Pick primary event
+      const ownerEventsRef = doc(db, "ownerEvents", user.uid);
+      const oeSnap = await getDoc(ownerEventsRef);
+      if (oeSnap.exists() && oeSnap.data().primaryEventId) {
+        currentEventId = oeSnap.data().primaryEventId;
+      } else {
+        currentEventId = eventsList[0].id;
+      }
+
+      // Populate dropdown & select event
+      renderEventSwitcher();
+      await selectEvent(currentEventId);
+
+      showAppView();
+    } catch (err) {
+      console.error("Error in auth state:", err);
+      showAuthView();
+      showAuthAlert("Error loading dashboard. Check console.");
+    } finally {
+      isSignupFlowInProgress = false;
     }
   });
 
-  // =========================
-  // LOAD EVENT & DATA
-  // =========================
+  // -----------------------------
+  // LOAD EVENTS FOR OWNER
+  // -----------------------------
+  async function loadEventsForOwner(uid) {
+    eventsList = [];
 
-  async function loadEventMeta(){
-    if(!eventId) return;
-    const ref = db.collection("events").doc(eventId);
-    const snap = await ref.get();
-    if(!snap.exists){
-      throw new Error("Event not found: " + eventId);
-    }
-    eventData = snap.data() || {};
+    // Option A: query events.ownerUserId == uid
+    const qEvents = query(
+      collection(db, "events"),
+      where("ownerUserId", "==", uid),
+      orderBy("createdAt", "desc")
+    );
 
-    const name = eventData.name || "Event";
-    const venue = eventData.venue || "";
-    const dates = eventData.dateRange || "";
-    const shortName = eventData.shortName || (name.length > 16 ? name.slice(0,16)+"…" : name);
-
-    sidebarEventName.textContent = name;
-    sidebarEventVenue.textContent = venue && dates ? `${venue} • ${dates}` : (venue || dates || "Event venue & dates");
-    authEventName.textContent = name;
-    topbarEventShortEl.textContent = shortName;
-    topbarDateRangeEl.textContent = dates || "Event dates";
-    topbarSubtitleEl.textContent = `Today’s performance for ${name}.`;
-    
-    // Avatar / logo letter
-    const letter = name.charAt(0)?.toUpperCase() || "E";
-    sidebarEventLogo.textContent = letter;
-    authEventLogo.textContent = letter;
-
-    // If logoUrl exists, show image circle
-    if(eventData.logoUrl){
-      const logoHtml = `<img src="${eventData.logoUrl}" alt="${name} logo"/>`;
-      sidebarEventLogo.innerHTML = logoHtml;
-      authEventLogo.innerHTML = logoHtml;
-    }
-
-    // Settings form
-    setEventNameInput.value = name;
-    setEventVenueInput.value = venue;
-    setEventDatesInput.value = dates;
+    const snap = await getDocs(qEvents);
+    snap.forEach((d) => {
+      eventsList.push({ id: d.id, ...d.data() });
+    });
   }
 
-  async function loadVendors(){
-    eventVendors = [];
-    try{
-      const ref = db.collection("events").doc(eventId).collection("vendors");
-      const snap = await ref.get();
-      eventVendors = snap.docs.map(d => ({
-        _id: d.id,
-        ...d.data()
-      }));
-    }catch(e){
-      console.error("Error loading event vendors", e);
-      eventVendors = [];
-    }
-  }
+  // -----------------------------
+  // EVENT SWITCHER
+  // -----------------------------
+  function renderEventSwitcher() {
+    if (!eventSelectEl) return;
+    eventSelectEl.innerHTML = "";
 
-  async function loadOrders(){
-    eventOrders = [];
-    try{
-      let query = db.collection("orders").where("eventId","==",eventId);
-      // try orderBy(createdAt) if index exists
-      try{
-        query = query.orderBy("createdAt","desc").limit(400);
-        const snap = await query.get();
-        eventOrders = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
-      }catch(inner){
-        console.warn("orders orderBy index missing, fallback without orderBy", inner);
-        const snap = await db.collection("orders").where("eventId","==",eventId).get();
-        eventOrders = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
-      }
-    }catch(e){
-      console.error("Error loading orders", e);
-      eventOrders = [];
-    }
-  }
-
-  async function deriveCustomersFromOrders(){
-    const map = new Map();
-    for(const o of eventOrders){
-      const customer = o.customer || {};
-      const phone = (customer.phone || customer.mobile || "").trim();
-      const email = (customer.email || "").trim().toLowerCase();
-      let key = phone || email;
-      if(!key){
-        key = o.customerId || o._id; // fallback
-      }
-      if(!key) continue;
-
-      const total = Number(o.total || 0);
-      const isReturn = o.isReturn === true;
-
-      if(!map.has(key)){
-        map.set(key,{
-          key,
-          name: customer.name || "Customer",
-          phone: phone || "-",
-          email: email || "",
-          ordersCount: 0,
-          totalSpent: 0
-        });
-      }
-      const item = map.get(key);
-      item.ordersCount += 1;
-      // Returns reduce spent
-      item.totalSpent += isReturn ? -Math.abs(total) : Math.abs(total);
-      map.set(key,item);
-    }
-    eventCustomers = Array.from(map.values());
-  }
-
-  function deriveBoothsFromVendors(){
-    const booths = [];
-    for(const v of eventVendors){
-      const vendorName = v.name || v.vendorName || "Vendor";
-      const vendorId = v._id;
-      const boothLabel = v.boothLabel || v.booth || "";
-      const brandId = v.brandId || null;
-
-      // Many events: 1 vendor = 1 booth (or multiple branches). We support:
-      // - v.branchIds: array of branchId
-      // - v.branches: array of {branchId, boothLabel}
-      if(Array.isArray(v.branchIds) && v.branchIds.length){
-        for(const bId of v.branchIds){
-          booths.push({
-            vendorId,
-            vendorName,
-            brandId,
-            branchId: bId,
-            boothLabel: boothLabel || bId
-          });
-        }
-      }else if(Array.isArray(v.branches) && v.branches.length){
-        for(const b of v.branches){
-          booths.push({
-            vendorId,
-            vendorName,
-            brandId,
-            branchId: b.branchId || b.id,
-            boothLabel: b.boothLabel || boothLabel || (b.branchId || b.id || "Booth")
-          });
-        }
-      }else{
-        booths.push({
-          vendorId,
-          vendorName,
-          brandId,
-          branchId: null,
-          boothLabel: boothLabel || "Booth"
-        });
-      }
-    }
-    eventBooths = booths;
-  }
-
-  async function initForUser(user){
-    // Optionally: check that user is allowed on this event
-    // e.g., events/{eventId}.ownerUids includes user.uid
-    try{
-      await loadEventMeta();
-    }catch(e){
-      console.error("loadEventMeta failed", e);
-      throw e;
-    }
-
-    // Set owner avatar/name
-    const email = user.email || "";
-    const name = email.split("@")[0] || "Event Owner";
-    topbarUserNameEl.textContent = name;
-    topbarUserAvatarEl.textContent = (name.charAt(0) || "E").toUpperCase();
-
-    // Load all event-related collections
-    await Promise.all([
-      loadVendors(),
-      loadOrders()
-    ]);
-
-    await deriveCustomersFromOrders();
-    deriveBoothsFromVendors();
-    computeAnalyticsAndRender();
-  }
-
-  // =========================
-  // ANALYTICS
-  // =========================
-
-  function computeAnalyticsAndRender(){
-    const todayStr = getTodayString();
-
-    let netSalesToday = 0;
-    let ordersTodayCount = 0;
-    let returnsTodayCount = 0;
-
-    const paymentBuckets = {
-      cash: 0,
-      card: 0,
-      other: 0
-    };
-
-    // For ranking vendors and booths
-    const vendorStats = new Map(); // vendorId -> {sales, orders}
-    const boothStats = new Map();  // branchId or boothLabel
-
-    // For sales curve: group by hour
-    const hourBuckets = {};
-    for(let h=0;h<24;h++){
-      const label = `${String(h).padStart(2,"0")}:00`;
-      hourBuckets[label] = 0;
-    }
-
-    for(const o of eventOrders){
-      const dStr = orderDateString(o);
-      const isReturn = o.isReturn === true;
-      const total = Math.abs(Number(o.total || 0));
-
-      // Payment method from multiple possible fields:
-      const p = o.payment || {};
-      const pm = (o.paymentMethod || p.method || p.type || "").toLowerCase();
-      let pmKey = "other";
-      if(pm.includes("cash")) pmKey = "cash";
-      else if(pm.includes("card") || pm.includes("visa") || pm.includes("master")) pmKey = "card";
-
-      // Vendor link: we assume your POS writes vendorId on order, fallback to brandId
-      const vendorId = o.vendorId || o.vendorRef || o.brandId || "unknown";
-      const branchId = o.branchId || o.boothId || null;
-
-      if(dStr === todayStr){
-        // Sales metrics
-        const signed = isReturn ? -total : total;
-        netSalesToday += signed;
-
-        if(isReturn) returnsTodayCount += 1;
-        else ordersTodayCount += 1;
-
-        paymentBuckets[pmKey] += signed;
-
-        // Hour bucket if createdAt exists
-        let hourLabel = null;
-        if(o.createdAt && o.createdAt.toDate){
-          const d = o.createdAt.toDate();
-          const h = d.getHours();
-          hourLabel = `${String(h).padStart(2,"0")}:00`;
-        }
-        if(hourLabel && hourBuckets.hasOwnProperty(hourLabel)){
-          hourBuckets[hourLabel] += signed;
-        }
-      }
-
-      // Vendor stats (whole event, not just today)
-      if(!vendorStats.has(vendorId)){
-        vendorStats.set(vendorId,{sales:0,orders:0});
-      }
-      const vItem = vendorStats.get(vendorId);
-      vItem.sales += isReturn ? -total : total;
-      vItem.orders += 1;
-      vendorStats.set(vendorId,vItem);
-
-      // Booth stats
-      if(branchId){
-        if(!boothStats.has(branchId)){
-          boothStats.set(branchId,{sales:0,orders:0});
-        }
-        const bItem = boothStats.get(branchId);
-        bItem.sales += isReturn ? -total : total;
-        bItem.orders += 1;
-        boothStats.set(branchId,bItem);
-      }
-    }
-
-    // Save stats to global so renderers can use them
-    window.__eventVendorStats = vendorStats;
-    window.__eventBoothStats = boothStats;
-
-    // KPIs
-    kpiSalesTodayEl.textContent = money(netSalesToday);
-    const salesNote = ordersTodayCount > 0
-      ? `${ordersTodayCount} orders · ${returnsTodayCount} returns`
-      : "No orders yet today.";
-    kpiSalesTodayNoteEl.textContent = salesNote;
-    kpiOrdersTodayEl.textContent = ordersTodayCount;
-    kpiReturnsTodayEl.textContent = returnsTodayCount;
-
-    const activeVendorIdsToday = new Set();
-    for(const [vendorId, stats] of vendorStats.entries()){
-      if(stats.orders > 0){
-        activeVendorIdsToday.add(vendorId);
-      }
-    }
-    kpiActiveVendorsEl.textContent = activeVendorIdsToday.size;
-    kpiTotalVendorsNoteEl.textContent = `${eventVendors.length} total vendors in event.`;
-    sidebarVendorsCountEl.textContent = String(eventVendors.length);
-
-    // Booth metrics
-    const activeBoothIds = new Set();
-    for(const [bId, stats] of boothStats.entries()){
-      if(stats.orders > 0){
-        activeBoothIds.add(bId);
-      }
-    }
-    kpiActiveBoothsEl.textContent = activeBoothIds.size;
-    kpiTotalBoothsNoteEl.textContent = `${eventBooths.length} booths configured.`;
-    sidebarBoothsCountEl.textContent = String(eventBooths.length);
-
-    // Orders & customers counts in sidebar
-    sidebarOrdersCountEl.textContent = String(eventOrders.length);
-    sidebarCustomersCountEl.textContent = String(eventCustomers.length);
-
-    // Payment split label
-    const cash = paymentBuckets.cash;
-    const card = paymentBuckets.card;
-    const other = paymentBuckets.other;
-    const totalSplit = cash + card + other;
-    if(totalSplit > 0){
-      const pct = (v) => Math.round((v/totalSplit)*100);
-      kpiPaymentSplitEl.textContent = `Cash ${pct(cash)}% • Card ${pct(card)}% • Other ${pct(other)}%`;
-    }else{
-      kpiPaymentSplitEl.textContent = "No payments yet today.";
-    }
-
-    // Render tables & charts
-    renderTopVendorsTable();
-    renderRecentOrdersTable();
-    renderVendorsTable();
-    renderBoothsTable();
-    renderOrdersTable();
-    renderCustomersTable();
-    renderSalesTimelineChart(hourBuckets);
-    renderPaymentSplitChart(paymentBuckets);
-  }
-
-  // =========================
-  // RENDERERS
-  // =========================
-
-  function renderTopVendorsTable(){
-    const vendorStats = window.__eventVendorStats || new Map();
-    if(!eventVendors.length || vendorStats.size === 0){
-      topVendorsTableEl.innerHTML = `<div class="table-empty">No vendor sales yet today.</div>`;
-      return;
-    }
-
-    const rows = eventVendors.map(v => {
-      const id = v._id;
-      const stats = vendorStats.get(id) || {sales:0,orders:0};
-      return {
-        vendor: v,
-        sales: stats.sales,
-        orders: stats.orders
-      };
-    }).sort((a,b) => b.sales - a.sales).slice(0,5);
-
-    if(!rows.length || rows.every(r => r.sales === 0 && r.orders === 0)){
-      topVendorsTableEl.innerHTML = `<div class="table-empty">No vendor sales yet today.</div>`;
-      return;
-    }
-
-    let html = `<table><thead>
-      <tr>
-        <th>Vendor</th>
-        <th>Booth</th>
-        <th>Brand</th>
-        <th>Orders</th>
-        <th>Sales</th>
-      </tr>
-    </thead><tbody>`;
-
-    for(const r of rows){
-      const v = r.vendor;
-      const name = v.name || v.vendorName || "Vendor";
-      const booth = v.boothLabel || v.booth || "-";
-      const brand = v.brandName || v.brandId || "-";
-      html += `<tr>
-        <td>${name}</td>
-        <td>${booth}</td>
-        <td>${brand}</td>
-        <td>${r.orders}</td>
-        <td>${money(r.sales)}</td>
-      </tr>`;
-    }
-
-    html += `</tbody></table>`;
-    topVendorsTableEl.innerHTML = html;
-  }
-
-  function renderRecentOrdersTable(){
-    if(!eventOrders.length){
-      recentOrdersTableEl.innerHTML = `<div class="table-empty">No orders yet.</div>`;
-      return;
-    }
-    const sorted = [...eventOrders].sort((a,b) => {
-      const da = a.createdAt && a.createdAt.toDate ? a.createdAt.toDate().getTime() : 0;
-      const db = b.createdAt && b.createdAt.toDate ? b.createdAt.toDate().getTime() : 0;
-      return db - da;
-    }).slice(0,10);
-
-    let html = `<table><thead>
-      <tr>
-        <th>Time</th>
-        <th>Order</th>
-        <th>Vendor</th>
-        <th>Booth</th>
-        <th>Type</th>
-        <th>Total</th>
-      </tr>
-    </thead><tbody>`;
-
-    for(const o of sorted){
-      let timeStr = "-";
-      if(o.createdAt && o.createdAt.toDate){
-        const d = o.createdAt.toDate();
-        timeStr = d.toLocaleTimeString("en-EG",{hour:"2-digit",minute:"2-digit"});
-      }
-      const isReturn = o.isReturn === true;
-      const vendor = o.vendorName || o.vendor || o.brandName || o.brandId || "-";
-      const booth = o.boothLabel || o.branchName || o.branchId || "-";
-      const typePill = isReturn
-        ? `<span class="pill pill-danger">Return</span>`
-        : `<span class="pill pill-success">Sale</span>`;
-      html += `<tr>
-        <td>${timeStr}</td>
-        <td>#${o.orderNumber || o._id}</td>
-        <td>${vendor}</td>
-        <td>${booth}</td>
-        <td>${typePill}</td>
-        <td>${money(o.total)}</td>
-      </tr>`;
-    }
-
-    html += `</tbody></table>`;
-    recentOrdersTableEl.innerHTML = html;
-  }
-
-  function renderVendorsTable(){
-    if(!eventVendors.length){
-      vendorsTableEl.innerHTML = `<div class="table-empty">No vendors added yet.</div>`;
-      return;
-    }
-
-    const vendorStats = window.__eventVendorStats || new Map();
-    const search = (searchVendorsInput.value || "").toLowerCase();
-    const statusFilter = filterVendorStatusSelect.value;
-
-    let rows = eventVendors.map(v => {
-      const stats = vendorStats.get(v._id) || {sales:0,orders:0};
-      return { vendor: v, sales: stats.sales, orders: stats.orders };
+    eventsList.forEach((ev) => {
+      const opt = document.createElement("option");
+      opt.value = ev.id;
+      opt.textContent = ev.name || "Untitled event";
+      eventSelectEl.appendChild(opt);
     });
 
-    if(search){
-      rows = rows.filter(r => {
-        const v = r.vendor;
-        const name = (v.name || v.vendorName || "").toLowerCase();
-        const brand = (v.brandName || v.brandId || "").toLowerCase();
-        const booth = (v.boothLabel || v.booth || "").toLowerCase();
-        return name.includes(search) || brand.includes(search) || booth.includes(search);
-      });
+    if (currentEventId) {
+      eventSelectEl.value = currentEventId;
     }
 
-    if(statusFilter !== "all"){
-      rows = rows.filter(r => {
-        const v = r.vendor;
-        const st = (v.status || "").toLowerCase();
-        if(statusFilter === "active") return st === "active";
-        if(statusFilter === "inactive") return st && st !== "active";
-        return true;
-      });
+    eventSelectEl.addEventListener("change", async () => {
+      const val = eventSelectEl.value;
+      if (!val) return;
+      currentEventId = val;
+
+      // Save as primary event for this owner
+      if (currentUser) {
+        const ownerEventsRef = doc(db, "ownerEvents", currentUser.uid);
+        const existingSnap = await getDoc(ownerEventsRef);
+        const existing = existingSnap.exists() ? existingSnap.data() : {};
+        const ids = Array.isArray(existing.eventIds) ? existing.eventIds : [];
+        if (!ids.includes(val)) ids.push(val);
+
+        await setDoc(
+          ownerEventsRef,
+          {
+            primaryEventId: val,
+            eventIds: ids
+          },
+          { merge: true }
+        );
+      }
+
+      await selectEvent(val);
+    });
+  }
+
+  // -----------------------------
+  // SELECT EVENT + LOAD DATA
+  // -----------------------------
+  async function selectEvent(eventId) {
+    if (!eventId) return;
+
+    // Stop old listeners
+    if (unsubVendors) {
+      unsubVendors();
+      unsubVendors = null;
+    }
+    if (unsubOrders) {
+      unsubOrders();
+      unsubOrders = null;
+    }
+    if (unsubStalls) {
+      unsubStalls();
+      unsubStalls = null;
     }
 
-    const sortValue = sortVendorsSelect.value;
-    rows.sort((a,b) => {
-      const vA = a.vendor;
-      const vB = b.vendor;
-      if(sortValue === "name-asc"){
-        return (vA.name || vA.vendorName || "").localeCompare(vB.name || vB.vendorName || "");
-      }
-      if(sortValue === "name-desc"){
-        return (vB.name || vB.vendorName || "").localeCompare(vA.name || vA.vendorName || "");
-      }
-      if(sortValue === "sales-desc"){
-        return b.sales - a.sales;
-      }
-      if(sortValue === "sales-asc"){
-        return a.sales - b.sales;
-      }
-      return 0;
+    // Load event doc
+    const evSnap = await getDoc(doc(db, "events", eventId));
+    if (!evSnap.exists()) {
+      console.warn("Event not found:", eventId);
+      return;
+    }
+    currentEventData = { id: eventId, ...evSnap.data() };
+
+    // Update topbar / settings
+    const name = currentEventData.name || "Event";
+    const date = currentEventData.date || "";
+    const location = currentEventData.location || "";
+
+    if (topbarTitleEl) topbarTitleEl.textContent = name;
+    if (topbarSubtitleEl) topbarSubtitleEl.textContent =
+      [date, location].filter(Boolean).join(" • ") || "Event overview";
+
+    if (setEventNameEl) setEventNameEl.value = name;
+    if (setEventDateEl) setEventDateEl.value = date;
+    if (setEventLocationEl) setEventLocationEl.value = location;
+    if (setEventNotesEl) setEventNotesEl.value = currentEventData.notes || "";
+
+    // Vendor link display
+    updateVendorSignupLinkDisplay();
+
+    // Listen to vendors
+    const vendorsRef = collection(db, "events", eventId, "vendors");
+    const qVendors = query(vendorsRef, orderBy("createdAt", "desc"));
+    unsubVendors = onSnapshot(qVendors, (snap) => {
+      vendors = [];
+      snap.forEach((d) => vendors.push({ id: d.id, ...d.data() }));
+      renderVendorsTable();
+      updateOverviewMetrics();
+      renderTasksToday();
     });
 
-    if(!rows.length){
-      vendorsTableEl.innerHTML = `<div class="table-empty">No vendors match your filters.</div>`;
+    // Listen to stalls (optional; if you store separately)
+    const stallsRef = collection(db, "events", eventId, "stalls");
+    unsubStalls = onSnapshot(stallsRef, (snap) => {
+      stalls = [];
+      snap.forEach((d) => stalls.push({ id: d.id, ...d.data() }));
+      renderStallsTable();
+      updateOverviewMetrics();
+    });
+
+    // Listen to orders (e.g., from event POS / brand POS writing eventId)
+    const ordersRef = collection(db, "events", eventId, "orders");
+    const qOrders = query(ordersRef, orderBy("createdAt", "desc"), limit(200));
+    unsubOrders = onSnapshot(qOrders, (snap) => {
+      orders = [];
+      snap.forEach((d) => orders.push({ id: d.id, ...d.data() }));
+      renderOrdersTable();
+      updateOverviewMetrics();
+    });
+  }
+
+  // -----------------------------
+  // VENDOR SIGNUP LINK
+  // -----------------------------
+  function buildVendorSignupUrl() {
+    if (!currentEventData) return "";
+    const eid = currentEventData.id;
+    const token = currentEventData.vendorSignupToken || "";
+    const url = new URL(VENDOR_SIGNUP_BASE_URL);
+    url.searchParams.set("eventId", eid);
+    if (token) url.searchParams.set("token", token);
+    return url.toString();
+  }
+
+  function updateVendorSignupLinkDisplay() {
+    if (!vendorLinkDisplayEl) return;
+    const url = buildVendorSignupUrl();
+    vendorLinkDisplayEl.textContent = url || "No event selected.";
+  }
+
+  btnCopyVendorLink?.addEventListener("click", () => {
+    const url = buildVendorSignupUrl();
+    if (!url) {
+      alert("No event selected.");
+      return;
+    }
+    copyToClipboard(url);
+    alert("Vendor signup link copied.");
+  });
+
+  // -----------------------------
+  // OVERVIEW METRICS
+  // -----------------------------
+  function updateOverviewMetrics() {
+    const totalVendors = vendors.length;
+    const approvedVendors = vendors.filter((v) => v.status === "approved").length;
+    const pendingVendors = vendors.filter((v) => !v.status || v.status === "pending").length;
+
+    const stallsCount = stalls.length;
+
+    const totalOrders = orders.length;
+    const totalRevenue = orders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+
+    if (metricTotalVendorsEl) metricTotalVendorsEl.textContent = String(totalVendors);
+    if (metricApprovedVendorsEl) metricApprovedVendorsEl.textContent = String(approvedVendors);
+    if (metricPendingVendorsEl) metricPendingVendorsEl.textContent = String(pendingVendors);
+    if (metricStallsEl) metricStallsEl.textContent = String(stallsCount);
+    if (metricOrdersEl) metricOrdersEl.textContent = String(totalOrders);
+    if (metricRevenueEl) metricRevenueEl.textContent = formatCurrency(totalRevenue);
+  }
+
+  // -----------------------------
+  // VENDORS TABLE
+  // -----------------------------
+  function renderVendorsTable() {
+    if (!vendorsTableEl) return;
+
+    if (!vendors.length) {
+      vendorsTableEl.innerHTML = `
+        <div class="table-empty">No vendors yet. Send the signup link to brands.</div>
+      `;
       return;
     }
 
-    let html = `<table><thead>
-      <tr>
-        <th>Vendor</th>
-        <th>Booth</th>
-        <th>Brand</th>
-        <th>Status</th>
-        <th>Orders</th>
-        <th>Sales</th>
-        <th>Dashboard</th>
-      </tr>
-    </thead><tbody>`;
+    let html = `
+      <table>
+        <thead>
+          <tr>
+            <th>Brand</th>
+            <th>Contact</th>
+            <th>Phone</th>
+            <th>Email</th>
+            <th>Category</th>
+            <th>Status</th>
+            <th>Stall</th>
+            <th>POS Linked?</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
 
-    for(const r of rows){
-      const v = r.vendor;
-      const name = v.name || v.vendorName || "Vendor";
-      const booth = v.boothLabel || v.booth || "-";
-      const brand = v.brandName || v.brandId || "-";
-      const st = (v.status || "active").toLowerCase();
-      const pillClass = st === "active" ? "pill-success" : "pill";
-      const statusLabel = st === "active" ? "Active" : "Inactive";
-      const brandId = v.brandId || "";
-      const vendorId = v._id;
+    vendors.forEach((v) => {
+      const status = v.status || "pending";
+      const posLinked = v.posBrandId ? "Yes" : "No";
 
-      html += `<tr>
-        <td>${name}</td>
-        <td>${booth}</td>
-        <td>${brand}</td>
-        <td><span class="pill ${pillClass}">${statusLabel}</span></td>
-        <td>${r.orders}</td>
-        <td>${money(r.sales)}</td>
-        <td>
-          ${brandId ? `<button class="btn btn-ghost" data-act="open-vendor" data-brand-id="${brandId}" data-vendor-id="${vendorId}" style="font-size:11px;padding:4px 8px;">Open Vendor</button>` : `<span class="panel-subtitle">Not linked</span>`}
-        </td>
-      </tr>`;
-    }
+      html += `
+        <tr>
+          <td>${v.brandName || v.vendorName || "Vendor"}</td>
+          <td>${v.contactName || ""}</td>
+          <td>${v.phone || ""}</td>
+          <td>${v.email || ""}</td>
+          <td>${v.category || v.segment || ""}</td>
+          <td>${status}</td>
+          <td>${v.stallCode || v.stallName || "—"}</td>
+          <td>${posLinked}</td>
+          <td>
+            <button class="btn btn-ghost" data-view-vendor="${v.id}">View</button>
+            ${
+              status === "approved"
+                ? `<button class="btn btn-ghost" data-mark-pending="${v.id}">Mark pending</button>`
+                : `<button class="btn btn-primary" data-approve-vendor="${v.id}">Approve</button>`
+            }
+          </td>
+        </tr>
+      `;
+    });
 
     html += `</tbody></table>`;
     vendorsTableEl.innerHTML = html;
+
+    // Bind actions
+    vendorsTableEl.querySelectorAll("[data-view-vendor]").forEach((btn) => {
+      const id = btn.getAttribute("data-view-vendor");
+      btn.addEventListener("click", () => openVendorDetails(id));
+    });
+    vendorsTableEl.querySelectorAll("[data-approve-vendor]").forEach((btn) => {
+      const id = btn.getAttribute("data-approve-vendor");
+      btn.addEventListener("click", () => approveVendor(id));
+    });
+    vendorsTableEl.querySelectorAll("[data-mark-pending]").forEach((btn) => {
+      const id = btn.getAttribute("data-mark-pending");
+      btn.addEventListener("click", () => markVendorPending(id));
+    });
   }
 
-  function renderBoothsTable(){
-    if(!eventBooths.length){
-      boothsTableEl.innerHTML = `<div class="table-empty">No booths found for this event.</div>`;
+  function openVendorDetails(vendorId) {
+    const v = vendors.find((x) => x.id === vendorId);
+    if (!v) {
+      alert("Vendor not found.");
       return;
     }
-    const search = (searchBoothsInput.value || "").toLowerCase();
-    const sortValue = sortBoothsSelect.value;
 
-    let rows = [...eventBooths];
+    const safe = (val) => (val == null ? "" : val);
 
-    if(search){
-      rows = rows.filter(b => {
-        const booth = (b.boothLabel || "").toLowerCase();
-        const vendor = (b.vendorName || "").toLowerCase();
-        const id = (b.branchId || "").toLowerCase();
-        return booth.includes(search) || vendor.includes(search) || id.includes(search);
-      });
-    }
+    openModal(`
+      <div class="modal-title">Vendor Details</div>
 
-    const vendorStats = window.__eventVendorStats || new Map();
-    const boothStats = window.__eventBoothStats || new Map();
+      <div class="field">
+        <div class="field-label">Brand</div>
+        <div>${safe(v.brandName || v.vendorName)}</div>
+      </div>
 
-    rows.sort((a,b) => {
-      if(sortValue === "name-asc"){
-        return (a.boothLabel || "").localeCompare(b.boothLabel || "");
-      }
-      if(sortValue === "name-desc"){
-        return (b.boothLabel || "").localeCompare(a.boothLabel || "");
-      }
-      if(sortValue === "vendor-asc"){
-        return (a.vendorName || "").localeCompare(b.vendorName || "");
-      }
-      return 0;
+      <div class="field">
+        <div class="field-label">Contact</div>
+        <div>${safe(v.contactName)} — ${safe(v.phone)}</div>
+      </div>
+
+      <div class="field">
+        <div class="field-label">Email</div>
+        <div>${safe(v.email)}</div>
+      </div>
+
+      <div class="field">
+        <div class="field-label">Category</div>
+        <div>${safe(v.category || v.segment)}</div>
+      </div>
+
+      <div class="field">
+        <div class="field-label">Stall</div>
+        <div>${safe(v.stallCode || v.stallName)}</div>
+      </div>
+
+      <div class="field">
+        <div class="field-label">Notes</div>
+        <div>${safe(v.notes)}</div>
+      </div>
+
+      <div class="field">
+        <div class="field-label">POS Link Info</div>
+        <div>
+          Brand ID: ${safe(v.posBrandId)}<br/>
+          Branch ID: ${safe(v.posBranchId)}<br/>
+          POS URL: ${safe(v.posUrl)}
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+      </div>
+    `);
+  }
+
+  async function approveVendor(vendorId) {
+    if (!currentEventId) return;
+    const vRef = doc(db, "events", currentEventId, "vendors", vendorId);
+    await updateDoc(vRef, {
+      status: "approved",
+      approvedAt: serverTimestamp()
     });
+  }
 
-    let html = `<table><thead>
-      <tr>
-        <th>Booth</th>
-        <th>Vendor</th>
-        <th>Branch ID</th>
-        <th>Orders</th>
-        <th>Sales</th>
-      </tr>
-    </thead><tbody>`;
+  async function markVendorPending(vendorId) {
+    if (!currentEventId) return;
+    const vRef = doc(db, "events", currentEventId, "vendors", vendorId);
+    await updateDoc(vRef, {
+      status: "pending"
+    });
+  }
 
-    for(const b of rows){
-      const stats = b.branchId ? (boothStats.get(b.branchId) || {sales:0,orders:0}) : {sales:0,orders:0};
-      html += `<tr>
-        <td>${b.boothLabel || "-"}</td>
-        <td>${b.vendorName || "-"}</td>
-        <td>${b.branchId || "-"}</td>
-        <td>${stats.orders}</td>
-        <td>${money(stats.sales)}</td>
-      </tr>`;
+  // -----------------------------
+  // STALLS TABLE
+  // -----------------------------
+  function renderStallsTable() {
+    if (!stallsTableEl) return;
+
+    if (!stalls.length) {
+      stallsTableEl.innerHTML = `<div class="table-empty">No stalls defined yet.</div>`;
+      return;
     }
 
+    let html = `
+      <table>
+        <thead>
+          <tr>
+            <th>Stall Code</th>
+            <th>Zone</th>
+            <th>Size</th>
+            <th>Price</th>
+            <th>Vendor</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+    stalls.forEach((s) => {
+      const vendorName =
+        s.vendorBrandName ||
+        (s.vendorId && (vendors.find((v) => v.id === s.vendorId)?.brandName || "")) ||
+        "—";
+
+      html += `
+        <tr>
+          <td>${s.code || s.name || ""}</td>
+          <td>${s.zone || ""}</td>
+          <td>${s.size || ""}</td>
+          <td>${formatCurrency(s.price)}</td>
+          <td>${vendorName}</td>
+        </tr>
+      `;
+    });
     html += `</tbody></table>`;
-    boothsTableEl.innerHTML = html;
+    stallsTableEl.innerHTML = html;
   }
 
-  function renderOrdersTable(){
-    if(!eventOrders.length){
-      ordersTableEl.innerHTML = `<div class="table-empty">No orders yet.</div>`;
+  // -----------------------------
+  // ORDERS TABLE
+  // -----------------------------
+  function renderOrdersTable() {
+    if (!ordersTableEl) return;
+
+    if (!orders.length) {
+      ordersTableEl.innerHTML = `<div class="table-empty">No orders yet for this event.</div>`;
       return;
     }
 
-    const search = (searchOrdersInput.value || "").toLowerCase();
-    const typeFilter = filterOrderTypeSelect.value;
-    const sortValue = sortOrdersSelect.value;
+    let html = `
+      <table>
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Vendor</th>
+            <th>Total</th>
+            <th>Payment</th>
+            <th>Type</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
 
-    let rows = [...eventOrders];
+    orders.forEach((o) => {
+      const vendorName =
+        o.vendorBrandName ||
+        (o.vendorId && (vendors.find((v) => v.id === o.vendorId)?.brandName || "")) ||
+        "—";
+      const createdAt = o.createdAt && typeof o.createdAt.toDate === "function"
+        ? o.createdAt.toDate()
+        : null;
+      const dateStr = createdAt ? createdAt.toLocaleString("en-EG", { timeZone: "Africa/Cairo" }) : "";
 
-    if(search){
-      rows = rows.filter(o => {
-        const id = (o.orderNumber || o._id || "").toString().toLowerCase();
-        const vendor = (o.vendorName || o.vendor || o.brandName || o.brandId || "").toLowerCase();
-        const customer = ((o.customer && o.customer.name) || "").toLowerCase();
-        return id.includes(search) || vendor.includes(search) || customer.includes(search);
-      });
-    }
-
-    if(typeFilter !== "all"){
-      rows = rows.filter(o => {
-        const isReturn = o.isReturn === true;
-        if(typeFilter === "sale") return !isReturn;
-        if(typeFilter === "return") return isReturn;
-        return true;
-      });
-    }
-
-    rows.sort((a,b) => {
-      if(sortValue === "date-desc"){
-        const da = a.createdAt && a.createdAt.toDate ? a.createdAt.toDate().getTime() : 0;
-        const db = b.createdAt && b.createdAt.toDate ? b.createdAt.toDate().getTime() : 0;
-        return db - da;
-      }
-      if(sortValue === "date-asc"){
-        const da = a.createdAt && a.createdAt.toDate ? a.createdAt.toDate().getTime() : 0;
-        const db = b.createdAt && b.createdAt.toDate ? b.createdAt.toDate().getTime() : 0;
-        return da - db;
-      }
-      if(sortValue === "total-desc"){
-        return (Number(b.total || 0) - Number(a.total || 0));
-      }
-      if(sortValue === "total-asc"){
-        return (Number(a.total || 0) - Number(b.total || 0));
-      }
-      return 0;
+      html += `
+        <tr>
+          <td>${o.orderId || o.id}</td>
+          <td>${vendorName}</td>
+          <td>${formatCurrency(o.total)}</td>
+          <td>${o.paymentMethod || ""}</td>
+          <td>${o.type || "sale"}</td>
+          <td>${dateStr}</td>
+        </tr>
+      `;
     });
-
-    if(!rows.length){
-      ordersTableEl.innerHTML = `<div class="table-empty">No orders match your filters.</div>`;
-      return;
-    }
-
-    let html = `<table><thead>
-      <tr>
-        <th>Date</th>
-        <th>Order</th>
-        <th>Vendor</th>
-        <th>Booth</th>
-        <th>Type</th>
-        <th>Total</th>
-        <th>Payment</th>
-      </tr>
-    </thead><tbody>`;
-
-    for(const o of rows){
-      let dateStr = "-";
-      if(o.createdAt && o.createdAt.toDate){
-        const d = o.createdAt.toDate();
-        dateStr = d.toLocaleString("en-EG",{month:"short",day:"2-digit",hour:"2-digit",minute:"2-digit"});
-      }else{
-        dateStr = orderDateString(o);
-      }
-      const isReturn = o.isReturn === true;
-      const vendor = o.vendorName || o.vendor || o.brandName || o.brandId || "-";
-      const booth = o.boothLabel || o.branchName || o.branchId || "-";
-      const typePill = isReturn
-        ? `<span class="pill pill-danger">Return</span>`
-        : `<span class="pill pill-success">Sale</span>`;
-      const p = o.payment || {};
-      const pm = o.paymentMethod || p.method || p.type || "-";
-      html += `<tr>
-        <td>${dateStr}</td>
-        <td>#${o.orderNumber || o._id}</td>
-        <td>${vendor}</td>
-        <td>${booth}</td>
-        <td>${typePill}</td>
-        <td>${money(o.total)}</td>
-        <td>${pm}</td>
-      </tr>`;
-    }
 
     html += `</tbody></table>`;
     ordersTableEl.innerHTML = html;
   }
 
-  function renderCustomersTable(){
-    if(!eventCustomers.length){
-      customersTableEl.innerHTML = `<div class="table-empty">No customers yet.</div>`;
+  // -----------------------------
+  // TODAY'S TASKS (OVERVIEW)
+  // -----------------------------
+  function renderTasksToday() {
+    if (!tasksTodayEl) return;
+
+    const pendingVendors = vendors.filter((v) => !v.status || v.status === "pending");
+    const stallsWithoutVendor = stalls.filter((s) => !s.vendorId && !s.vendorBrandName);
+
+    const items = [];
+
+    if (pendingVendors.length) {
+      items.push(`Review & approve <strong>${pendingVendors.length}</strong> pending vendors.`);
+    }
+    if (stallsWithoutVendor.length) {
+      items.push(`Assign vendors to <strong>${stallsWithoutVendor.length}</strong> free stalls.`);
+    }
+    if (!orders.length) {
+      items.push("No sales yet — ensure POS links are enabled for vendors.");
+    }
+
+    if (!items.length) {
+      tasksTodayEl.innerHTML = `<div class="field-hint">No urgent tasks. All caught up 🎉</div>`;
       return;
     }
 
-    const search = (searchCustomersInput.value || "").toLowerCase();
-    const sortValue = sortCustomersSelect.value;
+    tasksTodayEl.innerHTML = items.map((i) => `<div>• ${i}</div>`).join("");
+  }
 
-    let rows = [...eventCustomers];
+  // -----------------------------
+  // CREATE EXTRA EVENT (MODAL)
+  // -----------------------------
+  btnCreateEvent?.addEventListener("click", () => {
+    openModal(`
+      <div class="modal-title">Create New Event</div>
+      <div class="field">
+        <div class="field-label">Event name</div>
+        <input id="m-event-name" class="field-input" placeholder="Lokamania 6, Soueast Owners Club…" />
+      </div>
+      <div class="field">
+        <div class="field-label">Date</div>
+        <input id="m-event-date" class="field-input" type="date" />
+      </div>
+      <div class="field">
+        <div class="field-label">Location</div>
+        <input id="m-event-location" class="field-input" placeholder="Cairo Festival City, etc." />
+      </div>
 
-    if(search){
-      rows = rows.filter(c => {
-        return (
-          (c.name || "").toLowerCase().includes(search) ||
-          (c.phone || "").toLowerCase().includes(search) ||
-          (c.email || "").toLowerCase().includes(search)
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" id="m-btn-save-event">Create</button>
+      </div>
+    `);
+
+    const saveBtn = qs("#m-btn-save-event");
+    saveBtn?.addEventListener("click", async () => {
+      const name = qs("#m-event-name").value.trim();
+      const date = qs("#m-event-date").value.trim();
+      const location = qs("#m-event-location").value.trim();
+      if (!name || !currentUser) {
+        alert("Event name required.");
+        return;
+      }
+
+      const vendorToken = randomToken(8);
+      const ref = await addDoc(collection(db, "events"), {
+        name,
+        date: date || null,
+        location: location || null,
+        ownerUserId: currentUser.uid,
+        status: "active",
+        vendorSignupToken: vendorToken,
+        createdAt: serverTimestamp()
+      });
+
+      // Update ownerEvents
+      const ownerEventsRef = doc(db, "ownerEvents", currentUser.uid);
+      const snap = await getDoc(ownerEventsRef);
+      const existing = snap.exists() ? snap.data() : {};
+      const ids = Array.isArray(existing.eventIds) ? existing.eventIds : [];
+      if (!ids.includes(ref.id)) ids.push(ref.id);
+      await setDoc(
+        ownerEventsRef,
+        {
+          primaryEventId: ref.id,
+          eventIds: ids
+        },
+        { merge: true }
+      );
+
+      // Reload events and select
+      await loadEventsForOwner(currentUser.uid);
+      currentEventId = ref.id;
+      renderEventSwitcher();
+      await selectEvent(ref.id);
+
+      closeModal();
+    });
+  });
+
+  // -----------------------------
+  // SETTINGS SAVE / DELETE EVENT
+  // -----------------------------
+  btnSaveEventSettings?.addEventListener("click", async () => {
+    if (!currentEventId) {
+      alert("No event selected.");
+      return;
+    }
+
+    const name = setEventNameEl?.value.trim();
+    const date = setEventDateEl?.value.trim();
+    const location = setEventLocationEl?.value.trim();
+    const notes = setEventNotesEl?.value.trim();
+
+    const updates = {
+      name: name || null,
+      date: date || null,
+      location: location || null,
+      notes: notes || null
+    };
+
+    await updateDoc(doc(db, "events", currentEventId), updates);
+
+    alert("Event settings saved.");
+  });
+
+  btnDeleteEvent?.addEventListener("click", async () => {
+    if (!currentEventId || !currentUser) {
+      alert("No event selected.");
+      return;
+    }
+    const sure = confirm("Delete this event and ALL its vendors, stalls & orders? This cannot be undone.");
+    if (!sure) return;
+
+    // Delete subcollections
+    // Vendors
+    const vSnap = await getDocs(collection(db, "events", currentEventId, "vendors"));
+    await Promise.all(vSnap.docs.map((d) => deleteDoc(d.ref)));
+
+    // Stalls
+    const sSnap = await getDocs(collection(db, "events", currentEventId, "stalls"));
+    await Promise.all(sSnap.docs.map((d) => deleteDoc(d.ref)));
+
+    // Orders
+    const oSnap = await getDocs(collection(db, "events", currentEventId, "orders"));
+    await Promise.all(oSnap.docs.map((d) => deleteDoc(d.ref)));
+
+    // Delete event doc
+    await deleteDoc(doc(db, "events", currentEventId));
+
+    // Update ownerEvents
+    const ownerEventsRef = doc(db, "ownerEvents", currentUser.uid);
+    const snap = await getDoc(ownerEventsRef);
+    if (snap.exists()) {
+      const data = snap.data();
+      const ids = Array.isArray(data.eventIds) ? data.eventIds.filter((id) => id !== currentEventId) : [];
+      const primaryEventId = data.primaryEventId === currentEventId ? (ids[0] || null) : data.primaryEventId;
+
+      if (!ids.length) {
+        await deleteDoc(ownerEventsRef);
+      } else {
+        await setDoc(
+          ownerEventsRef,
+          {
+            eventIds: ids,
+            primaryEventId: primaryEventId || null
+          },
+          { merge: true }
         );
-      });
+      }
     }
 
-    rows.sort((a,b) => {
-      if(sortValue === "name-asc"){
-        return (a.name || "").localeCompare(b.name || "");
-      }
-      if(sortValue === "name-desc"){
-        return (b.name || "").localeCompare(a.name || "");
-      }
-      if(sortValue === "total-desc"){
-        return b.totalSpent - a.totalSpent;
-      }
-      if(sortValue === "orders-desc"){
-        return b.ordersCount - a.ordersCount;
-      }
-      return 0;
-    });
+    // Reload
+    await loadEventsForOwner(currentUser.uid);
+    if (eventsList.length) {
+      currentEventId = eventsList[0].id;
+      renderEventSwitcher();
+      await selectEvent(currentEventId);
+    } else {
+      currentEventId = null;
+      renderEventSwitcher();
+      // maybe show empty UI
+    }
 
-    if(!rows.length){
-      customersTableEl.innerHTML = `<div class="table-empty">No customers match your filters.</div>`;
+    alert("Event deleted.");
+  });
+
+  // -----------------------------
+  // EXPORT CSV
+  // -----------------------------
+  function downloadCsv(filename, rows) {
+    const escapeVal = (v) => {
+      if (v === null || v === undefined) return "";
+      const s = String(v).replace(/"/g, '""');
+      if (/[" ,\n]/.test(s)) return `"${s}"`;
+      return s;
+    };
+    const csv = rows.map((r) => r.map(escapeVal).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  btnExportVendors?.addEventListener("click", () => {
+    if (!vendors.length) {
+      alert("No vendors to export.");
       return;
     }
-
-    let html = `<table><thead>
-      <tr>
-        <th>Name</th>
-        <th>Phone</th>
-        <th>Email</th>
-        <th>Orders</th>
-        <th>Total spent</th>
-      </tr>
-    </thead><tbody>`;
-
-    for(const c of rows){
-      html += `<tr>
-        <td>${c.name}</td>
-        <td>${c.phone}</td>
-        <td>${c.email || "-"}</td>
-        <td>${c.ordersCount}</td>
-        <td>${money(c.totalSpent)}</td>
-      </tr>`;
-    }
-
-    html += `</tbody></table>`;
-    customersTableEl.innerHTML = html;
-  }
-
-  // =========================
-  // CHARTS
-  // =========================
-
-  function renderSalesTimelineChart(hourBuckets){
-    const ctx = document.getElementById("chartSalesTimeline");
-    if(!ctx) return;
-
-    const labels = Object.keys(hourBuckets);
-    const values = labels.map(l => hourBuckets[l]);
-
-    if(salesTimelineChart){
-      salesTimelineChart.destroy();
-    }
-    salesTimelineChart = new Chart(ctx,{
-      type:"line",
-      data:{
-        labels,
-        datasets:[{
-          label:"Sales (today)",
-          data:values,
-          borderWidth:2,
-          fill:false,
-          tension:0.25
-        }]
-      },
-      options:{
-        responsive:true,
-        maintainAspectRatio:false,
-        plugins:{
-          legend:{display:false}
-        },
-        scales:{
-          x:{grid:{display:false}},
-          y:{grid:{color:"#e5e7eb"}}
-        }
-      }
-    });
-  }
-
-  function renderPaymentSplitChart(paymentBuckets){
-    const ctx = document.getElementById("chartPaymentSplit");
-    if(!ctx) return;
-
-    const labels = ["Cash","Card","Other"];
-    const values = [
-      paymentBuckets.cash || 0,
-      paymentBuckets.card || 0,
-      paymentBuckets.other || 0
+    const rows = [
+      [
+        "brandName",
+        "contactName",
+        "phone",
+        "email",
+        "category",
+        "status",
+        "stallCode",
+        "posBrandId",
+        "posBranchId",
+        "notes"
+      ]
     ];
+    vendors.forEach((v) => {
+      rows.push([
+        v.brandName || v.vendorName || "",
+        v.contactName || "",
+        v.phone || "",
+        v.email || "",
+        v.category || v.segment || "",
+        v.status || "pending",
+        v.stallCode || v.stallName || "",
+        v.posBrandId || "",
+        v.posBranchId || "",
+        v.notes || ""
+      ]);
+    });
+    downloadCsv("event_vendors.csv", rows);
+  });
 
-    if(paymentSplitChart){
-      paymentSplitChart.destroy();
+  btnExportOrders?.addEventListener("click", () => {
+    if (!orders.length) {
+      alert("No orders to export.");
+      return;
     }
-    paymentSplitChart = new Chart(ctx,{
-      type:"doughnut",
-      data:{
-        labels,
-        datasets:[{
-          data:values
-        }]
-      },
-      options:{
-        responsive:true,
-        maintainAspectRatio:false,
-        plugins:{
-          legend:{position:"bottom"}
-        },
-        cutout:"60%"
-      }
+    const rows = [["orderId", "vendor", "total", "paymentMethod", "type", "createdAt"]];
+    orders.forEach((o) => {
+      const vendorName =
+        o.vendorBrandName ||
+        (o.vendorId && (vendors.find((v) => v.id === o.vendorId)?.brandName || "")) ||
+        "";
+      const createdAt = o.createdAt && typeof o.createdAt.toDate === "function"
+        ? o.createdAt.toDate().toISOString()
+        : "";
+      rows.push([
+        o.orderId || o.id,
+        vendorName,
+        o.total || 0,
+        o.paymentMethod || "",
+        o.type || "sale",
+        createdAt
+      ]);
     });
-  }
+    downloadCsv("event_orders.csv", rows);
+  });
 
-  // =========================
-  // NAVIGATION
-  // =========================
+  // -----------------------------
+  // NAVIGATION (SIDEBAR)
+  // -----------------------------
+  navItems.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const pageId = btn.dataset.page;
+      if (!pageId) return;
 
-  const pages = qsa(".page");
-  const navItems = qsa(".nav-item");
-  const goVendorsBtn = qs("#btn-go-vendors");
+      navItems.forEach((b) => b.classList.remove("active"));
+      pages.forEach((p) => p.classList.remove("active"));
 
-  function setActivePage(pageId){
-    pages.forEach(p => {
-      p.classList.toggle("active", p.id === pageId);
-    });
-    navItems.forEach(n => {
-      n.classList.toggle("active", n.dataset.page === pageId);
-    });
-
-    if(pageId === "page-overview"){
-      topbarTitleEl.textContent = "Live Overview";
-      topbarSubtitleEl.textContent = `Today’s performance for ${eventData?.name || "the event"}.`;
-    }else if(pageId === "page-vendors"){
-      topbarTitleEl.textContent = "Vendors";
-      topbarSubtitleEl.textContent = "Manage vendors linked to this event and open their dashboards.";
-    }else if(pageId === "page-booths"){
-      topbarTitleEl.textContent = "Booths / Branches";
-      topbarSubtitleEl.textContent = "All booths inside the event mapped to vendor branches.";
-    }else if(pageId === "page-orders"){
-      topbarTitleEl.textContent = "Orders";
-      topbarSubtitleEl.textContent = "All sales and returns made inside this event.";
-    }else if(pageId === "page-customers"){
-      topbarTitleEl.textContent = "Customers";
-      topbarSubtitleEl.textContent = "Customers who bought from any vendor in this event.";
-    }else if(pageId === "page-settings"){
-      topbarTitleEl.textContent = "Event Settings";
-      topbarSubtitleEl.textContent = "Edit event details and understand vendor linking.";
-    }
-  }
-
-  navItems.forEach(item => {
-    item.addEventListener("click", () => {
-      const pageId = item.dataset.page;
-      if(!pageId) return;
-      setActivePage(pageId);
+      btn.classList.add("active");
+      const pageEl = qs("#" + pageId);
+      if (pageEl) pageEl.classList.add("active");
     });
   });
 
-  if(goVendorsBtn){
-    goVendorsBtn.addEventListener("click", () => {
-      setActivePage("page-vendors");
-    });
-  }
+  // -----------------------------
+  // LOGOUT
+  // -----------------------------
+  logoutBtn?.addEventListener("click", async () => {
+    if (unsubVendors) unsubVendors();
+    if (unsubOrders) unsubOrders();
+    if (unsubStalls) unsubStalls();
+    unsubVendors = unsubOrders = unsubStalls = null;
 
-  // =========================
-  // MODALS (ADD VENDOR etc.)
-  // =========================
-
-  const addVendorBtn = qs("#btn-add-vendor");
-  const exportVendorsBtn = qs("#btn-export-vendors");
-  const exportBoothsBtn = qs("#btn-export-booths");
-  const exportOrdersBtn = qs("#btn-export-orders");
-  const exportCustomersBtn = qs("#btn-export-customers");
-
-  if(addVendorBtn){
-    addVendorBtn.addEventListener("click", () => {
-      const html = `
-        <div class="modal-title">Add Vendor to Event</div>
-        <div class="modal-subtitle">
-          Link a vendor to this event. This will create a record under
-          <strong>/events/${eventId}/vendors</strong> and connect it to its brand in Store OS.
-        </div>
-        <form id="addVendorForm">
-          <div class="field">
-            <div class="field-label">Vendor Name</div>
-            <input id="vendorName" class="field-input" placeholder="Oudies, Nizu, ..." required/>
-          </div>
-          <div class="field">
-            <div class="field-label">Brand ID (Store OS)</div>
-            <input id="brandId" class="field-input" placeholder="brands/{brandId}" required/>
-            <div class="field-hint">Use the brandId from the Luma Store OS Brand Dashboard.</div>
-          </div>
-          <div class="field">
-            <div class="field-label">Brand Name (optional)</div>
-            <input id="brandName" class="field-input" placeholder="If different from vendor name"/>
-          </div>
-          <div class="field">
-            <div class="field-label">Booth Label</div>
-            <input id="boothLabel" class="field-input" placeholder="Booth A12, Tent C3, ..." />
-          </div>
-          <div class="field">
-            <div class="field-label">Branch IDs (optional)</div>
-            <input id="branchIds" class="field-input" placeholder="branch1, branch2, ..." />
-            <div class="field-hint">
-              If you use multiple branches for the same vendor, enter the branch IDs (comma separated).
-            </div>
-          </div>
-          <div class="field">
-            <div class="field-label">Status</div>
-            <select id="vendorStatus" class="field-input">
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
-          <div class="field">
-            <div class="field-label">Contact Phone (optional)</div>
-            <input id="vendorPhone" class="field-input" placeholder="+20..." />
-          </div>
-          <div class="modal-actions">
-            <button type="button" class="btn btn-ghost" id="btnCancelAddVendor">Cancel</button>
-            <button type="submit" class="btn btn-primary">Save Vendor</button>
-          </div>
-        </form>
-      `;
-      openModal(html);
-
-      const form = modalContent.querySelector("#addVendorForm");
-      const cancelBtn = modalContent.querySelector("#btnCancelAddVendor");
-
-      cancelBtn.addEventListener("click", () => closeModal());
-
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const name = form.querySelector("#vendorName").value.trim();
-        const brandId = form.querySelector("#brandId").value.trim();
-        const brandName = form.querySelector("#brandName").value.trim();
-        const boothLabel = form.querySelector("#boothLabel").value.trim();
-        const branchIdsRaw = form.querySelector("#branchIds").value.trim();
-        const status = form.querySelector("#vendorStatus").value;
-        const phone = form.querySelector("#vendorPhone").value.trim();
-
-        if(!name || !brandId){
-          showAlert("Vendor name and brand ID are required.","error");
-          return;
-        }
-
-        const branchIds = branchIdsRaw
-          ? branchIdsRaw.split(",").map(s => s.trim()).filter(Boolean)
-          : [];
-
-        try{
-          showLoading(true);
-          const ref = db.collection("events").doc(eventId).collection("vendors");
-          await ref.add({
-            name,
-            brandId,
-            brandName: brandName || name,
-            boothLabel: boothLabel || "",
-            branchIds,
-            status,
-            phone,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-          showAlert("Vendor added & linked to event.");
-          closeModal();
-          await loadVendors();
-          deriveBoothsFromVendors();
-          computeAnalyticsAndRender();
-          setActivePage("page-vendors");
-        }catch(e){
-          console.error("Error adding vendor", e);
-          showAlert("Could not add vendor. Check console.","error");
-        }finally{
-          showLoading(false);
-        }
-      });
-    });
-  }
-
-  // Export helpers
-  function exportToXlsx(filename, rows, headers){
-    if(!rows || !rows.length){
-      showAlert("Nothing to export.","error");
-      return;
-    }
-    const sheetData = [headers.map(h => h.label)];
-    for(const r of rows){
-      sheetData.push(headers.map(h => (r[h.key] ?? "")));
-    }
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(sheetData);
-    XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-    XLSX.writeFile(wb, filename);
-  }
-
-  if(exportVendorsBtn){
-    exportVendorsBtn.addEventListener("click", () => {
-      const vendorStats = window.__eventVendorStats || new Map();
-      const rows = eventVendors.map(v => {
-        const stats = vendorStats.get(v._id) || {sales:0,orders:0};
-        return {
-          name: v.name || v.vendorName || "",
-          brandId: v.brandId || "",
-          brandName: v.brandName || "",
-          boothLabel: v.boothLabel || v.booth || "",
-          status: v.status || "active",
-          phone: v.phone || "",
-          orders: stats.orders,
-          sales: stats.sales
-        };
-      });
-      exportToXlsx("event-vendors.xlsx", rows, [
-        {key:"name",label:"Vendor Name"},
-        {key:"brandId",label:"Brand ID"},
-        {key:"brandName",label:"Brand Name"},
-        {key:"boothLabel",label:"Booth"},
-        {key:"status",label:"Status"},
-        {key:"phone",label:"Phone"},
-        {key:"orders",label:"Orders"},
-        {key:"sales",label:"Sales"}
-      ]);
-    });
-  }
-
-  if(exportBoothsBtn){
-    exportBoothsBtn.addEventListener("click", () => {
-      const boothStats = window.__eventBoothStats || new Map();
-      const rows = eventBooths.map(b => {
-        const stats = b.branchId ? (boothStats.get(b.branchId) || {sales:0,orders:0}) : {sales:0,orders:0};
-        return {
-          booth: b.boothLabel || "",
-          vendor: b.vendorName || "",
-          branchId: b.branchId || "",
-          sales: stats.sales,
-          orders: stats.orders
-        };
-      });
-      exportToXlsx("event-booths.xlsx", rows, [
-        {key:"booth",label:"Booth"},
-        {key:"vendor",label:"Vendor"},
-        {key:"branchId",label:"Branch ID"},
-        {key:"orders",label:"Orders"},
-        {key:"sales",label:"Sales"}
-      ]);
-    });
-  }
-
-  if(exportOrdersBtn){
-    exportOrdersBtn.addEventListener("click", () => {
-      const rows = eventOrders.map(o => {
-        let dateStr = "-";
-        if(o.createdAt && o.createdAt.toDate){
-          const d = o.createdAt.toDate();
-          dateStr = d.toISOString();
-        }else{
-          dateStr = orderDateString(o);
-        }
-        const isReturn = o.isReturn === true;
-        const p = o.payment || {};
-        const pm = o.paymentMethod || p.method || p.type || "";
-        return {
-          id: o._id,
-          orderNumber: o.orderNumber || "",
-          date: dateStr,
-          vendor: o.vendorName || o.vendor || o.brandName || o.brandId || "",
-          booth: o.boothLabel || o.branchName || o.branchId || "",
-          type: isReturn ? "Return" : "Sale",
-          total: o.total || 0,
-          paymentMethod: pm
-        };
-      });
-      exportToXlsx("event-orders.xlsx", rows, [
-        {key:"date",label:"Date"},
-        {key:"orderNumber",label:"Order #"},
-        {key:"vendor",label:"Vendor"},
-        {key:"booth",label:"Booth"},
-        {key:"type",label:"Type"},
-        {key:"total",label:"Total"},
-        {key:"paymentMethod",label:"Payment Method"},
-        {key:"id",label:"Order ID"}
-      ]);
-    });
-  }
-
-  if(exportCustomersBtn){
-    exportCustomersBtn.addEventListener("click", () => {
-      const rows = eventCustomers.map(c => ({
-        name: c.name,
-        phone: c.phone,
-        email: c.email,
-        orders: c.ordersCount,
-        totalSpent: c.totalSpent
-      }));
-      exportToXlsx("event-customers.xlsx", rows, [
-        {key:"name",label:"Name"},
-        {key:"phone",label:"Phone"},
-        {key:"email",label:"Email"},
-        {key:"orders",label:"Orders"},
-        {key:"totalSpent",label:"Total Spent"}
-      ]);
-    });
-  }
-
-  // Link "Open Vendor" button → brand dashboard (THIS LINKS TO CURRENT VENDOR)
-  vendorsTableEl.addEventListener("click", (e) => {
-    const btn = e.target.closest("button[data-act='open-vendor']");
-    if(!btn) return;
-    const brandId = btn.dataset.brandId;
-    const vendorId = btn.dataset.vendorId;
-    if(!brandId){
-      showAlert("This vendor is not linked to a brand yet.","error");
-      return;
-    }
-
-    // TODO: change this URL to your actual brand dashboard path (e.g. /brand.html)
-    const url = `/brand.html?brandId=${encodeURIComponent(brandId)}&eventId=${encodeURIComponent(eventId)}&vendorId=${encodeURIComponent(vendorId)}`;
-    window.open(url,"_blank");
+    await signOut(auth);
+    showAuthView();
   });
-
-  // =========================
-  // SETTINGS SAVE
-  // =========================
-
-  const saveEventSettingsBtn = qs("#btn-save-event-settings");
-  if(saveEventSettingsBtn){
-    saveEventSettingsBtn.addEventListener("click", async () => {
-      if(!eventId) return;
-      const name = setEventNameInput.value.trim();
-      const venue = setEventVenueInput.value.trim();
-      const dates = setEventDatesInput.value.trim();
-      const file = setEventLogoInput.files?.[0];
-
-      try{
-        showLoading(true);
-        const ref = db.collection("events").doc(eventId);
-        const update = {
-          name,
-          venue,
-          dateRange: dates
-        };
-        if(file){
-          const url = await uploadImageToStorage(file, `events/${eventId}/logo`);
-          update.logoUrl = url;
-        }
-        await ref.set(update,{merge:true});
-        showAlert("Event settings saved.");
-        await loadEventMeta();
-      }catch(e){
-        console.error("Save event settings error", e);
-        showAlert("Could not save event settings.","error");
-      }finally{
-        showLoading(false);
-      }
-    });
-  }
-
-  // =========================
-  // FILTER HANDLERS
-  // =========================
-
-  if(searchVendorsInput) searchVendorsInput.addEventListener("input", () => renderVendorsTable());
-  if(filterVendorStatusSelect) filterVendorStatusSelect.addEventListener("change", () => renderVendorsTable());
-  if(sortVendorsSelect) sortVendorsSelect.addEventListener("change", () => renderVendorsTable());
-
-  if(searchBoothsInput) searchBoothsInput.addEventListener("input", () => renderBoothsTable());
-  if(sortBoothsSelect) sortBoothsSelect.addEventListener("change", () => renderBoothsTable());
-
-  if(searchOrdersInput) searchOrdersInput.addEventListener("input", () => renderOrdersTable());
-  if(filterOrderTypeSelect) filterOrderTypeSelect.addEventListener("change", () => renderOrdersTable());
-  if(sortOrdersSelect) sortOrdersSelect.addEventListener("change", () => renderOrdersTable());
-
-  if(searchCustomersInput) searchCustomersInput.addEventListener("input", () => renderCustomersTable());
-  if(sortCustomersSelect) sortCustomersSelect.addEventListener("change", () => renderCustomersTable());
-
-  // Initial page
-  setActivePage("page-overview");
-
 </script>
-</body>
-</html>
