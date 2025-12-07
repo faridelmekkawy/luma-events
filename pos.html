@@ -65,9 +65,15 @@
       background:transparent;
       color:var(--ink);
     }
+    .btn-ghost:hover{
+      background:rgba(15,23,42,.04);
+    }
     .btn-danger{
       background:var(--danger);
       color:#fff;
+    }
+    .btn-danger:hover{
+      background:#b91c1c;
     }
     .btn-small{
       padding:4px 10px;
@@ -467,6 +473,9 @@
       padding:3px 8px;
       font-size:13px;
       cursor:pointer;
+    }
+    .qty-btn:hover{
+      background:rgba(15,23,42,.04);
     }
     .qty-val{
       padding:2px 8px;
@@ -910,9 +919,6 @@
                 <strong id="cart-summary-total">0.00</strong>
               </div>
               <div style="display:flex; gap:6px;">
-                <button type="button" id="btn-open-checkout-secondary" class="btn btn-ghost btn-small">
-                  Proceed
-                </button>
                 <button type="button" id="btn-open-checkout" class="btn btn-primary btn-small">
                   Proceed
                 </button>
@@ -1026,6 +1032,7 @@
       </div>
     </div>
   </div>
+
   <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import {
@@ -1097,7 +1104,6 @@
   const cartCardSubtitleEl = qs("#cart-card-subtitle");
   const summarySubtotalLabelEl = qs("#summary-subtotal-label");
   const summaryTotalLabelEl = qs("#summary-total-label");
-  const summaryPaymentLabelEl = qs("#summary-payment-label");
   const summaryTaxLabelEl = qs("#summary-tax-label");
   const summaryServiceLabelEl = qs("#summary-service-label");
   const returnNoteEl = qs("#return-note");
@@ -1118,7 +1124,6 @@
   const cartSummaryCountEl = qs("#cart-summary-count");
   const cartSummaryTotalEl = qs("#cart-summary-total");
   const btnOpenCheckoutTop = qs("#btn-open-checkout");
-  const btnOpenCheckoutSecondary = qs("#btn-open-checkout-secondary");
 
   const modeSaleBtn = qs("#mode-sale");
   const modeReturnBtn = qs("#mode-return");
@@ -1182,6 +1187,7 @@
   let eventName = null;
 
   let posUser = null;
+  let posSuspended = false;
 
   let products = [];
   let cartItems = [];
@@ -1226,6 +1232,24 @@
     if(type==="ok") cls = "alert-ok";
     globalAlertEl.innerHTML = `<div class="alert ${cls}">${msg}</div>`;
     setTimeout(()=>{ globalAlertEl.innerHTML = ""; }, 4000);
+  }
+
+  function suspendPOS(message){
+    posSuspended = true;
+    showGlobalAlert(message || "This brand has been suspended. POS is disabled.","error");
+    [
+      modeSaleBtn,
+      modeReturnBtn,
+      btnAddCode,
+      codeInputEl,
+      topSearchEl,
+      btnOpenCheckoutTop,
+      btnClearCart,
+      btnApplyDiscount,
+      btnReturnFull
+    ].forEach(el => {
+      if (el) el.disabled = true;
+    });
   }
 
   function initialsFromNameOrUsername(name,username){
@@ -1506,6 +1530,10 @@
 
   function addProductToCart(prod, qty=1){
     if(!prod) return;
+    if (posSuspended) {
+      showGlobalAlert("This brand has been suspended. POS is disabled.","error");
+      return;
+    }
     const idForCart = prod.id;
     const existingIdx = cartItems.findIndex(i=>i.id===idForCart);
     if(existingIdx>=0){
@@ -1681,6 +1709,30 @@
 
     summaryTaxLabelEl.textContent = `VAT (${taxPercent || 0}%)`;
     summaryServiceLabelEl.textContent = `Service Fee (${servicePercent || 0}%)`;
+
+    // Suspension status: brand-level + optional vendor-level (under events/{eventId}/vendors)
+    let suspensionMessage = "";
+    if (brandData.status === "suspended") {
+      suspensionMessage = "This brand has been suspended. POS is disabled.";
+    } else if (eventId) {
+      try {
+        const vendorsCol = collection(db,"events",eventId,"vendors");
+        const qVendor = query(vendorsCol, where("brandId","==", brandId), limit(1));
+        const snapVendor = await getDocs(qVendor);
+        if (!snapVendor.empty) {
+          const vData = snapVendor.docs[0].data() || {};
+          if (vData.status === "suspended") {
+            suspensionMessage = "This brand has been suspended for this event. POS is disabled.";
+          }
+        }
+      } catch(e) {
+        console.warn("Vendor status check failed", e);
+      }
+    }
+
+    if (suspensionMessage) {
+      suspendPOS(suspensionMessage);
+    }
   }
 
   async function loadProducts(){
@@ -1777,6 +1829,10 @@
   }
 
   async function handleAddByCodeSale(){
+    if (posSuspended) {
+      showGlobalAlert("This brand has been suspended. POS is disabled.","error");
+      return;
+    }
     const code = codeInputEl.value.trim();
     if(!code){
       showGlobalAlert("Enter or scan a code first.","error");
@@ -1824,6 +1880,10 @@
   // ---------- Returns (load order) ----------
 
   async function handleLoadOrderForReturn(){
+    if (posSuspended) {
+      showGlobalAlert("This brand has been suspended. POS is disabled.","error");
+      return;
+    }
     const input = codeInputEl.value.trim();
     if(!input){
       showGlobalAlert("Enter or scan an order ID or customer phone first.","error");
@@ -2226,6 +2286,10 @@
       showGlobalAlert("Cart is empty.","error");
       return;
     }
+    if (posSuspended) {
+      showGlobalAlert("This brand has been suspended. POS is disabled.","error");
+      return;
+    }
     clearCheckoutAlert();
     const totals = computeTotals();
     const total = totals.total;
@@ -2278,6 +2342,10 @@
   }
 
   function openProductModal(product){
+    if (posSuspended) {
+      showGlobalAlert("This brand has been suspended. POS is disabled.","error");
+      return;
+    }
     currentProductForModal = product;
     currentFlatVariants = buildFlatVariantsForProduct(product);
 
@@ -2954,6 +3022,10 @@
       showCheckoutAlert("Cart is empty.");
       return;
     }
+    if (posSuspended) {
+      showCheckoutAlert("POS is disabled for this brand. Contact the brand owner.");
+      return;
+    }
     const name = checkoutNameEl.value.trim();
     const email = checkoutEmailEl.value.trim();
     const phone = checkoutPhoneEl.value.trim();
@@ -3216,14 +3288,12 @@
       cartCardSubtitleEl.textContent = "Adjust quantities or remove items. Proceed to add customer & payment details.";
       summarySubtotalLabelEl.textContent = "Subtotal";
       summaryTotalLabelEl.textContent = "Total";
-      summaryPaymentLabelEl.textContent = "Payment method";
       returnNoteEl.style.display = "none";
       subtitleEl.textContent = "Event POS — Sale mode. Every sale is stored in the system.";
       productsListEl.style.display = "block";
       topSearchEl.disabled = false;
       topSearchEl.placeholder = "Search products (name/code)";
       btnOpenCheckoutTop.textContent = "Proceed";
-      btnOpenCheckoutSecondary.textContent = "Proceed";
       returnFullRowEl.style.display = "none";
     }else{
       modeSaleBtn.classList.remove("mode-pill-active");
@@ -3236,14 +3306,12 @@
       cartCardSubtitleEl.textContent = "Set the quantity to return for each item, then refund.";
       summarySubtotalLabelEl.textContent = "Refund subtotal";
       summaryTotalLabelEl.textContent = "Refund total";
-      summaryPaymentLabelEl.textContent = "Refund method";
       returnNoteEl.style.display = "block";
       subtitleEl.textContent = "Event POS — Return mode. Refunds are stored as negative totals linked to the original order.";
       productsListEl.style.display = "none";
       topSearchEl.disabled = true;
       topSearchEl.placeholder = "Products hidden in return mode";
       btnOpenCheckoutTop.textContent = "Refund selected items";
-      btnOpenCheckoutSecondary.textContent = "Refund selected items";
       returnFullRowEl.style.display = "flex";
     }
     renderProductsList(topSearchEl.value);
@@ -3301,6 +3369,14 @@
       }
       const d = snap.docs[0];
       const u = d.data() || {};
+
+      if (u.isActive === false) {
+        showAuthAlert("Your account has been suspended. Contact the brand owner.");
+        loginBtn.disabled = false;
+        loginBtn.textContent = "Log in";
+        return;
+      }
+
       const brandRef = d.ref.parent.parent;
       if(!brandRef){
         showAuthAlert("Staff user is not attached to a brand.");
@@ -3385,7 +3461,6 @@
 
     const openCheckout = ()=>openCheckoutModal();
     btnOpenCheckoutTop.addEventListener("click",openCheckout);
-    btnOpenCheckoutSecondary.addEventListener("click",openCheckout);
 
     btnCheckoutCancel.addEventListener("click",()=>{
       closeCheckoutModal();
@@ -3451,6 +3526,10 @@
     });
     btnProductModalAdd.addEventListener("click",()=>{
       if(!currentProductForModal) return;
+      if (posSuspended) {
+        showGlobalAlert("This brand has been suspended. POS is disabled.","error");
+        return;
+      }
       const product = currentProductForModal;
       let qty = parseInt(productModalQtyEl.value,10);
       if(!qty || qty < 1) qty = 1;
