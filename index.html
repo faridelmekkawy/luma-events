@@ -812,10 +812,1869 @@
   <!-- MODALS -->
   <div id="modal-container" style="position:fixed;inset:0;display:none;justify-content:center;align-items:center;background:rgba(0,0,0,.35);z-index:9999;"></div>
 
-  <!-- PART 2: JS (Firebase + logic + charts) will go here -->
-  <script type="module">
-    // placeholder so file is valid.
-    // Next message will contain full JS logic.
-  </script>
+   <script type="module">
+  // -----------------------------
+  // FIREBASE IMPORTS + CONFIG
+  // -----------------------------
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import {
+    getFirestore,
+    doc,
+    collection,
+    collectionGroup,
+    addDoc,
+    setDoc,
+    getDoc,
+    getDocs,
+    updateDoc,
+    query,
+    where,
+    orderBy,
+    serverTimestamp,
+    onSnapshot
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+  import {
+    getAuth,
+    onAuthStateChanged,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    updateProfile,
+    signOut
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyA80bAAGPuyscnTVS-zwrxE9Jp3tPiS1gM",
+    authDomain: "events-339ce.firebaseapp.com",
+    projectId: "events-339ce",
+    storageBucket: "events-339ce.firebasestorage.app",
+    messagingSenderId: "175601544315",
+    appId: "1:175601544315:web:00c94b4affa972b3a286de"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+
+  const VENDOR_SIGNUP_BASE_URL = window.location.origin + "/vendor-signup.html";
+
+  // -----------------------------
+  // DOM HELPERS
+  // -----------------------------
+  const qs = (s) => document.querySelector(s);
+  const qsa = (s) => document.querySelectorAll(s);
+
+  const authView = qs("#auth-view");
+  const appView = qs("#app-view");
+
+  function showAuthView() {
+    if (authView) authView.style.display = "block";
+    if (appView) appView.style.display = "none";
+  }
+  function showAppView() {
+    if (authView) authView.style.display = "none";
+    if (appView) appView.style.display = "flex";
+  }
+
+  function formatCurrency(num) {
+    const v = Number(num) || 0;
+    return v.toFixed(2);
+  }
+
+  function copyToClipboard(text) {
+    if (!navigator.clipboard) {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+      return;
+    }
+    navigator.clipboard.writeText(text).catch(() => {});
+  }
+
+  function parseLocalDate(dateStr) {
+    if (!dateStr) return null;
+    // Expecting YYYY-MM-DD
+    const [y, m, d] = dateStr.split("-").map((n) => parseInt(n, 10));
+    if (!y || !m || !d) return null;
+    return new Date(y, m - 1, d);
+  }
+
+  function formatDateKey(date) {
+    // YYYY-MM-DD
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+
+  function addDays(date, d) {
+    const n = new Date(date);
+    n.setDate(n.getDate() + d);
+    return n;
+  }
+
+  function parseOrderDate(order) {
+    // priority: createdAtLocal (string) -> createdAt (Timestamp) -> now
+    if (order.createdAtLocal) {
+      // try parse as ISO or "YYYY-MM-DD HH:mm"
+      const s = order.createdAtLocal;
+      const tryDate = new Date(s);
+      if (!isNaN(tryDate.getTime())) return tryDate;
+
+      // fallback simple split
+      const [datePart, timePart] = s.split(" ");
+      const [y, m, d] = datePart.split("-").map((n) => parseInt(n, 10));
+      let hour = 0, min = 0;
+      if (timePart) {
+        const [h, mm] = timePart.split(":").map((n) => parseInt(n, 10));
+        hour = h || 0;
+        min = mm || 0;
+      }
+      return new Date(y, (m || 1) - 1, d || 1, hour, min);
+    }
+    if (order.createdAt && typeof order.createdAt.toDate === "function") {
+      return order.createdAt.toDate();
+    }
+    return new Date();
+  }
+
+  // -----------------------------
+  // AUTH DOM
+  // -----------------------------
+  const tabLogin = qs("#tab-login");
+  const tabSignup = qs("#tab-signup");
+  const loginForm = qs("#login-form");
+  const signupForm = qs("#signup-form");
+  const authAlertContainer = qs("#auth-alert-container");
+  const authSubtitle = qs("#auth-subtitle");
+
+  const loginEmailEl = qs("#login-email");
+  const loginPasswordEl = qs("#login-password");
+
+  const signupNameEl = qs("#signup-name");
+  const signupEmailEl = qs("#signup-email");
+  const signupPasswordEl = qs("#signup-password");
+  const signupEventNameEl = qs("#signup-event-name");
+  const signupEventLocationEl = qs("#signup-event-location");
+  const signupEventStartEl = qs("#signup-event-start");
+  const signupEventEndEl = qs("#signup-event-end");
+
+  // -----------------------------
+  // APP DOM
+  // -----------------------------
+  const sidebarEventLogoEl = qs("#sidebar-event-logo");
+  const sidebarEventNameEl = qs("#sidebar-event-name");
+  const topbarTitleEl = qs("#topbar-title");
+  const topbarSubtitleEl = qs("#topbar-sub");
+  const eventSelectEl = qs("#event-select");
+  const dateFilterContainer = qs("#date-filter");
+
+  // Overview KPIs
+  const kpiTotalRevenueEl = qs("#kpi-total-revenue");
+  const kpiTotalOrdersEl = qs("#kpi-total-orders");
+  const kpiItemsSoldEl = qs("#kpi-items-sold");
+  const kpiAovEl = qs("#kpi-aov");
+  const kpiReturnsEl = qs("#kpi-returns");
+  const kpiNetRevenueEl = qs("#kpi-net-revenue");
+  const kpiActiveBrandsEl = qs("#kpi-active-brands");
+  const badgePeakHourEl = qs("#badge-peak-hour");
+  const timelineSubtitleEl = qs("#timeline-subtitle");
+
+  const peakHourWindowEl = qs("#peak-hour-window");
+  const peakHourRevenueEl = qs("#peak-hour-revenue");
+  const peakHourOrdersEl = qs("#peak-hour-orders");
+  const overviewTopVendorsEl = qs("#overview-top-vendors");
+  const overviewLiveFeedEl = qs("#overview-live-feed");
+  const paymentMiniStatsEl = qs("#payment-mini-stats");
+
+  // Timeline mode pills
+  const btnTimelineAuto = qs("#btn-timeline-auto");
+  const btnTimelineDay = qs("#btn-timeline-day");
+  const btnTimelineHour = qs("#btn-timeline-hour");
+
+  // Vendors page
+  const vendorsKpisEl = qs("#vendors-kpis");
+  const vendorStatusFiltersEl = qs("#vendor-status-filters");
+  const vendorSearchEl = qs("#vendor-search");
+  const vendorsTableWrapperEl = qs("#vendors-table-wrapper");
+  const btnManualVendor = qs("#btn-open-manual-vendor");
+  const btnCopyVendorLink = qs("#btn-copy-vendor-link");
+  const btnExportVendors = qs("#btn-export-vendors");
+
+  // Products page
+  const problemProductsWrapperEl = qs("#problem-products-table-wrapper");
+
+  // Customers page
+  const customersKpisEl = qs("#customers-kpis");
+  const customersTableWrapperEl = qs("#customers-table-wrapper");
+  const customerSearchEl = qs("#customer-search");
+  const btnExportCustomers = qs("#btn-export-customers");
+
+  // Sales page
+  const ordersTableWrapperEl = qs("#orders-table-wrapper");
+  const btnExportOrders = qs("#btn-export-orders");
+
+  // Settings
+  const setEventNameEl = qs("#set-event-name");
+  const setEventLocationEl = qs("#set-event-location");
+  const setEventStartEl = qs("#set-event-start");
+  const setEventEndEl = qs("#set-event-end");
+  const btnSaveEventSettings = qs("#btn-save-event");
+
+  // Nav
+  const navItems = qsa(".nav-item[data-page]");
+  const pages = qsa(".page");
+
+  // Modal
+  const modalContainer = qs("#modal-container");
+
+  const logoutBtn = qs("#btn-logout");
+
+  // -----------------------------
+  // STATE
+  // -----------------------------
+  let currentUser = null;
+  let ownerProfile = null;
+
+  let eventsList = [];
+  let currentEventId = null;
+  let currentEventData = null;
+
+  let vendors = [];
+  let ordersAll = []; // all orders for eventId
+  let brandMap = {};  // brandId -> brand data (logo, status, etc.)
+
+  let vendorStatusFilter = "all";
+  let vendorSearchTerm = "";
+
+  let customerSearchTerm = "";
+
+  let dateFilterMode = "general"; // "general" or "YYYY-MM-DD"
+  let timelineMode = "auto";      // "auto" | "day" | "hour"
+
+  let unsubVendors = null;
+  let unsubOrders = null;
+
+  // Chart instances
+  let chartRevenueTimeline = null;
+  let chartPeakSparkline = null;
+  let chartPaymentMix = null;
+  let chartTopProducts = null;
+
+  // -----------------------------
+  // AUTH ALERTS
+  // -----------------------------
+  function showAuthAlert(message, type = "error") {
+    const cls = type === "error" ? "auth-alert-error" : "auth-alert-info";
+    authAlertContainer.innerHTML = `
+      <div class="auth-alert ${cls}">
+        ${message}
+      </div>
+    `;
+  }
+  function clearAuthAlert() {
+    authAlertContainer.innerHTML = "";
+  }
+
+  // -----------------------------
+  // MODAL HELPERS
+  // -----------------------------
+  function openModal(innerHtml) {
+    if (!modalContainer) return;
+    modalContainer.style.display = "flex";
+    modalContainer.innerHTML = `
+      <div class="modal" style="
+        background:#fff;
+        border-radius:16px;
+        max-width:520px;
+        width:100%;
+        padding:18px;
+        box-shadow:0 18px 40px rgba(15,23,42,.2);
+      ">
+        ${innerHtml}
+      </div>
+    `;
+  }
+
+  function closeModal() {
+    if (!modalContainer) return;
+    modalContainer.style.display = "none";
+    modalContainer.innerHTML = "";
+  }
+  window.closeModal = closeModal;
+
+  // -----------------------------
+  // AUTH VIEW TOGGLING
+  // -----------------------------
+  tabLogin?.addEventListener("click", () => {
+    tabLogin.classList.add("active");
+    tabSignup.classList.remove("active");
+    if (loginForm) loginForm.style.display = "";
+    if (signupForm) signupForm.style.display = "none";
+    authSubtitle.textContent = "Sign in to manage your events and analytics.";
+  });
+
+  tabSignup?.addEventListener("click", () => {
+    tabSignup.classList.add("active");
+    tabLogin.classList.remove("active");
+    if (signupForm) signupForm.style.display = "";
+    if (loginForm) loginForm.style.display = "none";
+    authSubtitle.textContent = "Create your first event and dashboard.";
+  });
+
+  // -----------------------------
+  // AUTH: LOGIN
+  // -----------------------------
+  loginForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearAuthAlert();
+
+    const email = loginEmailEl?.value.trim();
+    const pw = loginPasswordEl?.value;
+
+    if (!email || !pw) {
+      showAuthAlert("Enter email and password.");
+      return;
+    }
+
+    try {
+      await signInWithEmailAndPassword(auth, email, pw);
+    } catch (err) {
+      console.error("Login error:", err);
+      let msg = "Login failed.";
+      if (err.code === "auth/user-not-found") msg = "User not found.";
+      if (err.code === "auth/wrong-password") msg = "Wrong password.";
+      showAuthAlert(msg);
+    }
+  });
+
+  // -----------------------------
+  // AUTH: SIGNUP
+  // -----------------------------
+  signupForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearAuthAlert();
+
+    const name = signupNameEl?.value.trim();
+    const email = signupEmailEl?.value.trim();
+    const pw = signupPasswordEl?.value;
+    const eventName = signupEventNameEl?.value.trim();
+    const eventLocation = signupEventLocationEl?.value.trim();
+    const startDate = signupEventStartEl?.value.trim();
+    const endDate = signupEventEndEl?.value.trim();
+
+    if (!name || !email || !pw || !eventName) {
+      showAuthAlert("Fill all required fields (name, email, password, event name).");
+      return;
+    }
+    if (pw.length < 6) {
+      showAuthAlert("Password must be at least 6 characters.");
+      return;
+    }
+
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, pw);
+      const user = cred.user;
+      await updateProfile(user, { displayName: name });
+
+      // owner profile
+      await setDoc(doc(db, "eventOwners", user.uid), {
+        uid: user.uid,
+        name,
+        email,
+        createdAt: serverTimestamp()
+      });
+
+      // create first event
+      const vendorToken = Math.random().toString(36).substring(2, 10).toUpperCase();
+      const evRef = await addDoc(collection(db, "events"), {
+        name: eventName,
+        location: eventLocation || null,
+        startDate: startDate || null,
+        endDate: endDate || null,
+        ownerUserId: user.uid,
+        status: "active",
+        vendorSignupToken: vendorToken,
+        createdAt: serverTimestamp()
+      });
+
+      const eventId = evRef.id;
+
+      await setDoc(
+        doc(db, "ownerEvents", user.uid),
+        {
+          primaryEventId: eventId,
+          eventIds: [eventId]
+        },
+        { merge: true }
+      );
+    } catch (err) {
+      console.error("Signup error:", err);
+      let msg = "Signup failed.";
+      if (err.code === "auth/email-already-in-use") msg = "Email already in use.";
+      showAuthAlert(msg);
+    }
+  });
+
+  // -----------------------------
+  // LOAD EVENTS FOR OWNER
+  // -----------------------------
+  async function loadEventsForOwner(uid) {
+    const qEv = query(
+      collection(db, "events"),
+      where("ownerUserId", "==", uid)
+    );
+    const snap = await getDocs(qEv);
+    eventsList = [];
+    snap.forEach((d) => {
+      eventsList.push({ id: d.id, ...d.data() });
+    });
+  }
+
+  function renderEventSwitcher() {
+    if (!eventSelectEl) return;
+    eventSelectEl.innerHTML = "";
+    eventsList.forEach((ev) => {
+      const opt = document.createElement("option");
+      opt.value = ev.id;
+      opt.textContent = ev.name || "Untitled event";
+      eventSelectEl.appendChild(opt);
+    });
+    if (currentEventId) {
+      eventSelectEl.value = currentEventId;
+    }
+
+    eventSelectEl.onchange = async () => {
+      const val = eventSelectEl.value;
+      if (!val) return;
+      currentEventId = val;
+
+      if (currentUser) {
+        const ownerEventsRef = doc(db, "ownerEvents", currentUser.uid);
+        const existingSnap = await getDoc(ownerEventsRef);
+        const existing = existingSnap.exists() ? existingSnap.data() : {};
+        const ids = Array.isArray(existing.eventIds) ? existing.eventIds : [];
+        if (!ids.includes(val)) ids.push(val);
+
+        await setDoc(
+          ownerEventsRef,
+          {
+            primaryEventId: val,
+            eventIds: ids
+          },
+          { merge: true }
+        );
+      }
+
+      await selectEvent(val);
+    };
+  }
+
+  // -----------------------------
+  // DATE FILTER CHIPS
+  // -----------------------------
+  function buildDateFilterChips() {
+    if (!dateFilterContainer) return;
+    dateFilterContainer.innerHTML = "";
+
+    const btnGeneral = document.createElement("button");
+    btnGeneral.className = "date-chip";
+    btnGeneral.dataset.date = "general";
+    btnGeneral.textContent = "General";
+    dateFilterContainer.appendChild(btnGeneral);
+
+    let start = null;
+    let end = null;
+    if (currentEventData?.startDate) {
+      start = parseLocalDate(currentEventData.startDate);
+    }
+    if (currentEventData?.endDate) {
+      end = parseLocalDate(currentEventData.endDate);
+    }
+
+    if (start && end && end >= start) {
+      let d = new Date(start);
+      while (d <= end) {
+        const key = formatDateKey(d);
+        const b = document.createElement("button");
+        b.className = "date-chip";
+        b.dataset.date = key;
+        b.textContent = key;
+        dateFilterContainer.appendChild(b);
+        d = addDays(d, 1);
+      }
+    }
+
+    function updateActiveChip() {
+      const chips = dateFilterContainer.querySelectorAll(".date-chip");
+      chips.forEach((c) => {
+        if (c.dataset.date === dateFilterMode) {
+          c.classList.add("active");
+        } else {
+          c.classList.remove("active");
+        }
+      });
+    }
+
+    dateFilterContainer.addEventListener("click", (e) => {
+      const target = e.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (!target.classList.contains("date-chip")) return;
+      const val = target.dataset.date || "general";
+      dateFilterMode = val;
+      updateActiveChip();
+      recomputeAllAnalytics();
+    });
+
+    // default
+    dateFilterMode = "general";
+    updateActiveChip();
+  }
+
+  // -----------------------------
+  // SELECT EVENT
+  // -----------------------------
+  async function selectEvent(eventId) {
+    if (!eventId) return;
+
+    if (unsubVendors) unsubVendors();
+    if (unsubOrders) unsubOrders();
+    unsubVendors = unsubOrders = null;
+
+    currentEventData = null;
+    vendors = [];
+    ordersAll = [];
+    brandMap = {};
+
+    const evSnap = await getDoc(doc(db, "events", eventId));
+    if (!evSnap.exists()) return;
+    currentEventData = { id: eventId, ...evSnap.data() };
+
+    const name = currentEventData.name || "Event";
+    const location = currentEventData.location || "";
+    const startDate = currentEventData.startDate || "";
+    const endDate = currentEventData.endDate || "";
+
+    if (sidebarEventNameEl) sidebarEventNameEl.textContent = name;
+    if (sidebarEventLogoEl) {
+      sidebarEventLogoEl.textContent = (name[0] || "E").toUpperCase();
+    }
+
+    if (topbarTitleEl) topbarTitleEl.textContent = "Event Overview";
+    if (topbarSubtitleEl) {
+      const parts = [name];
+      if (startDate && endDate) parts.push(`${startDate} → ${endDate}`);
+      if (location) parts.push(location);
+      topbarSubtitleEl.textContent = parts.filter(Boolean).join(" • ");
+    }
+
+    // settings fields
+    if (setEventNameEl) setEventNameEl.value = name;
+    if (setEventLocationEl) setEventLocationEl.value = location;
+    if (setEventStartEl) setEventStartEl.value = startDate || "";
+    if (setEventEndEl) setEventEndEl.value = endDate || "";
+
+    buildDateFilterChips();
+
+    // vendors listener
+    const vendorsRef = collection(db, "events", eventId, "vendors");
+    const qVendors = query(vendorsRef);
+    unsubVendors = onSnapshot(qVendors, async (snap) => {
+      vendors = [];
+      snap.forEach((d) => vendors.push({ id: d.id, ...d.data() }));
+      await ensureBrandDocsLoaded();
+      renderVendorsSection();
+      recomputeAllAnalytics(); // active brands etc depend on vendors + orders
+    });
+
+    // orders listener: collectionGroup on "orders" filtered by eventId
+    const qOrders = query(
+      collectionGroup(db, "orders"),
+      where("eventId", "==", eventId)
+    );
+    unsubOrders = onSnapshot(
+      qOrders,
+      async (snap) => {
+        ordersAll = [];
+        snap.forEach((d) => ordersAll.push({ id: d.id, ...d.data() }));
+        await ensureBrandDocsLoaded();
+        recomputeAllAnalytics();
+      },
+      (err) => {
+        console.error("Orders listener error:", err);
+      }
+    );
+  }
+
+  async function ensureBrandDocsLoaded() {
+    // gather all brandIds from vendors + orders
+    const neededIds = new Set();
+    vendors.forEach((v) => {
+      if (v.brandId) neededIds.add(v.brandId);
+    });
+    ordersAll.forEach((o) => {
+      if (o.brandId) neededIds.add(o.brandId);
+    });
+
+    const toFetch = [];
+    neededIds.forEach((id) => {
+      if (!brandMap[id]) toFetch.push(id);
+    });
+    if (!toFetch.length) return;
+
+    await Promise.all(
+      toFetch.map(async (id) => {
+        const snap = await getDoc(doc(db, "brands", id));
+        if (snap.exists()) {
+          brandMap[id] = { id, ...snap.data() };
+        } else {
+          brandMap[id] = { id };
+        }
+      })
+    );
+  }
+
+  // -----------------------------
+  // FILTER ORDERS BY CURRENT DATE FILTER
+  // -----------------------------
+  function getFilteredOrders() {
+    if (!ordersAll.length) return [];
+    if (dateFilterMode === "general") return [...ordersAll];
+
+    // specific day: match YYYY-MM-DD
+    const target = dateFilterMode;
+    return ordersAll.filter((o) => {
+      const d = parseOrderDate(o);
+      const key = formatDateKey(d);
+      return key === target;
+    });
+  }
+
+  // -----------------------------
+  // AGGREGATIONS & ANALYTICS
+  // -----------------------------
+  function recomputeAllAnalytics() {
+    const filteredOrders = getFilteredOrders();
+    computeAndRenderOverview(filteredOrders);
+    computeAndRenderProducts(filteredOrders);
+    computeAndRenderCustomers(filteredOrders);
+    renderOrdersTable(filteredOrders);
+    renderVendorsSection(); // vendor revenue % etc
+  }
+
+  function computeAndRenderOverview(filteredOrders) {
+    let totalRevenue = 0;
+    let totalOrders = 0;
+    let itemsSold = 0;
+    let returnsAmount = 0;
+
+    const brandStats = {}; // brandId -> { revenue, orders }
+    const paymentStats = {}; // method -> { amount, count }
+
+    const hourlyBuckets = {}; // "YYYY-MM-DD HH" -> { revenue, orders }
+    const dailyBuckets = {};  // "YYYY-MM-DD" -> { revenue }
+
+    const liveOrders = [...filteredOrders].sort((a,b) => {
+      const da = parseOrderDate(a).getTime();
+      const db = parseOrderDate(b).getTime();
+      return db - da;
+    }).slice(0, 10);
+
+    filteredOrders.forEach((o) => {
+      const isReturn = !!o.isReturn;
+      const total = Number(o.total) || 0;
+      const absTotal = Math.abs(total);
+      const sign = isReturn ? -1 : 1;
+
+      const d = parseOrderDate(o);
+      const dayKey = formatDateKey(d);
+      const hourKey = `${dayKey} ${String(d.getHours()).padStart(2,"0")}:00`;
+
+      if (!isReturn) {
+        totalRevenue += total;
+      } else {
+        returnsAmount += absTotal;
+      }
+
+      if (!isReturn) {
+        totalOrders += 1;
+      }
+
+      const items = Array.isArray(o.items) ? o.items : [];
+      items.forEach((it) => {
+        const q = Number(it.qty) || 0;
+        if (!isReturn) itemsSold += q;
+      });
+
+      const brandId = o.brandId || null;
+      if (brandId) {
+        if (!brandStats[brandId]) brandStats[brandId] = { revenue:0, orders:0 };
+        if (!isReturn) {
+          brandStats[brandId].revenue += total;
+          brandStats[brandId].orders += 1;
+        } else {
+          brandStats[brandId].revenue -= total; // or ignore returns here; we keep it simple
+        }
+      }
+
+      const pmRaw = (o.paymentMethod || "").toString().toLowerCase();
+      let pm = "other";
+      if (pmRaw.includes("cash")) pm = "cash";
+      else if (pmRaw.includes("card")) pm = "card";
+      else if (pmRaw.includes("wallet") || pmRaw.includes("mada") || pmRaw.includes("stc")) pm = "wallet";
+      if (!paymentStats[pm]) paymentStats[pm] = { amount:0, count:0 };
+      paymentStats[pm].amount += sign * absTotal;
+      paymentStats[pm].count += 1;
+
+      if (!isReturn) {
+        if (!dailyBuckets[dayKey]) dailyBuckets[dayKey] = { revenue:0 };
+        dailyBuckets[dayKey].revenue += total;
+
+        if (!hourlyBuckets[hourKey]) hourlyBuckets[hourKey] = { revenue:0, orders:0 };
+        hourlyBuckets[hourKey].revenue += total;
+        hourlyBuckets[hourKey].orders += 1;
+      }
+    });
+
+    const netRevenue = totalRevenue - returnsAmount;
+    const aov = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+    const activeBrandCount = Object.values(brandStats).filter(b => b.revenue > 0).length;
+
+    if (kpiTotalRevenueEl) kpiTotalRevenueEl.textContent = formatCurrency(totalRevenue);
+    if (kpiTotalOrdersEl) kpiTotalOrdersEl.textContent = String(totalOrders);
+    if (kpiItemsSoldEl) kpiItemsSoldEl.textContent = String(itemsSold);
+    if (kpiAovEl) kpiAovEl.textContent = formatCurrency(aov);
+    if (kpiReturnsEl) kpiReturnsEl.textContent = formatCurrency(returnsAmount);
+    if (kpiNetRevenueEl) kpiNetRevenueEl.textContent = formatCurrency(netRevenue);
+    if (kpiActiveBrandsEl) kpiActiveBrandsEl.textContent = String(activeBrandCount);
+
+    // timeline mode: auto
+    let mode = timelineMode;
+    if (mode === "auto") {
+      // if filter is specific day -> hour, else day
+      mode = dateFilterMode === "general" ? "day" : "hour";
+    }
+
+    if (timelineSubtitleEl) {
+      if (mode === "day") timelineSubtitleEl.textContent = "Revenue aggregated by day.";
+      else if (mode === "hour") timelineSubtitleEl.textContent = "Revenue aggregated by hour.";
+    }
+
+    if (mode === "day") {
+      const labels = Object.keys(dailyBuckets).sort();
+      const data = labels.map((k) => dailyBuckets[k].revenue);
+      updateLineChart(chartRevenueTimeline, "chart-revenue-timeline", labels, data, "Revenue");
+    } else {
+      const labels = Object.keys(hourlyBuckets).sort();
+      const data = labels.map((k) => hourlyBuckets[k].revenue);
+      updateLineChart(chartRevenueTimeline, "chart-revenue-timeline", labels, data, "Revenue");
+    }
+
+    // peak hour (from hourlyBuckets)
+    let peakKey = null;
+    let peakRev = 0;
+    let peakOrders = 0;
+    Object.entries(hourlyBuckets).forEach(([key, val]) => {
+      if (val.revenue > peakRev) {
+        peakRev = val.revenue;
+        peakOrders = val.orders;
+        peakKey = key;
+      }
+    });
+
+    if (peakKey) {
+      const [day, hourStr] = peakKey.split(" ");
+      const hour = parseInt(hourStr, 10);
+      const endHour = (hour + 1) % 24;
+      const windowStr = `${hourStr}-${String(endHour).padStart(2,"0")}:00 (${day})`;
+      if (peakHourWindowEl) peakHourWindowEl.textContent = windowStr;
+      if (peakHourRevenueEl) peakHourRevenueEl.textContent = formatCurrency(peakRev);
+      if (peakHourOrdersEl) peakHourOrdersEl.textContent = String(peakOrders);
+      if (badgePeakHourEl) {
+        badgePeakHourEl.style.display = "";
+        badgePeakHourEl.textContent = `Peak: ${hourStr}`;
+      }
+    } else {
+      if (peakHourWindowEl) peakHourWindowEl.textContent = "—";
+      if (peakHourRevenueEl) peakHourRevenueEl.textContent = "0.00";
+      if (peakHourOrdersEl) peakHourOrdersEl.textContent = "0";
+      if (badgePeakHourEl) badgePeakHourEl.style.display = "none";
+    }
+
+    // peak sparkline
+    const sparkLabels = Object.keys(hourlyBuckets).sort();
+    const sparkData = sparkLabels.map((k) => hourlyBuckets[k].orders);
+    updateLineChart(chartPeakSparkline, "chart-peak-sparkline", sparkLabels, sparkData, "Orders");
+
+    // payment mix chart
+    const paymentLabels = ["Cash","Card","Wallet","Other"];
+    const paymentKeys = ["cash","card","wallet","other"];
+    const paymentData = paymentKeys.map((k) => paymentStats[k]?.amount || 0);
+    updateDoughnutChart(chartPaymentMix, "chart-payment-mix", paymentLabels, paymentData);
+
+    // payment mini stats
+    if (paymentMiniStatsEl) {
+      paymentMiniStatsEl.innerHTML = "";
+      paymentKeys.forEach((k, i) => {
+        const label = paymentLabels[i];
+        const stat = paymentStats[k] || { amount:0, count:0 };
+        const div = document.createElement("div");
+        div.innerHTML = `
+          <strong>${label}</strong><br/>
+          ${formatCurrency(stat.amount)} EGP • ${stat.count} orders
+        `;
+        paymentMiniStatsEl.appendChild(div);
+      });
+    }
+
+    // top vendors snippet on overview (top 3)
+    if (overviewTopVendorsEl) {
+      const entries = Object.entries(brandStats).sort((a,b) => b[1].revenue - a[1].revenue);
+      const totalRevForPercent = totalRevenue || 1;
+      overviewTopVendorsEl.innerHTML = "";
+      entries.slice(0,3).forEach(([brandId, stats]) => {
+        const b = brandMap[brandId] || {};
+        const name = b.name || b.brandName || stats.brandName || "Brand";
+        const pct = (stats.revenue / totalRevForPercent) * 100;
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <div class="card-header">
+            <div>
+              <div class="card-title">${name}</div>
+              <div style="font-size:11px;color:var(--muted);">${stats.orders} orders</div>
+            </div>
+          </div>
+          <div class="card-number">${formatCurrency(stats.revenue)}</div>
+          <div class="card-note">${pct.toFixed(1)}% of event revenue</div>
+        `;
+        overviewTopVendorsEl.appendChild(card);
+      });
+      if (!entries.length) {
+        overviewTopVendorsEl.innerHTML = `<div class="card-note">No vendor sales yet for this view.</div>`;
+      }
+    }
+
+    // live feed
+    if (overviewLiveFeedEl) {
+      overviewLiveFeedEl.innerHTML = "";
+      liveOrders.forEach((o) => {
+        const d = parseOrderDate(o);
+        const timeStr = d.toLocaleTimeString("en-EG", { hour:"2-digit", minute:"2-digit" });
+        const brandName = o.brandName || (brandMap[o.brandId]?.name) || "Brand";
+        const isReturn = !!o.isReturn;
+        const amt = Number(o.total) || 0;
+        const pmRaw = (o.paymentMethod || "").toLowerCase();
+        let icon = "💸";
+        if (pmRaw.includes("card")) icon = "💳";
+        else if (pmRaw.includes("wallet")) icon = "📱";
+        else if (pmRaw.includes("cash")) icon = "💵";
+
+        const highValue = Math.abs(amt) >= 2000; // arbitrary threshold
+
+        const item = document.createElement("div");
+        item.className = "feed-item";
+        item.innerHTML = `
+          <div class="feed-main">
+            <div class="feed-top-row">
+              <span class="feed-brand">${brandName}</span>
+              <span class="feed-time">${timeStr}</span>
+            </div>
+            <div style="font-size:11px;color:var(--muted);">
+              ${icon} ${pmRaw || "other"}
+            </div>
+          </div>
+          <div class="feed-right">
+            <div class="feed-amount">${formatCurrency(amt)}</div>
+            <div class="feed-tags">
+              ${isReturn ? '<span class="badge badge-danger">Refund</span>' : ""}
+              ${highValue && !isReturn ? '<span class="badge">High value</span>' : ""}
+            </div>
+          </div>
+        `;
+        overviewLiveFeedEl.appendChild(item);
+      });
+      if (!liveOrders.length) {
+        overviewLiveFeedEl.innerHTML = `<div class="table-empty">No orders yet for this view.</div>`;
+      }
+    }
+  }
+
+  // -----------------------------
+  // PRODUCTS & RETURNS
+  // -----------------------------
+  function computeAndRenderProducts(filteredOrders) {
+    const prodMap = {}; // key = brandId + "::" + name
+    filteredOrders.forEach((o) => {
+      const isReturn = !!o.isReturn;
+      const items = Array.isArray(o.items) ? o.items : [];
+      const brandId = o.brandId || null;
+      const brandName = o.brandName || (brandMap[brandId]?.name) || "Brand";
+      items.forEach((it) => {
+        const name = it.name || "Product";
+        const qty = Number(it.qty) || 0;
+        const lineTotal = Number(it.lineTotal) || 0;
+        const key = `${brandId || "none"}::${name}`;
+        if (!prodMap[key]) {
+          prodMap[key] = {
+            productName: name,
+            brandId,
+            brandName,
+            qtySold: 0,
+            revenue: 0,
+            returnsQty: 0,
+            returnsRevenue: 0
+          };
+        }
+        const p = prodMap[key];
+        if (!isReturn) {
+          p.qtySold += qty;
+          p.revenue += lineTotal;
+        } else {
+          p.returnsQty += qty;
+          p.returnsRevenue += Math.abs(lineTotal);
+        }
+      });
+    });
+
+    const allProducts = Object.values(prodMap);
+
+    // top products chart
+    const topByRevenue = [...allProducts].sort((a,b) => b.revenue - a.revenue).slice(0, 8);
+    const labels = topByRevenue.map((p) => p.productName);
+    const data = topByRevenue.map((p) => p.revenue);
+    updateBarChart(chartTopProducts, "chart-top-products", labels, data, "Revenue");
+
+    // problem products table
+    if (problemProductsWrapperEl) {
+      if (!allProducts.length) {
+        problemProductsWrapperEl.innerHTML = `<div class="table-empty">No product data for this view.</div>`;
+        return;
+      }
+      const withSold = allProducts.filter((p) => p.qtySold > 0 && p.returnsQty > 0);
+      const ranked = withSold.map((p) => {
+        const retPct = p.returnsQty / p.qtySold;
+        return { ...p, returnPct: retPct };
+      }).sort((a,b) => b.returnPct - a.returnPct).slice(0, 10);
+
+      if (!ranked.length) {
+        problemProductsWrapperEl.innerHTML = `<div class="table-empty">No problematic products for this view.</div>`;
+        return;
+      }
+
+      let html = `
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Brand</th>
+              <th>Returns</th>
+              <th>Return %</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      ranked.forEach((p) => {
+        const pctStr = (p.returnPct * 100).toFixed(1) + "%";
+        html += `
+          <tr>
+            <td>${p.productName}</td>
+            <td>${p.brandName}</td>
+            <td>${p.returnsQty}</td>
+            <td style="color:#b91c1c;font-weight:600;">${pctStr}</td>
+          </tr>
+        `;
+      });
+      html += `</tbody></table>`;
+      problemProductsWrapperEl.innerHTML = html;
+    }
+  }
+
+  // -----------------------------
+  // CUSTOMERS
+  // -----------------------------
+  function computeAndRenderCustomers(filteredOrders) {
+    const custMap = {}; // key -> aggregated
+
+    filteredOrders.forEach((o) => {
+      let cust = o.customer || {};
+      // fallback if you store directly on order
+      const name = cust.name || o.customerName || "";
+      const phone = cust.phone || o.customerPhone || "";
+      const email = cust.email || o.customerEmail || "";
+      const key = phone || email || name || "anonymous";
+
+      const total = Number(o.total) || 0;
+      const isReturn = !!o.isReturn;
+
+      const d = parseOrderDate(o);
+
+      if (!custMap[key]) {
+        custMap[key] = {
+          key,
+          name: name || "Customer",
+          phone: phone || "",
+          email: email || "",
+          orders: 0,
+          totalSpent: 0,
+          lastOrderAt: d
+        };
+      }
+      const c = custMap[key];
+      if (!isReturn) {
+        c.orders += 1;
+        c.totalSpent += total;
+      } else {
+        c.totalSpent -= Math.abs(total);
+      }
+      if (!c.lastOrderAt || d > c.lastOrderAt) c.lastOrderAt = d;
+    });
+
+    let customersArr = Object.values(custMap).filter((c) => c.orders > 0 || c.totalSpent !== 0);
+
+    // search filter
+    if (customerSearchTerm) {
+      const q = customerSearchTerm.toLowerCase();
+      customersArr = customersArr.filter((c) => {
+        return (
+          (c.name || "").toLowerCase().includes(q) ||
+          (c.phone || "").toLowerCase().includes(q) ||
+          (c.email || "").toLowerCase().includes(q)
+        );
+      });
+    }
+
+    const topCustomers = [...customersArr].sort((a,b) => b.totalSpent - a.totalSpent).slice(0,3);
+
+    // top customers cards
+    if (customersKpisEl) {
+      customersKpisEl.innerHTML = "";
+      topCustomers.forEach((c) => {
+        const highValue = c.totalSpent >= 5000;
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <div class="card-header">
+            <div>
+              <div class="card-title">${c.name}</div>
+              <div class="card-note">${c.orders} orders</div>
+            </div>
+            ${highValue ? '<span class="badge">High value</span>' : ""}
+          </div>
+          <div class="card-number">${formatCurrency(c.totalSpent)}</div>
+          <div class="card-note">Avg ${c.orders ? formatCurrency(c.totalSpent / c.orders) : "0.00"} per order</div>
+        `;
+        customersKpisEl.appendChild(card);
+      });
+      if (!topCustomers.length) {
+        customersKpisEl.innerHTML = `<div class="card-note">No customers yet for this view.</div>`;
+      }
+    }
+
+    // customers table
+    if (customersTableWrapperEl) {
+      if (!customersArr.length) {
+        customersTableWrapperEl.innerHTML = `<div class="table-empty">No customers yet for this view.</div>`;
+        return;
+      }
+
+      customersArr.sort((a,b) => b.totalSpent - a.totalSpent);
+
+      let html = `
+        <table>
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Phone</th>
+              <th>Email</th>
+              <th>Orders</th>
+              <th>Total Spent</th>
+              <th>Avg Order</th>
+              <th>Last Order</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      customersArr.forEach((c) => {
+        const last = c.lastOrderAt
+          ? c.lastOrderAt.toLocaleString("en-EG", { day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit" })
+          : "";
+        html += `
+          <tr>
+            <td>${c.name}</td>
+            <td>${c.phone || "—"}</td>
+            <td>${c.email || "—"}</td>
+            <td>${c.orders}</td>
+            <td>${formatCurrency(c.totalSpent)}</td>
+            <td>${c.orders ? formatCurrency(c.totalSpent / c.orders) : "0.00"}</td>
+            <td>${last}</td>
+          </tr>
+        `;
+      });
+
+      html += `</tbody></table>`;
+      customersTableWrapperEl.innerHTML = html;
+    }
+
+    // store global customers for export
+    window.__customersForExport = customersArr;
+  }
+
+  // -----------------------------
+  // VENDORS SECTION
+  // -----------------------------
+  function renderVendorsSection() {
+    if (!vendorsTableWrapperEl) return;
+
+    let list = [...vendors];
+
+    // filter by status pill
+    if (vendorStatusFilter !== "all") {
+      list = list.filter((v) => (v.status || "pending") === vendorStatusFilter);
+    }
+
+    // search
+    if (vendorSearchTerm) {
+      const q = vendorSearchTerm.toLowerCase();
+      list = list.filter((v) => {
+        const brandName = (v.brandName || v.vendorName || "").toLowerCase();
+        const ownerName = (v.ownerName || v.contactName || "").toLowerCase();
+        return brandName.includes(q) || ownerName.includes(q);
+      });
+    }
+
+    // simple sort: by brand name
+    list.sort((a,b) => {
+      const an = (a.brandName || a.vendorName || "").toLowerCase();
+      const bn = (b.brandName || b.vendorName || "").toLowerCase();
+      if (an < bn) return -1;
+      if (an > bn) return 1;
+      return 0;
+    });
+
+    if (!list.length) {
+      vendorsTableWrapperEl.innerHTML = `<div class="table-empty">No vendors match this filter.</div>`;
+      return;
+    }
+
+    let html = `
+      <table>
+        <thead>
+          <tr>
+            <th>Brand Name</th>
+            <th>Owner Name</th>
+            <th>Phone</th>
+            <th>Email</th>
+            <th>Category</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    list.forEach((v) => {
+      const status = v.status || "pending";
+      const brandName = v.brandName || v.vendorName || "Vendor";
+      const ownerName = v.ownerName || v.contactName || "";
+      const phone = v.phone || "";
+      const email = v.email || "";
+      const category = v.category || v.segment || "";
+
+      const actions = [];
+
+      if (status === "pending") {
+        actions.push(`<button data-action="approve" data-id="${v.id}" class="btn btn-primary" style="padding:4px 8px;font-size:10px;">Approve</button>`);
+        actions.push(`<button data-action="reject" data-id="${v.id}" class="btn btn-danger" style="padding:4px 8px;font-size:10px;">Reject</button>`);
+      } else if (status === "approved") {
+        actions.push(`<button data-action="suspend" data-id="${v.id}" class="btn btn-danger" style="padding:4px 8px;font-size:10px;">Suspend</button>`);
+      } else if (status === "rejected" || status === "suspended") {
+        actions.push(`<button data-action="reactivate" data-id="${v.id}" class="btn btn-primary" style="padding:4px 8px;font-size:10px;">Re-Activate</button>`);
+      }
+
+      actions.push(`<button data-action="open-pos" data-id="${v.id}" class="btn btn-ghost" style="padding:4px 8px;font-size:10px;">Open POS</button>`);
+
+      html += `
+        <tr data-vendor-id="${v.id}">
+          <td>${brandName}</td>
+          <td>${ownerName}</td>
+          <td>${phone}</td>
+          <td>${email}</td>
+          <td>${category}</td>
+          <td>${status}</td>
+          <td style="display:flex;flex-wrap:wrap;gap:4px;">${actions.join("")}</td>
+        </tr>
+      `;
+    });
+
+    html += `</tbody></table>`;
+    vendorsTableWrapperEl.innerHTML = html;
+
+    // attach actions
+    vendorsTableWrapperEl.querySelectorAll("button[data-action]").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const action = btn.getAttribute("data-action");
+        const id = btn.getAttribute("data-id");
+        const vendor = vendors.find((v) => v.id === id);
+        if (!vendor) return;
+
+        if (action === "approve") {
+          updateVendorStatus(vendor, "approved");
+        } else if (action === "reject") {
+          openRejectModal(vendor);
+        } else if (action === "suspend") {
+          updateVendorStatus(vendor, "suspended");
+        } else if (action === "reactivate") {
+          updateVendorStatus(vendor, "approved");
+        } else if (action === "open-pos") {
+          openVendorPOS(vendor);
+        }
+      });
+    });
+
+    // row click -> details modal
+    vendorsTableWrapperEl.querySelectorAll("tr[data-vendor-id]").forEach((row) => {
+      row.addEventListener("click", (e) => {
+        // ignore clicks on buttons
+        if (e.target instanceof HTMLButtonElement) return;
+        const id = row.getAttribute("data-vendor-id");
+        const vendor = vendors.find((v) => v.id === id);
+        if (!vendor) return;
+        openVendorDetailsModal(vendor);
+      });
+    });
+  }
+
+  async function updateVendorStatus(vendor, status, rejectionReason = null) {
+    if (!currentEventId) return;
+    try {
+      const vendorRef = doc(db, "events", currentEventId, "vendors", vendor.id);
+      const updates = { status };
+      if (status === "rejected") {
+        updates.rejectionReason = rejectionReason || "No reason provided";
+      }
+      await updateDoc(vendorRef, updates);
+
+      // brand status sync
+      if (vendor.brandId) {
+        const brandRef = doc(db, "brands", vendor.brandId);
+        let brandStatus = "active";
+        if (status === "pending") brandStatus = "pending";
+        if (status === "approved") brandStatus = "active";
+        if (status === "suspended") brandStatus = "suspended";
+        if (status === "rejected") brandStatus = "suspended";
+        await updateDoc(brandRef, { status: brandStatus });
+      }
+    } catch (err) {
+      console.error("Error updating vendor status:", err);
+      alert("Failed to update vendor status.");
+    }
+  }
+
+  function openRejectModal(vendor) {
+    openModal(`
+      <div class="modal-title" style="font-weight:700;margin-bottom:8px;font-size:16px;">Reject Vendor</div>
+      <div style="font-size:13px;margin-bottom:10px;">
+        Brand: <strong>${vendor.brandName || vendor.vendorName || "Vendor"}</strong>
+      </div>
+      <div class="field">
+        <div class="field-label">Rejection reason</div>
+        <textarea id="reject-reason" class="field-input" style="min-height:70px;"></textarea>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">
+        <button onclick="closeModal()" class="btn btn-ghost">Cancel</button>
+        <button id="btn-confirm-reject" class="btn btn-danger">Reject vendor</button>
+      </div>
+    `);
+
+    const btnConfirm = qs("#btn-confirm-reject");
+    const reasonEl = qs("#reject-reason");
+    btnConfirm?.addEventListener("click", async () => {
+      const reason = reasonEl?.value.trim() || "No reason provided";
+      await updateVendorStatus(vendor, "rejected", reason);
+      closeModal();
+    });
+  }
+
+  function openVendorDetailsModal(vendor) {
+    const status = vendor.status || "pending";
+    const brandName = vendor.brandName || vendor.vendorName || "Vendor";
+    const ownerName = vendor.ownerName || vendor.contactName || "";
+    const phone = vendor.phone || "";
+    const email = vendor.email || "";
+    const category = vendor.category || vendor.segment || "";
+    const notes = vendor.notes || "";
+
+    openModal(`
+      <div class="modal-title" style="font-weight:700;margin-bottom:6px;font-size:16px;">Vendor Details</div>
+      <div style="font-size:13px;margin-bottom:8px;">
+        <strong>${brandName}</strong>
+      </div>
+      <div style="font-size:12px;margin-bottom:10px;">
+        <div><strong>Owner:</strong> ${ownerName || "—"}</div>
+        <div><strong>Phone:</strong> ${phone || "—"}</div>
+        <div><strong>Email:</strong> ${email || "—"}</div>
+        <div><strong>Category:</strong> ${category || "—"}</div>
+        <div><strong>Status:</strong> ${status}</div>
+        <div><strong>Notes:</strong> ${notes || "—"}</div>
+        ${vendor.rejectionReason ? `<div style="margin-top:4px;color:#b91c1c;"><strong>Rejection reason:</strong> ${vendor.rejectionReason}</div>` : ""}
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;">
+        <button onclick="closeModal()" class="btn btn-ghost">Close</button>
+        ${status !== "approved" ? `<button id="btn-vendor-approve" class="btn btn-primary">Approve</button>` : ""}
+        ${status === "approved" ? `<button id="btn-vendor-suspend" class="btn btn-danger">Suspend</button>` : ""}
+        ${(status === "rejected" || status === "suspended") ? `<button id="btn-vendor-reactivate" class="btn btn-primary">Re-Activate</button>` : ""}
+        <button id="btn-vendor-open-pos" class="btn btn-ghost">Open POS</button>
+      </div>
+    `);
+
+    const btnApprove = qs("#btn-vendor-approve");
+    const btnSuspend = qs("#btn-vendor-suspend");
+    const btnReactivate = qs("#btn-vendor-reactivate");
+    const btnOpenPOS = qs("#btn-vendor-open-pos");
+
+    btnApprove?.addEventListener("click", async () => {
+      await updateVendorStatus(vendor, "approved");
+      closeModal();
+    });
+    btnSuspend?.addEventListener("click", async () => {
+      await updateVendorStatus(vendor, "suspended");
+      closeModal();
+    });
+    btnReactivate?.addEventListener("click", async () => {
+      await updateVendorStatus(vendor, "approved");
+      closeModal();
+    });
+    btnOpenPOS?.addEventListener("click", () => {
+      openVendorPOS(vendor);
+    });
+  }
+
+  function openVendorPOS(vendor) {
+    if (!currentEventId) return;
+    const brandId = vendor.brandId;
+    const branchId = vendor.branchId || "";
+    if (!brandId) {
+      alert("No brand linked for this vendor.");
+      return;
+    }
+    const url = new URL(window.location.origin + "/pos.html");
+    url.searchParams.set("brandId", brandId);
+    if (branchId) url.searchParams.set("branchId", branchId);
+    url.searchParams.set("eventId", currentEventId);
+    window.open(url.toString(), "_blank");
+  }
+
+  btnManualVendor?.addEventListener("click", () => {
+    if (!currentEventId) {
+      alert("No event selected.");
+      return;
+    }
+    openModal(`
+      <div class="modal-title" style="font-weight:700;margin-bottom:8px;font-size:16px;">Add Vendor Manually</div>
+      <div class="field">
+        <div class="field-label">Brand name</div>
+        <input id="mv-brand-name" class="field-input" placeholder="Brand name"/>
+      </div>
+      <div class="field">
+        <div class="field-label">Owner name</div>
+        <input id="mv-owner-name" class="field-input" placeholder="Owner full name"/>
+      </div>
+      <div class="field">
+        <div class="field-label">Phone</div>
+        <input id="mv-phone" class="field-input" placeholder="Phone"/>
+      </div>
+      <div class="field">
+        <div class="field-label">Email</div>
+        <input id="mv-email" class="field-input" placeholder="Email"/>
+      </div>
+      <div class="field">
+        <div class="field-label">Category</div>
+        <input id="mv-category" class="field-input" placeholder="Food, Fashion, etc."/>
+      </div>
+      <div class="field">
+        <div class="field-label">Notes (optional)</div>
+        <textarea id="mv-notes" class="field-input" style="min-height:60px;"></textarea>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px;">
+        <button onclick="closeModal()" class="btn btn-ghost">Cancel</button>
+        <button id="mv-submit" class="btn btn-primary">Create vendor</button>
+      </div>
+    `);
+
+    const btnSubmit = qs("#mv-submit");
+    btnSubmit?.addEventListener("click", async () => {
+      const brandName = qs("#mv-brand-name")?.value.trim();
+      const ownerName = qs("#mv-owner-name")?.value.trim();
+      const phone = qs("#mv-phone")?.value.trim();
+      const email = qs("#mv-email")?.value.trim();
+      const category = qs("#mv-category")?.value.trim();
+      const notes = qs("#mv-notes")?.value.trim();
+
+      if (!brandName) {
+        alert("Brand name is required.");
+        return;
+      }
+
+      try {
+        // brand
+        const brandRef = await addDoc(collection(db, "brands"), {
+          name: brandName,
+          ownerName: ownerName || null,
+          phone: phone || null,
+          email: email || null,
+          category: category || null,
+          status: "active",
+          createdAt: serverTimestamp()
+        });
+        const brandId = brandRef.id;
+
+        // branch
+        const branchRef = await addDoc(collection(db, "brands", brandId, "branches"), {
+          name: "Main",
+          status: "active",
+          createdAt: serverTimestamp()
+        });
+        const branchId = branchRef.id;
+
+        // staff owner (placeholder)
+        await addDoc(collection(db, "brands", brandId, "staff"), {
+          name: ownerName || "Owner",
+          phone: phone || null,
+          email: email || null,
+          role: "owner",
+          createdAt: serverTimestamp()
+        });
+
+        // vendor doc under event
+        await addDoc(collection(db, "events", currentEventId, "vendors"), {
+          brandId,
+          branchId,
+          brandName,
+          ownerName: ownerName || null,
+          phone: phone || null,
+          email: email || null,
+          category: category || null,
+          notes: notes || null,
+          status: "approved",
+          createdAt: serverTimestamp()
+        });
+
+        alert("Vendor created and approved.");
+        closeModal();
+      } catch (err) {
+        console.error("Error creating manual vendor:", err);
+        alert("Failed to create vendor.");
+      }
+    });
+  });
+
+  function buildVendorSignupUrl() {
+    if (!currentEventData) return "";
+    const eid = currentEventData.id;
+    const token = currentEventData.vendorSignupToken || "";
+    const url = new URL(VENDOR_SIGNUP_BASE_URL);
+    url.searchParams.set("eventId", eid);
+    if (token) url.searchParams.set("token", token);
+    return url.toString();
+  }
+
+  btnCopyVendorLink?.addEventListener("click", () => {
+    const url = buildVendorSignupUrl();
+    if (!url) {
+      alert("No event selected or vendor token missing.");
+      return;
+    }
+    copyToClipboard(url);
+    alert("Vendor signup link copied.");
+  });
+
+  // vendor filters / search
+  vendorStatusFiltersEl?.addEventListener("click", (e) => {
+    const t = e.target;
+    if (!(t instanceof HTMLElement)) return;
+    if (!t.dataset.status) return;
+    vendorStatusFilter = t.dataset.status;
+    vendorStatusFiltersEl.querySelectorAll(".pill").forEach((p) => p.classList.remove("active"));
+    t.classList.add("active");
+    renderVendorsSection();
+  });
+
+  vendorSearchEl?.addEventListener("input", () => {
+    vendorSearchTerm = vendorSearchEl.value.trim();
+    renderVendorsSection();
+  });
+
+  // export vendors
+  function downloadCsv(filename, rows) {
+    const escapeVal = (v) => {
+      if (v === null || v === undefined) return "";
+      const s = String(v).replace(/"/g, '""');
+      if (/[" ,\n]/.test(s)) return `"${s}"`;
+      return s;
+    };
+    const csv = rows.map((r) => r.map(escapeVal).join(",")).join("\n");
+    const blob = new Blob([csv], { type:"text/csv;charset=utf-8;" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  btnExportVendors?.addEventListener("click", () => {
+    if (!vendors.length) {
+      alert("No vendors to export.");
+      return;
+    }
+    const rows = [["brandName","ownerName","phone","email","category","status"]];
+    vendors.forEach((v) => {
+      rows.push([
+        v.brandName || v.vendorName || "",
+        v.ownerName || v.contactName || "",
+        v.phone || "",
+        v.email || "",
+        v.category || v.segment || "",
+        v.status || "pending"
+      ]);
+    });
+    downloadCsv("vendors.csv", rows);
+  });
+
+  // -----------------------------
+  // ORDERS TABLE & EXPORT
+  // -----------------------------
+  function renderOrdersTable(filteredOrders) {
+    if (!ordersTableWrapperEl) return;
+    if (!filteredOrders.length) {
+      ordersTableWrapperEl.innerHTML = `<div class="table-empty">No orders yet for this view.</div>`;
+      return;
+    }
+
+    const list = [...filteredOrders].sort((a,b) => parseOrderDate(b) - parseOrderDate(a));
+
+    let html = `
+      <table>
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Brand</th>
+            <th>Total</th>
+            <th>Payment</th>
+            <th>Type</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+    list.forEach((o) => {
+      const d = parseOrderDate(o);
+      const dateStr = d.toLocaleString("en-EG", { day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit" });
+      const brandName = o.brandName || (brandMap[o.brandId]?.name) || "Brand";
+      const isReturn = !!o.isReturn;
+      html += `
+        <tr>
+          <td>${o.orderId || o.id}</td>
+          <td>${brandName}</td>
+          <td>${formatCurrency(o.total)}</td>
+          <td>${o.paymentMethod || ""}</td>
+          <td>${isReturn ? "refund" : "sale"}</td>
+          <td>${dateStr}</td>
+        </tr>
+      `;
+    });
+    html += `</tbody></table>`;
+    ordersTableWrapperEl.innerHTML = html;
+
+    window.__ordersForExport = list;
+  }
+
+  btnExportOrders?.addEventListener("click", () => {
+    const list = window.__ordersForExport || [];
+    if (!list.length) {
+      alert("No orders to export.");
+      return;
+    }
+    const rows = [["orderId","brand","total","paymentMethod","type","createdAt"]];
+    list.forEach((o) => {
+      const d = parseOrderDate(o);
+      rows.push([
+        o.orderId || o.id,
+        o.brandName || (brandMap[o.brandId]?.name) || "",
+        o.total || 0,
+        o.paymentMethod || "",
+        o.isReturn ? "refund" : "sale",
+        d.toISOString()
+      ]);
+    });
+    downloadCsv("event_orders.csv", rows);
+  });
+
+  // -----------------------------
+  // CUSTOMERS EXPORT
+  // -----------------------------
+  btnExportCustomers?.addEventListener("click", () => {
+    const list = window.__customersForExport || [];
+    if (!list.length) {
+      alert("No customers to export.");
+      return;
+    }
+    const rows = [["name","phone","email","orders","totalSpent","avgOrder","lastOrder"]];
+    list.forEach((c) => {
+      rows.push([
+        c.name,
+        c.phone || "",
+        c.email || "",
+        c.orders,
+        c.totalSpent,
+        c.orders ? c.totalSpent / c.orders : 0,
+        c.lastOrderAt ? c.lastOrderAt.toISOString() : ""
+      ]);
+    });
+    downloadCsv("customers.csv", rows);
+  });
+
+  customerSearchEl?.addEventListener("input", () => {
+    customerSearchTerm = customerSearchEl.value.trim();
+    recomputeAllAnalytics();
+  });
+
+  // -----------------------------
+  // SETTINGS SAVE
+  // -----------------------------
+  btnSaveEventSettings?.addEventListener("click", async () => {
+    if (!currentEventId) {
+      alert("No event selected.");
+      return;
+    }
+    const name = setEventNameEl?.value.trim() || null;
+    const location = setEventLocationEl?.value.trim() || null;
+    const startDate = setEventStartEl?.value.trim() || null;
+    const endDate = setEventEndEl?.value.trim() || null;
+
+    try {
+      await updateDoc(doc(db, "events", currentEventId), {
+        name,
+        location,
+        startDate,
+        endDate
+      });
+      alert("Event settings saved.");
+      // refresh event data
+      await selectEvent(currentEventId);
+    } catch (err) {
+      console.error("Error saving settings:", err);
+      alert("Failed to save event settings.");
+    }
+  });
+
+  // -----------------------------
+  // CHART HELPERS
+  // -----------------------------
+  function updateLineChart(instance, canvasId, labels, data, label) {
+    const ctx = document.getElementById(canvasId);
+    if (!ctx) return;
+    if (instance) instance.destroy();
+    if (!labels.length) {
+      // create empty chart with no data
+      instance = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: [],
+          datasets: [{
+            label,
+            data: []
+          }]
+        }
+      });
+      return;
+    }
+    instance = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [{
+          label,
+          data,
+          tension: 0.3,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { autoSkip: true, maxTicksLimit: 6 } },
+          y: { beginAtZero: true }
+        }
+      }
+    });
+    if (canvasId === "chart-revenue-timeline") chartRevenueTimeline = instance;
+    if (canvasId === "chart-peak-sparkline") chartPeakSparkline = instance;
+  }
+
+  function updateDoughnutChart(instance, canvasId, labels, data) {
+    const ctx = document.getElementById(canvasId);
+    if (!ctx) return;
+    if (instance) instance.destroy();
+    instance = new Chart(ctx, {
+      type: "doughnut",
+      data: {
+        labels,
+        datasets: [{
+          data
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: "bottom" }
+        },
+        cutout: "60%"
+      }
+    });
+    if (canvasId === "chart-payment-mix") chartPaymentMix = instance;
+  }
+
+  function updateBarChart(instance, canvasId, labels, data, label) {
+    const ctx = document.getElementById(canvasId);
+    if (!ctx) return;
+    if (instance) instance.destroy();
+    if (!labels.length) {
+      instance = new Chart(ctx, {
+        type: "bar",
+        data: { labels: [], datasets:[{ label, data:[] }] }
+      });
+      return;
+    }
+    instance = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [{
+          label,
+          data
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display:false } },
+        scales: {
+          x: { ticks: { autoSkip:true, maxTicksLimit:6 } },
+          y: { beginAtZero:true }
+        }
+      }
+    });
+    if (canvasId === "chart-top-products") chartTopProducts = instance;
+  }
+
+  // -----------------------------
+  // NAVIGATION
+  // -----------------------------
+  navItems.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const pageId = btn.dataset.page;
+      if (!pageId) return;
+      navItems.forEach((b) => b.classList.remove("active"));
+      pages.forEach((p) => p.classList.remove("active"));
+      btn.classList.add("active");
+      const pageEl = qs("#" + pageId);
+      if (pageEl) pageEl.classList.add("active");
+
+      if (pageId === "page-overview" && topbarTitleEl) topbarTitleEl.textContent = "Event Overview";
+      if (pageId === "page-vendors" && topbarTitleEl) topbarTitleEl.textContent = "Vendors";
+      if (pageId === "page-products" && topbarTitleEl) topbarTitleEl.textContent = "Products & Returns";
+      if (pageId === "page-customers" && topbarTitleEl) topbarTitleEl.textContent = "Customers";
+      if (pageId === "page-sales" && topbarTitleEl) topbarTitleEl.textContent = "Sales & POS";
+      if (pageId === "page-settings" && topbarTitleEl) topbarTitleEl.textContent = "Event Settings";
+    });
+  });
+
+  // timeline mode pills
+  function setTimelineMode(mode) {
+    timelineMode = mode;
+    [btnTimelineAuto, btnTimelineDay, btnTimelineHour].forEach((btn) => {
+      if (!btn) return;
+      const m = btn.dataset.timelineMode;
+      if (m === mode) btn.classList.add("active");
+      else btn.classList.remove("active");
+    });
+    recomputeAllAnalytics();
+  }
+
+  btnTimelineAuto?.addEventListener("click", () => setTimelineMode("auto"));
+  btnTimelineDay?.addEventListener("click", () => setTimelineMode("day"));
+  btnTimelineHour?.addEventListener("click", () => setTimelineMode("hour"));
+
+  // -----------------------------
+  // LOGOUT
+  // -----------------------------
+  logoutBtn?.addEventListener("click", async () => {
+    if (unsubVendors) unsubVendors();
+    if (unsubOrders) unsubOrders();
+    unsubVendors = unsubOrders = null;
+    await signOut(auth);
+    showAuthView();
+  });
+
+  // -----------------------------
+  // AUTH STATE
+  // -----------------------------
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      currentUser = null;
+      ownerProfile = null;
+      eventsList = [];
+      currentEventId = null;
+      currentEventData = null;
+      vendors = [];
+      ordersAll = [];
+      brandMap = {};
+      if (unsubVendors) unsubVendors();
+      if (unsubOrders) unsubOrders();
+      unsubVendors = unsubOrders = null;
+      showAuthView();
+      return;
+    }
+
+    currentUser = user;
+    showAppView();
+
+    // owner profile (optional)
+    const ownerRef = doc(db, "eventOwners", user.uid);
+    const ownerSnap = await getDoc(ownerRef);
+    ownerProfile = ownerSnap.exists() ? ownerSnap.data() : null;
+
+    await loadEventsForOwner(user.uid);
+
+    // pick primary event
+    const ownerEventsRef = doc(db, "ownerEvents", user.uid);
+    const ownSnap = await getDoc(ownerEventsRef);
+    if (ownSnap.exists()) {
+      const data = ownSnap.data();
+      if (data.primaryEventId) currentEventId = data.primaryEventId;
+    }
+    if (!currentEventId && eventsList.length) {
+      currentEventId = eventsList[0].id;
+    }
+
+    renderEventSwitcher();
+    if (currentEventId) {
+      await selectEvent(currentEventId);
+    }
+  });
+
+  // start on auth
+  showAuthView();
+</script>
 </body>
 </html>
