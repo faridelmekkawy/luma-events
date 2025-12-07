@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Luma Events — Vendor Dashboard</title>
+  <title>Luma Events — Brand Dashboard</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 
@@ -120,6 +120,10 @@
     .btn-ghost:hover{background:var(--accent-soft);}
     .btn-danger{background:var(--danger);color:#fff;}
     .btn-danger:hover{background:#b91c1c;}
+    .btn[disabled]{
+      opacity:.45;
+      cursor:not-allowed;
+    }
 
     .auth-footer{text-align:center;margin-top:8px;font-size:10px;color:var(--muted);}
 
@@ -179,7 +183,7 @@
       border:1px solid var(--border);background:var(--panel-soft);
     }
 
-    .content-area{flex:1;padding:20px;overflow-y:auto;background:var(--bg);}
+    .content-area{flex:1;padding:20px;overflow-y:auto;background:var(--bg);position:relative;}
     .page{display:none;}
     .page.active{display:block;}
     .page-header{
@@ -288,7 +292,7 @@
     }
     .modal{
       background:var(--panel);
-      width:100%;max-width:480px;
+      width:100%;max-width:520px;
       border-radius:16px;
       padding:18px;
       box-shadow:var(--shadow);
@@ -302,6 +306,81 @@
     }
     .variant-row input{flex:1;}
     .variant-row .variant-qty{max-width:80px;}
+
+    /* Product thumb in table */
+    .product-cell{
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .product-thumb{
+      width:32px;
+      height:32px;
+      border-radius:8px;
+      background:#e5e7eb;
+      background-size:cover;
+      background-position:center;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:13px;
+      font-weight:600;
+      color:#4b5563;
+      flex-shrink:0;
+    }
+
+    /* STATUS BANNER + OVERLAY */
+    .status-banner{
+      display:none;
+      margin-bottom:12px;
+      padding:9px 11px;
+      border-radius:12px;
+      font-size:12px;
+      border:1px solid;
+      align-items:flex-start;
+      gap:8px;
+    }
+    .status-banner.pending{
+      display:flex;
+      background:#fffbeb;
+      border-color:#facc15;
+      color:#92400e;
+    }
+    .status-banner.suspended{
+      display:flex;
+      background:#fef2f2;
+      border-color:#fecaca;
+      color:#b91c1c;
+    }
+
+    .status-overlay{
+      position:fixed;
+      inset:0;
+      background:rgba(15,23,42,.65);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:9999;
+    }
+    .status-overlay-card{
+      background:var(--panel);
+      border-radius:18px;
+      padding:22px 20px;
+      max-width:400px;
+      width:90%;
+      text-align:center;
+      box-shadow:var(--shadow);
+    }
+    .status-overlay-card h2{
+      font-size:17px;
+      font-weight:700;
+      margin-bottom:8px;
+    }
+    .status-overlay-card p{
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:16px;
+    }
 
     @keyframes fadeIn{
       from{transform:scale(.96);opacity:0;}
@@ -323,7 +402,7 @@
     <div class="auth-header">
       <div class="auth-logo">B</div>
       <div>
-        <div class="auth-title">Luma Events — Vendor Portal</div>
+        <div class="auth-title">Luma Events — Brand Portal</div>
         <div id="auth-subtitle" class="auth-subtitle">
           Sign in or create your brand to manage your event booth.
         </div>
@@ -380,7 +459,7 @@
     </form>
 
     <div class="auth-footer">
-      After login, you will access your event dashboard and POS settings.
+      After login, you will access your brand dashboard and POS settings.
     </div>
   </div>
 
@@ -396,7 +475,7 @@
         </div>
       </div>
       <nav class="sidebar-nav">
-        <button class="nav-item active" data-page="page-dashboard">Event Dashboard</button>
+        <button class="nav-item active" data-page="page-dashboard">Brand Dashboard</button>
         <button class="nav-item" data-page="page-products">Products</button>
         <button class="nav-item" data-page="page-branches">Booths / Branches</button>
         <button class="nav-item" data-page="page-staff">Staff & POS Users</button>
@@ -411,7 +490,7 @@
     <div style="flex:1;display:flex;flex-direction:column;">
       <header class="topbar">
         <div>
-          <div id="topbar-brand-title" class="topbar-title">Vendor Dashboard</div>
+          <div id="topbar-brand-title" class="topbar-title">Brand Dashboard</div>
           <div class="topbar-sub" id="topbar-subtitle">
             Control center for your brand inside this event.
           </div>
@@ -425,9 +504,12 @@
       </header>
 
       <main class="content-area">
+        <!-- STATUS BANNER (pending / suspended) -->
+        <div id="status-banner" class="status-banner"></div>
+
         <!-- DASHBOARD -->
         <section id="page-dashboard" class="page active">
-          <div class="cards-grid">
+          <div id="dashboard-analytics" class="cards-grid">
             <div class="card">
               <div class="card-title">Sales Today</div>
               <div id="dash-sales-today" class="card-number">0</div>
@@ -457,6 +539,14 @@
             <div id="event-card-meta" class="card-note"></div>
           </div>
 
+          <!-- Analytics-disabled note for pending / suspended -->
+          <div id="analytics-disabled-message" class="card" style="display:none;margin-top:10px;background:#fffbeb;border-color:#facc15;">
+            <div class="card-title" style="color:#92400e;">Analytics temporarily unavailable</div>
+            <div class="card-note">
+              Sales & revenue analytics will be available when your vendor is approved and the brand is active.
+            </div>
+          </div>
+
           <div class="card" style="margin-top:10px;">
             <div class="card-title">Top Staff Today</div>
             <div id="top-staff-today" class="card-number" style="font-size:14px;line-height:20px"></div>
@@ -476,7 +566,7 @@
           <div class="page-header">
             <div>
               <div class="page-title">Products</div>
-              <div class="page-sub">Manage products, images, variants & stock for this event.</div>
+              <div class="page-sub">Manage products, images, variants & availability for this event.</div>
             </div>
             <div class="page-actions">
               <button id="btn-add-product" class="btn btn-primary">Add Product</button>
@@ -487,7 +577,7 @@
           </div>
           <div id="products-analytics" class="cards-grid" style="margin-top:4px;"></div>
           <div class="toolbar">
-            <input id="search-products" placeholder="Search products by name or SKU"/>
+            <input id="search-products" placeholder="Search products by name, SKU or code"/>
             <select id="sort-products">
               <option value="name-asc">Name A → Z</option>
               <option value="name-desc">Name Z → A</option>
@@ -544,7 +634,8 @@
               <button id="btn-export-staff" class="btn btn-ghost">Export CSV</button>
             </div>
           </div>
-          <div id="staff-analytics" class="cards-grid" style="margin-top:4px;"></div>
+          <!-- Staff analytics container is kept but hidden (no staff analytics in UI) -->
+          <div id="staff-analytics" class="cards-grid" style="margin-top:4px;display:none;"></div>
           <div class="toolbar">
             <input id="search-staff" placeholder="Search staff by username or name"/>
             <select id="sort-staff">
@@ -556,8 +647,8 @@
           </div>
           <div id="staff-table" class="table-wrapper"></div>
 
-          <!-- CASHIER ANALYTICS -->
-          <div style="margin-top:24px;">
+          <!-- CASHIER ANALYTICS (hidden to remove staff analytics from UI) -->
+          <div id="staff-analytics-wrapper" style="margin-top:24px;display:none;">
             <h2 style="font-size:18px;font-weight:600;margin-bottom:10px;">Cashier Performance (Today)</h2>
             <div id="cashier-performance-table"></div>
 
@@ -640,7 +731,7 @@
                 <div class="field-label">Brand Logo</div>
                 <input id="set-brand-logo" class="field-input" type="file" accept="image/*"/>
                 <div class="field-hint">
-                  Used on POS and vendor dashboard. Stored under brands/&lt;brandId&gt;/branding/.
+                  Used on POS and brand dashboard. Stored under brands/&lt;brandId&gt;/branding/.
                 </div>
               </div>
               <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;">
@@ -663,13 +754,27 @@
             </div>
 
             <div class="settings-card">
-              <div class="settings-title">Receipt Settings</div>
+              <div class="settings-title">POS Access</div>
+              <div class="field">
+                <div class="field-label">POS Link</div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <input id="pos-link-input" class="field-input" readonly value="https://luma-events.vercel.app/pos.html"/>
+                  <button id="btn-copy-pos-link" class="btn btn-ghost" type="button">Copy link</button>
+                </div>
+                <div id="pos-link-note" class="field-hint" style="margin-top:4px;">
+                  Cashiers will log in with their username &amp; PIN. POS is enabled when your vendor is approved and brand is active.
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <div class="settings-title">Receipt Settings & Discounts</div>
               <div class="field">
                 <label><input type="checkbox" id="set-send-email"/> Always send email receipts</label>
               </div>
 
-              <div class="settings-card" style="margin-top:10px;">
-                <div class="settings-title">Discount Codes</div>
+              <div class="settings-card" style="margin-top:10px;padding:12px;">
+                <div class="settings-title" style="margin-bottom:8px;">Discount Codes</div>
 
                 <div class="field">
                   <div class="field-label">New Code</div>
@@ -705,11 +810,20 @@
                 </div>
               </div>
 
-              <button id="btn-save-receipt-settings" class="btn btn-primary" style="margin-top:10px;">Save</button>
+              <button id="btn-save-receipt-settings" class="btn btn-primary" style="margin-top:10px;">Save Receipt Settings</button>
             </div>
           </div>
         </section>
       </main>
+    </div>
+  </div>
+
+  <!-- STATUS OVERLAY (rejected) -->
+  <div id="status-overlay" class="status-overlay">
+    <div class="status-overlay-card">
+      <h2>Your application was rejected for this event.</h2>
+      <p>Please contact the event organizer if you have any questions.</p>
+      <button type="button" id="btn-overlay-logout" class="btn btn-ghost">Sign out</button>
     </div>
   </div>
 
@@ -748,7 +862,130 @@
     const auth = getAuth(app);
     const storage = getStorage(app);
 
-    /* QUERY PARAM / EVENT ID */
+    /* QUERY PARAMS / EVENT + BRAND IDs */
+    const qs = s => document.querySelector(s);
+    const qsa = s => document.querySelectorAll(s);
+    function getQueryParam(key){
+      return new URLSearchParams(window.location.search).get(key);
+    }
+    let eventId = getQueryParam("eventId");
+    const brandIdFromUrl = getQueryParam("brandId");
+
+    /* AUTH DOM */
+    const authView = qs("#auth-view");
+    const authAlertContainer = qs("#auth-alert-container");
+    const tabLogin = qs("#tab-login");
+    const tabCreate = qs("#tab-create");
+    const loginForm = qs("#login-form");
+    const createForm = qs("#create-form");
+    const authEventChip = qs("#auth-event-chip");
+
+    /* APP DOM */
+    const appView = qs("#app-view");
+    const sidebarBrandLogo = qs("#sidebar-brand-logo");
+    const sidebarBrandName = qs("#sidebar-brand-name");
+    const sidebarEventLabel = qs("#sidebar-event-label");
+    const topbarBrandTitle = qs("#topbar-brand-title");
+    const topbarSubtitle = qs("#topbar-subtitle");
+    const globalBranchSelect = qs("#global-branch-select");
+    const statusBannerEl = qs("#status-banner");
+    const statusOverlayEl = qs("#status-overlay");
+
+    /* TABLE CONTAINERS */
+    const productsTable = qs("#products-table");
+    const branchesTable = qs("#branches-table");
+    const staffTable = qs("#staff-table");
+    const customersTable = qs("#customers-table");
+    const ordersTable = qs("#orders-table");
+    const recentOrdersTable = qs("#table-recent-orders");
+    const modalContainer = qs("#modal-container");
+
+    /* ANALYTICS BLOCKS */
+    const dashSalesTodayEl = qs("#dash-sales-today");
+    const dashOrdersTodayEl = qs("#dash-orders-today");
+    const dashOrdersReturnsTodayEl = qs("#dash-orders-returns-today");
+    const dashActiveBranchesEl = qs("#dash-active-branches");
+    const productsAnalyticsEl = qs("#products-analytics");
+    const branchesAnalyticsEl = qs("#branches-analytics");
+    const staffAnalyticsEl = qs("#staff-analytics");
+    const customersAnalyticsEl = qs("#customers-analytics");
+    const ordersAnalyticsEl = qs("#orders-analytics");
+
+    const eventInfoCard = qs("#event-info-card");
+    const eventCardName = qs("#event-card-name");
+    const eventCardMeta = qs("#event-card-meta");
+    const authSubtitle = qs("#auth-subtitle");
+    const analyticsDisabledMessageEl = qs("#analytics-disabled-message");
+
+    /* STATE */
+    let currentUser = null;
+    let brandId = null;
+    let brandData = {};
+    let vendorData = null;
+    let vendorStatus = null;
+    let vendorDocId = null;
+    let currentEventName = "";
+    let isBrandCreationInProgress = false;
+    let branches = [];
+    let products = [];
+    let staffUsers = [];
+    let customersList = [];
+    let ordersList = [];
+    let ordersUnsub = null;
+    let productsUnsub = null;
+    let discounts = [];
+
+    /* ALERTS + MODALS */
+    function showAuthAlert(msg, type = "error") {
+      const cls = type === "error" ? "auth-alert-error" : "auth-alert-info";
+      authAlertContainer.innerHTML = `<div class="auth-alert ${cls}">${msg}</div>`;
+    }
+    function clearAuthAlert() {
+      authAlertContainer.innerHTML = "";
+    }
+
+    function openModal(innerHtml) {
+      modalContainer.style.display = "flex";
+      modalContainer.innerHTML = `<div class="modal">${innerHtml}</div>`;
+    }
+    function closeModal() {
+      modalContainer.style.display = "none";
+      modalContainer.innerHTML = "";
+    }
+    window.closeModal = closeModal;
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import {
+      getFirestore, doc, collection, addDoc, setDoc, getDoc, getDocs,
+      updateDoc, deleteDoc, query, where, serverTimestamp, onSnapshot
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import {
+      getAuth, onAuthStateChanged, createUserWithEmailAndPassword,
+      signInWithEmailAndPassword, updateProfile, signOut
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import {
+      getStorage, ref, uploadBytes, getDownloadURL
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+
+    /* FIREBASE CONFIG (EVENTS PROJECT) */
+    const firebaseConfig = {
+      apiKey:"AIzaSyA80bAAGPuyscnTVS-zwrxE9Jp3tPiS1gM",
+      authDomain:"events-339ce.firebaseapp.com",
+      projectId:"events-339ce",
+      storageBucket:"events-339ce.firebasestorage.app",
+      messagingSenderId:"175601544315",
+      appId:"1:175601544315:web:00c94b4affa972b3a286de"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const storage = getStorage(app);
+
+    /* HELPERS */
     const qs = s => document.querySelector(s);
     const qsa = s => document.querySelectorAll(s);
     function getQueryParam(key){
@@ -764,6 +1001,7 @@
     const loginForm = qs("#login-form");
     const createForm = qs("#create-form");
     const authEventChip = qs("#auth-event-chip");
+    const authSubtitle = qs("#auth-subtitle");
 
     /* APP DOM */
     const appView = qs("#app-view");
@@ -793,11 +1031,17 @@
     const staffAnalyticsEl = qs("#staff-analytics");
     const customersAnalyticsEl = qs("#customers-analytics");
     const ordersAnalyticsEl = qs("#orders-analytics");
-
     const eventInfoCard = qs("#event-info-card");
     const eventCardName = qs("#event-card-name");
     const eventCardMeta = qs("#event-card-meta");
-    const authSubtitle = qs("#auth-subtitle");
+
+    /* LOW STOCK PANEL */
+    const lowStockPanel = qs("#lowStockPanel");
+    const lowStockPanelTitle = qs("#lowStockPanelTitle");
+    const lowStockListEl = qs("#lowStockList");
+
+    /* DISCOUNTS DOM */
+    const discountsListEl = qs("#discounts-list");
 
     /* STATE */
     let currentUser = null;
@@ -831,71 +1075,6 @@
       modalContainer.innerHTML = "";
     }
     window.closeModal = closeModal;
-
-    /* EVENT META (optional) */
-    async function loadEventMeta() {
-      if (!eventId) return;
-      try {
-        const snap = await getDoc(doc(db,"events",eventId));
-        if (!snap.exists()) return;
-        const data = snap.data();
-        const name = data.name || data.title || "Event";
-        const date = data.date || data.startDate || "";
-        const location = data.location || "";
-
-        const metaParts = [];
-        if (date) metaParts.push(date);
-        if (location) metaParts.push(location);
-
-        const metaText = metaParts.join(" • ");
-
-        if (authEventChip) {
-          authEventChip.textContent = `You are joining: ${name}${metaText ? " • " + metaText : ""}`;
-        }
-        if (sidebarEventLabel) {
-          sidebarEventLabel.textContent = name;
-        }
-        if (topbarSubtitle) {
-          topbarSubtitle.textContent = `Sales and POS dashboard for "${name}".`;
-        }
-        if (eventInfoCard && eventCardName && eventCardMeta) {
-          eventInfoCard.style.display = "block";
-          eventCardName.textContent = name;
-          eventCardMeta.textContent = metaText || "Event details from organizer.";
-        }
-      } catch (err) {
-        console.error("Error loading event meta", err);
-      }
-    }
-
-    if (eventId) {
-      loadEventMeta();
-    }
-
-    /* AUTH TABS */
-    tabLogin.addEventListener("click", () => {
-      tabLogin.classList.add("active");
-      tabCreate.classList.remove("active");
-      loginForm.style.display = "block";
-      createForm.style.display = "none";
-    });
-
-    tabCreate.addEventListener("click", () => {
-      tabCreate.classList.add("active");
-      tabLogin.classList.remove("active");
-      loginForm.style.display = "none";
-      createForm.style.display = "block";
-    });
-
-    /* SHOW/HIDE APP */
-    function showApp() {
-      authView.style.display = "none";
-      appView.style.display = "flex";
-    }
-    function showAuth() {
-      appView.style.display = "none";
-      authView.style.display = "block";
-    }
 
     /* DATE HELPERS */
     function todayDate() {
@@ -942,11 +1121,80 @@
     async function uploadImageToStorage(file, path) {
       if (!file) return null;
       const safeName = file.name.replace(/\s+/g, "_");
-      const refPath = `${path}/${safeName}`;
+      const refPath = `${path}/${Date.now()}_${safeName}`;
       const storageRef = ref(storage, refPath);
       await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
-      return url;
+      return await getDownloadURL(storageRef);
+    }
+
+    /* SKU HELPER */
+    function generateSku(name) {
+      const base = (name || "ITEM")
+        .replace(/[^a-z0-9]/gi, "")
+        .toUpperCase()
+        .slice(0, 4) || "ITEM";
+      const rand = Math.floor(1000 + Math.random() * 9000);
+      return `${base}-${rand}`;
+    }
+
+    /* EVENT META (optional) */
+    async function loadEventMeta() {
+      if (!eventId) return;
+      try {
+        const snap = await getDoc(doc(db,"events",eventId));
+        if (!snap.exists()) return;
+        const data = snap.data();
+        const name = data.name || data.title || "Event";
+        const date = data.date || data.startDate || "";
+        const location = data.location || "";
+
+        const metaParts = [];
+        if (date) metaParts.push(date);
+        if (location) metaParts.push(location);
+        const metaText = metaParts.join(" • ");
+
+        if (authEventChip) {
+          authEventChip.textContent = `You are joining: ${name}${metaText ? " • " + metaText : ""}`;
+        }
+        if (sidebarEventLabel) {
+          sidebarEventLabel.textContent = name;
+        }
+        if (topbarSubtitle) {
+          topbarSubtitle.textContent = `Sales and POS dashboard for "${name}".`;
+        }
+        if (eventInfoCard && eventCardName && eventCardMeta) {
+          eventInfoCard.style.display = "block";
+          eventCardName.textContent = name;
+          eventCardMeta.textContent = metaText || "Event details from organizer.";
+        }
+      } catch (err) {
+        console.error("Error loading event meta", err);
+      }
+    }
+    if (eventId) loadEventMeta();
+
+    /* AUTH TABS */
+    tabLogin.addEventListener("click", () => {
+      tabLogin.classList.add("active");
+      tabCreate.classList.remove("active");
+      loginForm.style.display = "block";
+      createForm.style.display = "none";
+    });
+    tabCreate.addEventListener("click", () => {
+      tabCreate.classList.add("active");
+      tabLogin.classList.remove("active");
+      loginForm.style.display = "none";
+      createForm.style.display = "block";
+    });
+
+    /* SHOW/HIDE APP */
+    function showApp() {
+      authView.style.display = "none";
+      appView.style.display = "flex";
+    }
+    function showAuth() {
+      appView.style.display = "none";
+      authView.style.display = "block";
     }
 
     /* LOGIN */
@@ -969,7 +1217,7 @@
       }
     });
 
-    /* CREATE BRAND (from inside vendor portal, same as vendor.html flow but generic) */
+    /* CREATE BRAND (inside vendor portal) */
     createForm.addEventListener("submit", async e => {
       e.preventDefault();
       clearAuthAlert();
@@ -992,7 +1240,7 @@
       try {
         isBrandCreationInProgress = true;
 
-        // 1) create auth user (logs them in)
+        // 1) create auth user
         const cred = await createUserWithEmailAndPassword(auth, email, pw);
         const user = cred.user;
         await updateProfile(user, { displayName: ownerName });
@@ -1018,7 +1266,7 @@
           brandIds: [brandRef.id]
         });
 
-        // 4) top-level users doc
+        // 4) top-level user doc
         await setDoc(doc(db, "users", user.uid), {
           uid: user.uid,
           name: ownerName,
@@ -1028,7 +1276,7 @@
           createdAt: serverTimestamp()
         });
 
-        // 5) first branch as Event Booth
+        // 5) first branch
         const mainBranchRef = await addDoc(collection(brandRef, "branches"), {
           name: "Event Booth",
           code: "EVENT",
@@ -1037,7 +1285,7 @@
           createdAt: serverTimestamp()
         });
 
-        // 6) staff record for the owner
+        // 6) staff record for owner
         await setDoc(doc(brandRef, "staff", user.uid), {
           userId: user.uid,
           name: ownerName,
@@ -1045,10 +1293,11 @@
           role: "brand_owner",
           isActive: true,
           branchId: mainBranchRef.id,
+          eventId: eventId || null,
           createdAt: serverTimestamp()
         });
 
-        // 7) initial loads
+        // Initial loads
         await loadBrand();
         await loadBranches();
         await loadProducts();
@@ -1068,9 +1317,6 @@
         renderRecentOrdersTable();
         renderDiscounts();
 
-        const staffStats = buildCashierAnalytics();
-        renderTopStaff(staffStats);
-
         await loadEventMeta();
         showApp();
       } catch (err) {
@@ -1082,7 +1328,8 @@
         isBrandCreationInProgress = false;
       }
     });
-        /* AUTH STATE */
+
+    /* AUTH STATE */
     onAuthStateChanged(auth, async user => {
       currentUser = user || null;
 
@@ -1100,11 +1347,9 @@
         return;
       }
 
-      // If we're in the middle of brand creation, let that flow handle everything.
       if (isBrandCreationInProgress) return;
 
       try {
-        // read userBrands to know which brand to open
         const ubSnap = await getDoc(doc(db, "userBrands", user.uid));
         if (!ubSnap.exists()) {
           showAuthAlert("No brand linked to this account yet. Use 'Create brand' to get started.");
@@ -1113,14 +1358,12 @@
         }
         const ub = ubSnap.data();
         brandId = ub.primaryBrandId || (Array.isArray(ub.brandIds) ? ub.brandIds[0] : null);
-
         if (!brandId) {
           showAuthAlert("No brandId found for this user.");
           showAuth();
           return;
         }
 
-        // Load everything
         await loadBrand();
         await loadBranches();
         await loadProducts();
@@ -1139,11 +1382,6 @@
         renderOrdersTable();
         renderRecentOrdersTable();
         renderDiscounts();
-
-        const stats = buildCashierAnalytics();
-        renderTopStaff(stats);
-        renderCashierTables(stats);
-        renderCashierPaymentChart(stats);
 
         await loadEventMeta();
         showApp();
@@ -1169,7 +1407,6 @@
       sidebarBrandName.textContent = name;
       topbarBrandTitle.textContent = `${name} — Vendor Dashboard`;
 
-      // Auth header logo
       const authLogo = document.querySelector(".auth-logo");
       if (logo) {
         sidebarBrandLogo.textContent = "";
@@ -1192,7 +1429,6 @@
         }
       }
 
-      // Settings form
       const setBrandName = qs("#set-brand-name");
       const setBrandCountry = qs("#set-brand-country");
       const setVat = qs("#set-vat");
@@ -1206,7 +1442,6 @@
       if (setSendEmail) setSendEmail.checked = !!brandData.sendEmail;
 
       if (brandData.eventId && !eventId) {
-        // if brand is tied to a specific event, we can show that
         sidebarEventLabel.textContent = `Event: ${brandData.eventId}`;
       }
     }
@@ -1218,7 +1453,6 @@
       const brSnap = await getDocs(collection(brandRef, "branches"));
       branches = brSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-      // Fill global branch select
       globalBranchSelect.innerHTML = `<option value="global">All branches</option>`;
       branches.forEach(b => {
         const opt = document.createElement("option");
@@ -1244,7 +1478,6 @@
     function listenToProductsRealtime() {
       if (!brandId) return;
       if (productsUnsub) productsUnsub();
-
       const brandRef = doc(db, "brands", brandId);
       const colRef = collection(brandRef, "products");
       productsUnsub = onSnapshot(colRef, snap => {
@@ -1268,41 +1501,41 @@
     async function loadCustomers() {
       customersList = [];
       if (!brandId) return;
-      // customers can be subcollection or top-level; we assume subcollection
       const brandRef = doc(db, "brands", brandId);
       const custSnap = await getDocs(collection(brandRef, "customers"));
       customersList = custSnap.docs.map(d => ({ id: d.id, ...d.data() }));
       updateCustomersAnalytics();
     }
 
-    /* LOAD ORDERS */
+    /* LOAD ORDERS (filtered by eventId if provided) */
     async function loadOrders() {
       ordersList = [];
       if (!brandId) return;
-      const qRef = query(collection(db, "orders"), where("brandId", "==", brandId));
+
+      const constraints = [where("brandId", "==", brandId)];
+      if (eventId) constraints.push(where("eventId", "==", eventId));
+
+      const qRef = query(collection(db, "orders"), ...constraints);
       const oSnap = await getDocs(qRef);
       ordersList = oSnap.docs.map(d => ({ id: d.id, ...d.data() }));
       updateOrdersAnalytics();
     }
 
-    /* REALTIME ORDERS */
+    /* REALTIME ORDERS (filtered by eventId if provided) */
     function listenToOrdersRealtime() {
       if (!brandId) return;
       if (ordersUnsub) ordersUnsub();
 
-      const qRef = query(collection(db, "orders"), where("brandId", "==", brandId));
+      const constraints = [where("brandId", "==", brandId)];
+      if (eventId) constraints.push(where("eventId", "==", eventId));
+      const qRef = query(collection(db, "orders"), ...constraints);
+
       ordersUnsub = onSnapshot(qRef, snap => {
         ordersList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         updateDashboardUI();
         updateOrdersAnalytics();
-
         renderOrdersTable();
         renderRecentOrdersTable();
-
-        const stats = buildCashierAnalytics();
-        renderTopStaff(stats);
-        renderCashierTables(stats);
-        renderCashierPaymentChart(stats);
       });
     }
 
@@ -1335,7 +1568,6 @@
         const d = orderDate(o);
         const isReturn = !!o.isReturn;
         const branchId = o.branchId || null;
-
         if (d !== todayStr) continue;
         if (branchFilter && branchFilter !== branchId) continue;
 
@@ -1359,6 +1591,7 @@
 
     /* ANALYTICS HELPERS */
     function updateProductsAnalytics() {
+      if (!productsAnalyticsEl) return;
       productsAnalyticsEl.innerHTML = "";
       if (!products.length) return;
 
@@ -1407,6 +1640,7 @@
     }
 
     function updateBranchesAnalytics() {
+      if (!branchesAnalyticsEl) return;
       branchesAnalyticsEl.innerHTML = "";
       if (!branches.length) return;
 
@@ -1428,33 +1662,13 @@
     }
 
     function updateStaffAnalytics() {
+      // user requested: delete all staff analytics → keep card empty / hidden
+      if (!staffAnalyticsEl) return;
       staffAnalyticsEl.innerHTML = "";
-      if (!staffUsers.length) return;
-
-      const total = staffUsers.length;
-      const active = staffUsers.filter(s => s.isActive !== false).length;
-      const cashiers = staffUsers.filter(s => (s.role || "").includes("cashier")).length;
-
-      staffAnalyticsEl.innerHTML = `
-        <div class="card">
-          <div class="card-title">Total Staff</div>
-          <div class="card-number">${total}</div>
-          <div class="card-note">Users with access to POS & dashboard.</div>
-        </div>
-        <div class="card">
-          <div class="card-title">Active Staff</div>
-          <div class="card-number">${active}</div>
-          <div class="card-note">Currently active logins.</div>
-        </div>
-        <div class="card">
-          <div class="card-title">Cashiers</div>
-          <div class="card-number">${cashiers}</div>
-          <div class="card-note">Users assigned to cashier roles.</div>
-        </div>
-      `;
     }
 
     function updateCustomersAnalytics() {
+      if (!customersAnalyticsEl) return;
       customersAnalyticsEl.innerHTML = "";
       if (!customersList.length) return;
 
@@ -1479,6 +1693,7 @@
     }
 
     function updateOrdersAnalytics() {
+      if (!ordersAnalyticsEl) return;
       ordersAnalyticsEl.innerHTML = "";
       if (!ordersList.length) return;
 
@@ -1524,15 +1739,11 @@
     }
 
     /* LOW STOCK PANEL */
-    const lowStockPanel = qs("#lowStockPanel");
-    const lowStockPanelTitle = qs("#lowStockPanelTitle");
-    const lowStockListEl = qs("#lowStockList");
-
     function updateLowStockPanel() {
       if (!lowStockPanel) return;
       const low = products.filter(p => {
         let threshold = p.lowStockThreshold;
-        if (threshold == null) threshold = 8; // default threshold for event
+        if (threshold == null) threshold = 8;
         return Number(p.stock || 0) <= Number(threshold);
       });
 
@@ -1553,6 +1764,7 @@
     }
 
     /* RENDER TABLES */
+
     function renderProductsTable() {
       const branchFilter = getActiveBranchFilter();
       const searchVal = (qs("#search-products")?.value || "").toLowerCase();
@@ -1560,6 +1772,7 @@
 
       let list = products.slice();
 
+      // keep branch filter behavior for backwards compat (products without branchIds = all branches)
       if (branchFilter) {
         list = list.filter(p => {
           const allowedBranches = p.branchIds || p.branches || null;
@@ -1605,18 +1818,17 @@
         const stock = Number(p.stock || 0);
         const threshold = p.lowStockThreshold != null ? Number(p.lowStockThreshold) : 8;
         const lowClass = stock <= threshold ? "low-stock" : "";
-        const branchNames = (p.branchIds || [])
-          .map(id => branches.find(b => b.id === id)?.name || "")
-          .filter(Boolean)
-          .join(", ");
+        const hasVariants = Array.isArray(p.variants) && p.variants.length > 0;
+        const hasImage = !!p.imageUrl;
 
         return `
           <tr>
             <td>${name}</td>
+            <td>${hasImage ? "🖼️" : "—"}</td>
             <td>${sku}</td>
             <td>${price}</td>
             <td class="${lowClass}">${stock}</td>
-            <td>${branchNames || "All"}</td>
+            <td>${hasVariants ? `${p.variants.length} variants` : "—"}</td>
             <td>
               <button class="btn btn-ghost" data-action="edit-product" data-id="${p.id}">Edit</button>
               <button class="btn btn-danger" data-action="delete-product" data-id="${p.id}">Delete</button>
@@ -1630,10 +1842,11 @@
           <thead>
             <tr>
               <th>Name</th>
+              <th>Image</th>
               <th>SKU</th>
               <th>Price</th>
               <th>Stock</th>
-              <th>Branches</th>
+              <th>Variants</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -1980,7 +2193,6 @@
         list = list.filter(o => (o.branchId || null) === branchFilter);
       }
 
-      // sort by createdAt / date descending
       list.sort((a, b) => {
         const dA = orderDate(a);
         const dB = orderDate(b);
@@ -2028,185 +2240,7 @@
       `;
     }
 
-    /* CASHIER ANALYTICS */
-    const topStaffTodayEl = qs("#top-staff-today");
-    const cashierPerformanceTableEl = qs("#cashier-performance-table");
-    const cashierReturnsTableEl = qs("#cashier-returns-table");
-    const cashierPaymentCanvas = document.getElementById("cashier-payment-chart");
-    let cashierPaymentChart = null;
-
-    function buildCashierAnalytics() {
-      const todayStr = todayDate();
-      const branchFilter = getActiveBranchFilter();
-      const byStaff = {};
-      const byStaffReturns = {};
-      const paymentSplit = { cash: 0, card: 0, other: 0 };
-
-      for (const o of ordersList) {
-        const d = orderDate(o);
-        if (d !== todayStr) continue;
-        if (branchFilter && (o.branchId || null) !== branchFilter) continue;
-
-        const staffId = o.cashierId || o.staffId || "unknown";
-        const staffName =
-          staffUsers.find(s => s.id === staffId)?.name ||
-          o.cashierName ||
-          "Unknown";
-
-        if (!byStaff[staffId]) {
-          byStaff[staffId] = { staffId, staffName, orders: 0, total: 0 };
-        }
-        if (!byStaffReturns[staffId]) {
-          byStaffReturns[staffId] = { staffId, staffName, returns: 0, totalRefunded: 0 };
-        }
-
-        const t = Number(o.total || 0);
-        const isReturn = !!o.isReturn;
-
-        if (isReturn) {
-          byStaffReturns[staffId].returns += 1;
-          byStaffReturns[staffId].totalRefunded += Math.abs(t);
-        } else {
-          byStaff[staffId].orders += 1;
-          byStaff[staffId].total += t;
-        }
-
-        const pm = (o.paymentMethod || "").toLowerCase();
-        if (pm.includes("cash")) {
-          paymentSplit.cash += Math.abs(t);
-        } else if (pm.includes("card") || pm.includes("visa") || pm.includes("master")) {
-          paymentSplit.card += Math.abs(t);
-        } else {
-          paymentSplit.other += Math.abs(t);
-        }
-      }
-
-      // find top staff
-      const arr = Object.values(byStaff);
-      arr.sort((a, b) => b.total - a.total);
-      const topStaff = arr[0] || null;
-
-      return {
-        topStaff,
-        byStaff,
-        byStaffReturns,
-        paymentSplit
-      };
-    }
-
-    function renderTopStaff(stats) {
-      if (!topStaffTodayEl) return;
-      if (!stats || !stats.topStaff) {
-        topStaffTodayEl.textContent = "No cashier data yet for today.";
-        return;
-      }
-      const s = stats.topStaff;
-      topStaffTodayEl.textContent = `${s.staffName} — ${s.total.toFixed(2)} EGP in sales`;
-    }
-
-    function renderCashierTables(stats) {
-      if (!stats) return;
-
-      const perfArr = Object.values(stats.byStaff);
-      if (!perfArr.length) {
-        cashierPerformanceTableEl.innerHTML = `<div class="table-empty">No sales from cashiers today.</div>`;
-      } else {
-        const rows = perfArr
-          .sort((a, b) => b.total - a.total)
-          .map(s => `
-            <tr>
-              <td>${s.staffName}</td>
-              <td>${s.orders}</td>
-              <td>${s.total.toFixed(2)}</td>
-            </tr>
-          `)
-          .join("");
-        cashierPerformanceTableEl.innerHTML = `
-          <table>
-            <thead>
-              <tr>
-                <th>Cashier</th>
-                <th>Orders</th>
-                <th>Sales Total</th>
-              </tr>
-            </thead>
-            <tbody>${rows}</tbody>
-          </table>
-        `;
-      }
-
-      const retArr = Object.values(stats.byStaffReturns);
-      const hasReturns = retArr.some(r => r.returns > 0);
-      if (!hasReturns) {
-        cashierReturnsTableEl.innerHTML = `<div class="table-empty">No returns from cashiers today.</div>`;
-      } else {
-        const rowsR = retArr
-          .filter(r => r.returns > 0)
-          .sort((a, b) => b.totalRefunded - a.totalRefunded)
-          .map(r => `
-            <tr>
-              <td>${r.staffName}</td>
-              <td>${r.returns}</td>
-              <td>${r.totalRefunded.toFixed(2)}</td>
-            </tr>
-          `)
-          .join("");
-        cashierReturnsTableEl.innerHTML = `
-          <table>
-            <thead>
-              <tr>
-                <th>Cashier</th>
-                <th>Returns</th>
-                <th>Refunded</th>
-              </tr>
-            </thead>
-            <tbody>${rowsR}</tbody>
-          </table>
-        `;
-      }
-    }
-
-    function renderCashierPaymentChart(stats) {
-      if (!cashierPaymentCanvas || !stats) return;
-      const data = stats.paymentSplit;
-      const total = data.cash + data.card + data.other;
-      if (!total) {
-        if (cashierPaymentChart) {
-          cashierPaymentChart.destroy();
-          cashierPaymentChart = null;
-        }
-        const ctx = cashierPaymentCanvas.getContext("2d");
-        ctx.clearRect(0, 0, cashierPaymentCanvas.width, cashierPaymentCanvas.height);
-        return;
-      }
-
-      const ctx = cashierPaymentCanvas.getContext("2d");
-      if (cashierPaymentChart) {
-        cashierPaymentChart.destroy();
-      }
-
-      cashierPaymentChart = new Chart(ctx, {
-        type: "doughnut",
-        data: {
-          labels: ["Cash", "Card", "Other"],
-          datasets: [
-            {
-              data: [data.cash, data.card, data.other]
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { position: "bottom" }
-          }
-        }
-      });
-    }
-
     /* DISCOUNTS */
-    const discountsListEl = qs("#discounts-list");
-
     function renderDiscounts() {
       if (!discountsListEl) return;
       if (!discounts.length) {
@@ -2221,16 +2255,14 @@
           const scope = d.scope || "store_and_online";
           const desc = d.description || "";
           const active = d.isActive !== false;
-          const scopeLabel =
-            scope === "online_only" ? "Online only" : "POS + Online";
+          const scopeLabel = scope === "online_only" ? "Online only" : "POS + Online";
 
           return `
             <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding:6px 0;font-size:12px;">
               <div>
                 <div><strong>${code}</strong> — ${percent}%</div>
                 <div style="font-size:11px;color:var(--muted);">
-                  ${scopeLabel}${desc ? " • " + desc : ""}
-                  ${!active ? " • Inactive" : ""}
+                  ${scopeLabel}${desc ? " • " + desc : ""}${!active ? " • Inactive" : ""}
                 </div>
               </div>
               <div style="display:flex;gap:6px;">
@@ -2293,7 +2325,6 @@
       const brandRef = doc(db, "brands", brandId);
       const colRef = collection(brandRef, "discounts");
 
-      // Try to find existing with same code
       const existing = discounts.find(d => (d.code || "").toUpperCase() === rawCode);
       if (existing) {
         await updateDoc(doc(brandRef, "discounts", existing.id), {
@@ -2371,16 +2402,12 @@
       await signOut(auth);
     });
 
-    /* PRODUCT MODAL */
+    /* PRODUCT MODAL (with image upload + variants + auto SKU) */
     function openProductModal(product) {
       const isEdit = !!product;
       const title = isEdit ? "Edit Product" : "Add Product";
 
-      const branchOptions = branches
-        .map(b => `<option value="${b.id}">${b.name || "Branch"}</option>`)
-        .join("");
-
-      const selectedBranches = new Set(product?.branchIds || []);
+      const variants = Array.isArray(product?.variants) ? product.variants : [];
 
       openModal(`
         <div class="modal-title">${title}</div>
@@ -2390,7 +2417,7 @@
             <input id="prod-name" class="field-input" value="${product?.name || ""}" required />
           </div>
           <div class="field">
-            <div class="field-label">SKU (optional)</div>
+            <div class="field-label">SKU (optional — will auto-generate if empty)</div>
             <input id="prod-sku" class="field-input" value="${product?.sku || ""}" />
           </div>
           <div class="field">
@@ -2409,12 +2436,23 @@
             <input id="prod-low-stock" type="number" class="field-input" value="${product?.lowStockThreshold ?? 8}" />
           </div>
           <div class="field">
-            <div class="field-label">Branches (optional)</div>
-            <select id="prod-branches" class="field-input" multiple size="4">
-              ${branchOptions}
-            </select>
-            <div class="field-hint">Leave empty to allow in all branches.</div>
+            <div class="field-label">Product Image</div>
+            <input id="prod-image" class="field-input" type="file" accept="image/*" />
+            <div class="field-hint">
+              Stored in Firebase Storage under brands/&lt;brandId&gt;/products/.
+            </div>
+            ${product?.imageUrl ? `<div class="field-hint">Current image: <a href="${product.imageUrl}" target="_blank">Open</a></div>` : ""}
           </div>
+
+          <div class="field">
+            <div class="field-label">Variants (optional)</div>
+            <div id="variants-container"></div>
+            <button type="button" id="btn-add-variant" class="btn btn-ghost" style="margin-top:6px;">Add Variant</button>
+            <div class="field-hint">
+              Example: Size / Color options. POS can read these later.
+            </div>
+          </div>
+
           <div class="modal-actions">
             <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
             <button type="submit" class="btn btn-primary">Save</button>
@@ -2422,38 +2460,78 @@
         </form>
       `);
 
-      // preselect branches
-      const branchSelect = document.getElementById("prod-branches");
-      if (branchSelect && selectedBranches.size) {
-        Array.from(branchSelect.options).forEach(opt => {
-          if (selectedBranches.has(opt.value)) {
-            opt.selected = true;
-          }
+      const variantsContainer = document.getElementById("variants-container");
+      const addVariantBtn = document.getElementById("btn-add-variant");
+
+      function addVariantRow(variant = {}) {
+        const row = document.createElement("div");
+        row.className = "variant-row";
+        row.innerHTML = `
+          <input class="field-input variant-name" placeholder="Variant name (e.g. M / Red)" value="${variant.name || ""}"/>
+          <input class="field-input variant-sku" placeholder="SKU (optional)" value="${variant.sku || ""}"/>
+          <input class="field-input variant-price variant-qty" type="number" placeholder="Price (opt.)" value="${variant.price ?? ""}"/>
+          <input class="field-input variant-stock variant-qty" type="number" placeholder="Stock" value="${variant.stock ?? ""}"/>
+          <button type="button" class="btn btn-danger variant-remove">×</button>
+        `;
+        variantsContainer.appendChild(row);
+        row.querySelector(".variant-remove").addEventListener("click", () => {
+          variantsContainer.removeChild(row);
         });
       }
+
+      variants.forEach(v => addVariantRow(v));
+      addVariantBtn.addEventListener("click", () => addVariantRow());
 
       document.getElementById("product-form").addEventListener("submit", async evt => {
         evt.preventDefault();
         if (!brandId) return;
 
         const name = document.getElementById("prod-name").value.trim();
-        const sku = document.getElementById("prod-sku").value.trim();
+        let sku = document.getElementById("prod-sku").value.trim();
         const price = Number(document.getElementById("prod-price").value || 0);
         const stock = Number(document.getElementById("prod-stock").value || 0);
         const lowStockThreshold = Number(document.getElementById("prod-low-stock").value || 8);
+        const imageInput = document.getElementById("prod-image");
+        let imageUrl = product?.imageUrl || null;
 
-        const sel = Array.from(branchSelect?.selectedOptions || []).map(o => o.value);
+        if (!sku) {
+          sku = generateSku(name);
+        }
+
+        if (imageInput && imageInput.files && imageInput.files[0]) {
+          imageUrl = await uploadImageToStorage(imageInput.files[0], `brands/${brandId}/products`);
+        }
+
+        const variantRows = Array.from(variantsContainer.querySelectorAll(".variant-row"));
+        const variantsData = variantRows
+          .map(row => {
+            const nameEl = row.querySelector(".variant-name");
+            const skuEl = row.querySelector(".variant-sku");
+            const priceEl = row.querySelector(".variant-price");
+            const stockEl = row.querySelector(".variant-stock");
+            const vName = nameEl.value.trim();
+            if (!vName) return null;
+            return {
+              name: vName,
+              sku: skuEl.value.trim() || null,
+              price: priceEl.value ? Number(priceEl.value) : null,
+              stock: stockEl.value ? Number(stockEl.value) : null
+            };
+          })
+          .filter(Boolean);
 
         const brandRef = doc(db, "brands", brandId);
         const colRef = collection(brandRef, "products");
         const data = {
           name,
-          sku: sku || null,
+          sku,
           price,
           stock,
           lowStockThreshold,
-          branchIds: sel.length ? sel : null,
-          updatedAt: serverTimestamp()
+          imageUrl: imageUrl || null,
+          variants: variantsData.length ? variantsData : null,
+          updatedAt: serverTimestamp(),
+          eventId: eventId || null
         };
 
         if (isEdit) {
@@ -2660,16 +2738,16 @@
         alert("No products to export.");
         return;
       }
-      const rows = [
-        ["Name", "SKU", "Price", "Stock", "LowStockThreshold"]
-      ];
+      const rows = [["Name", "SKU", "Price", "Stock", "LowStockThreshold", "HasImage", "VariantsCount"]];
       products.forEach(p => {
         rows.push([
           p.name || "",
           p.sku || "",
           p.price || 0,
           p.stock || 0,
-          p.lowStockThreshold ?? ""
+          p.lowStockThreshold ?? "",
+          p.imageUrl ? "Yes" : "No",
+          Array.isArray(p.variants) ? p.variants.length : 0
         ]);
       });
       downloadCsv("products.csv", rows);
@@ -2727,9 +2805,7 @@
         alert("No orders to export.");
         return;
       }
-      const rows = [
-        ["OrderId", "Date", "Type", "Total", "Customer", "Branch", "Payment"]
-      ];
+      const rows = [["OrderId", "Date", "Type", "Total", "Customer", "Branch", "Payment"]];
       ordersList.forEach(o => {
         const id = o.orderId || o.id;
         const dateStr = orderDate(o) || "";
@@ -2803,19 +2879,21 @@
             const name = (row[nameIdx] || "").toString().trim();
             if (!name) continue;
 
-            const sku = skuIdx >= 0 ? (row[skuIdx] || "").toString().trim() : "";
+            let sku = skuIdx >= 0 ? (row[skuIdx] || "").toString().trim() : "";
             const price = priceIdx >= 0 ? Number(row[priceIdx] || 0) : 0;
             const stock = stockIdx >= 0 ? Number(row[stockIdx] || 0) : 0;
-            const lowStockThreshold =
-              lowIdx >= 0 ? Number(row[lowIdx] || 8) : 8;
+            const lowStockThreshold = lowIdx >= 0 ? Number(row[lowIdx] || 8) : 8;
+
+            if (!sku) sku = generateSku(name);
 
             await addDoc(colRef, {
               name,
-              sku: sku || null,
+              sku,
               price,
               stock,
               lowStockThreshold,
-              createdAt: serverTimestamp()
+              createdAt: serverTimestamp(),
+              eventId: eventId || null
             });
           }
 
@@ -2849,11 +2927,6 @@
       renderProductsTable();
       renderOrdersTable();
       renderRecentOrdersTable();
-
-      const stats = buildCashierAnalytics();
-      renderTopStaff(stats);
-      renderCashierTables(stats);
-      renderCashierPaymentChart(stats);
     });
 
     /* SEARCH & SORT INPUTS */
