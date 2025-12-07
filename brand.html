@@ -859,1624 +859,1630 @@
       </div>
     </div>
   </div>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import {
-      getFirestore,
-      doc,
-      collection,
-      addDoc,
-      setDoc,
-      getDoc,
-      getDocs,
-      updateDoc,
-      serverTimestamp,
-      query,
-      where,
-      limit
-    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-    import {
-      getAuth,
-      onAuthStateChanged,
-      createUserWithEmailAndPassword,
-      signInWithEmailAndPassword,
-      updateProfile,
-      signOut
-    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-    import {
-      getStorage,
-      ref,
-      uploadBytes,
-      getDownloadURL
-    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import {
+    getFirestore,
+    doc,
+    collection,
+    addDoc,
+    setDoc,
+    getDoc,
+    getDocs,
+    updateDoc,
+    serverTimestamp,
+    query,
+    where,
+    limit
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import {
+    getAuth,
+    onAuthStateChanged,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    updateProfile,
+    signOut
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import {
+    getStorage,
+    ref,
+    uploadBytes,
+    getDownloadURL
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
 
-    /* ------------------------------
-       FIREBASE INIT
-    ------------------------------ */
-    const firebaseConfig = {
-      apiKey:"AIzaSyA80bAAGPuyscnTVS-zwrxE9Jp3tPiS1gM",
-      authDomain:"events-339ce.firebaseapp.com",
-      projectId:"events-339ce",
-      storageBucket:"events-339ce.firebasestorage.app",
-      messagingSenderId:"175601544315",
-      appId:"1:175601544315:web:00c94b4affa972b3a286de"
-    };
+  /* ------------------------------
+     FIREBASE INIT
+  ------------------------------ */
+  const firebaseConfig = {
+    apiKey:"AIzaSyA80bAAGPuyscnTVS-zwrxE9Jp3tPiS1gM",
+    authDomain:"events-339ce.firebaseapp.com",
+    projectId:"events-339ce",
+    storageBucket:"events-339ce.firebasestorage.app",
+    messagingSenderId:"175601544315",
+    appId:"1:175601544315:web:00c94b4affa972b3a286de"
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
-    const storage = getStorage(app);
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+  const storage = getStorage(app);
 
-    /* ------------------------------
-       DOM HELPERS
-    ------------------------------ */
-    const qs = sel => document.querySelector(sel);
-    const qsa = sel => Array.from(document.querySelectorAll(sel));
+  /* ------------------------------
+     DOM HELPERS
+  ------------------------------ */
+  const qs = sel => document.querySelector(sel);
+  const qsa = sel => Array.from(document.querySelectorAll(sel));
 
-    /* ------------------------------
-       URL PARAMS (event/vendor ONLY)
-       brandId always comes from userBrands/{uid}
-    ------------------------------ */
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlEventId = urlParams.get("eventId") || null;
-    const urlVendorId = urlParams.get("vendorId") || null;
+  /* ------------------------------
+     URL PARAMS (event/vendor ONLY)
+     brandId always comes from userBrands/{uid}
+  ------------------------------ */
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlEventId = urlParams.get("eventId") || null;
+  const urlVendorId = urlParams.get("vendorId") || null;
 
-    /* ------------------------------
-       DOM REFERENCES
-    ------------------------------ */
-const authView     = qs("#auth-view");
-const appView      = qs("#app-view");
-const rejectedView = qs("#rejected-state"); // matches your HTML
-const appMain      = qs("#app-main");       // inner main app container
+  /* ------------------------------
+     DOM REFERENCES
+  ------------------------------ */
+  // main views
+  const authView     = qs("#auth-view");
+  const appView      = qs("#app-view");
+  const rejectedView = qs("#rejected-state");
+  const appMain      = qs("#app-main");
 
-// auth
-const authAlertBox  = qs("#auth-alert-container");
+  // banner
+  const statusBanner = qs("#status-banner");
 
+  // auth
+  const authAlertBox   = qs("#auth-alert-container");
+  const authEventChip  = qs("#auth-event-chip");
+  const tabLogin       = qs("#tab-login");
+  const tabCreate      = qs("#tab-create");
+  const loginForm      = qs("#login-form");
+  const createForm     = qs("#create-form");
 
-// overview recent orders
-const recentOrdersWrapper = qs("#table-recent-orders");
+  // sidebar + topbar
+  const sidebarLogo       = qs("#sidebar-brand-logo");
+  const sidebarBrandName  = qs("#sidebar-brand-name");
+  const sidebarEventLabel = qs("#sidebar-event-label");
+  const topbarTitle       = qs("#topbar-brand-title");
+  const topbarSub         = qs("#topbar-subtitle");
 
-// banner + rejected
-const rejectedReasonBox   = qs("#rejected-reason-box");
-// these IDs don't exist in HTML but safe to keep (guarded with if)
-const rejectedEventNameEl = qs("#rejected-event-name");
-const rejectedBrandNameEl = qs("#rejected-brand-name");
+  // rejected area
+  const rejectedReasonBox   = qs("#rejected-reason-box");
+  // these optional IDs don’t exist in HTML but are guarded with if-checks
+  const rejectedEventNameEl = qs("#rejected-event-name");
+  const rejectedBrandNameEl = qs("#rejected-brand-name");
+  const btnRejectedLogout   = qs("#btn-rejected-logout");
 
-    const btnRejectedLogout     = qs("#btn-rejected-logout");
+  // overview KPIs
+  const dashSalesTodayEl    = qs("#dash-sales-today");
+  const dashOrdersTodayEl   = qs("#dash-orders-today");
+  const dashReturnsTodayEl  = qs("#dash-orders-returns-today");
+  const dashUniqueCustEl    = qs("#dash-unique-customers");
+  const overviewNoteEl      = qs("#dashboard-event-subtitle");
 
-    // overview KPIs
-    const dashSalesTodayEl   = qs("#dash-sales-today");
-    const dashOrdersTodayEl  = qs("#dash-orders-today");
-    const dashReturnsTodayEl = qs("#dash-returns-today");
-    const dashUniqueCustEl   = qs("#dash-unique-customers");
-    const overviewNoteEl     = qs("#overview-note");
+  // POS card
+  const posLinkUrlEl        = qs("#pos-link-text");
+  const posStatusHintEl     = qs("#pos-card-status");
+  const btnCopyPosLink      = qs("#btn-copy-pos-link");
 
-    // POS card
-    const posLinkUrlEl    = qs("#pos-link-url");
-    const posStatusHintEl = qs("#pos-status-hint");
-    const btnCopyPosLink  = qs("#btn-copy-pos-link");
+  // overview recent orders
+  const recentOrdersWrapper = qs("#table-recent-orders");
 
-    // overview recent orders
-    const recentOrdersWrapper = qs("#recent-orders-table");
+  // products
+  const productsSearchInput = qs("#products-search");
+  const productsSortSelect  = qs("#products-sort");
+  const productsTableWrapper= qs("#products-table-wrapper");
+  const btnAddProduct       = qs("#btn-add-product");
+  const lowStockPanel       = qs("#lowStockPanel");
+  const lowStockTitle       = qs("#lowStockPanelTitle");
+  const lowStockList        = qs("#lowStockList");
 
-    // products
-    const productsSearchInput = qs("#products-search");
-    const productsSortSelect  = qs("#products-sort");
-    const productsTableWrapper= qs("#products-table-wrapper");
-    const btnAddProduct       = qs("#btn-add-product");
-    const lowStockPanel       = qs("#lowStockPanel");
-    const lowStockTitle       = qs("#lowStockPanelTitle");
-    const lowStockList        = qs("#lowStockList");
+  // staff
+  const staffSearchInput    = qs("#staff-search");
+  const staffTableWrapper   = qs("#staff-table-wrapper");
+  const btnAddStaff         = qs("#btn-add-staff");
 
-    // staff
-    const staffSearchInput    = qs("#staff-search");
-    const staffTableWrapper   = qs("#staff-table-wrapper");
-    const btnAddStaff         = qs("#btn-add-staff");
+  // customers
+  const customersTotalEl      = qs("#customers-total");
+  const customersAvgSpendEl   = qs("#customers-avg-spend");
+  const customersSearchInput  = qs("#customers-search");
+  const customersSortSelect   = qs("#customers-sort");
+  const customersTableWrapper = qs("#customers-table-wrapper");
 
-    // customers
-    const customersTotalEl    = qs("#customers-total");
-    const customersAvgSpendEl = qs("#customers-avg-spend");
-    const customersSearchInput= qs("#customers-search");
-    const customersSortSelect = qs("#customers-sort");
-    const customersTableWrapper = qs("#customers-table-wrapper");
+  // orders
+  const ordersTotalSalesEl  = qs("#orders-total-sales");
+  const ordersTotalCountEl  = qs("#orders-total-count");
+  const ordersSearchInput   = qs("#orders-search");
+  const ordersFilterTypeSel = qs("#orders-filter-type");
+  const ordersFilterPaySel  = qs("#orders-filter-payment");
+  const ordersSortSelect    = qs("#orders-sort");
+  const ordersTableWrapper  = qs("#orders-table-wrapper");
 
-    // orders
-    const ordersTotalSalesEl  = qs("#orders-total-sales");
-    const ordersTotalCountEl  = qs("#orders-total-count");
-    const ordersSearchInput   = qs("#orders-search");
-    const ordersFilterTypeSel = qs("#orders-filter-type");
-    const ordersFilterPaySel  = qs("#orders-filter-payment");
-    const ordersSortSelect    = qs("#orders-sort");
-    const ordersTableWrapper  = qs("#orders-table-wrapper");
+  // settings
+  const settingsBrandNameEl    = qs("#settings-brand-name");
+  const settingsBrandCountryEl = qs("#settings-brand-country");
+  const settingsBrandLogoEl    = qs("#settings-brand-logo");
+  const settingsEventNameEl    = qs("#settings-event-name");
+  const settingsStatusEl       = qs("#settings-status");
+  const btnSaveSettings        = qs("#btn-save-settings");
 
-    // settings
-    const settingsBrandNameEl   = qs("#settings-brand-name");
-    const settingsBrandCountryEl= qs("#settings-brand-country");
-    const settingsBrandLogoEl   = qs("#settings-brand-logo");
-    const settingsEventNameEl   = qs("#settings-event-name");
-    const settingsStatusEl      = qs("#settings-status");
-    const btnSaveSettings       = qs("#btn-save-settings");
+  // nav + logout
+  const navButtons = qsa(".nav-item[data-page]");
+  const pages      = qsa(".page");
+  const btnLogout  = qs("#btn-logout");
 
-    // nav + logout
-    const navButtons = qsa(".nav-item[data-page]");
-    const pages      = qsa(".page");
-    const btnLogout  = qs("#btn-logout");
+  // modal
+  const modalContainer = qs("#modal-container");
+  const modalBody      = qs("#modal-body");
 
-    // modal
-    const modalContainer = qs("#modal-container");
-    const modalBody      = qs("#modal-body");
+  /* ------------------------------
+     GLOBAL STATE
+  ------------------------------ */
+  let currentUser      = null;
+  let brandId          = null;
+  let brandData        = null;
+  let vendorData       = null;
+  let currentEventId   = null;
+  let currentEventName = null;
+  let effectiveStatus  = "pending"; // "pending" | "approved" | "suspended" | "rejected"
 
-    /* ------------------------------
-       GLOBAL STATE
-    ------------------------------ */
-    let currentUser  = null;
-    let brandId      = null;
-    let brandData    = null;
-    let vendorData   = null;
-    let currentEventId   = null;
-    let currentEventName = null;
-    let effectiveStatus  = "pending"; // "pending" | "approved" | "suspended" | "rejected"
+  let orders     = [];
+  let products   = [];
+  let staff      = [];
+  let customers  = []; // derived from orders
 
-    let orders   = [];
-    let products = [];
-    let staff    = [];
-    let customers = []; // derived from orders
+  let isCreatingBrand = false;
 
-    let isCreatingBrand = false;
-
-    /* ------------------------------
-       HELPERS
-    ------------------------------ */
-function showAuthView() {
-  if (authView) authView.style.display = "block";
-  if (appView) appView.style.display = "none";
-  if (rejectedView) rejectedView.style.display = "none";
-  if (appMain) appMain.style.display = "none";
-}
-
-function showAppView() {
-  if (authView) authView.style.display = "none";
-  if (appView) appView.style.display = "flex";
-  if (rejectedView) rejectedView.style.display = "none";
-  if (appMain) appMain.style.display = "flex";
-}
-
-function showRejectedView() {
-  if (authView) authView.style.display = "none";
-  if (appView) appView.style.display = "flex";   // keep shell (sidebar/topbar)
-  if (rejectedView) rejectedView.style.display = "flex";
-  if (appMain) appMain.style.display = "none";   // hide normal pages
-}
-
- function setAuthAlert(msg, type = "error") {
-  if (!authAlertBox) return;
-  if (!msg) {
-    authAlertBox.innerHTML = "";
-    return;
+  /* ------------------------------
+     HELPERS
+  ------------------------------ */
+  function showAuthView() {
+    if (authView) authView.style.display = "block";
+    if (appView) appView.style.display = "none";
+    if (rejectedView) rejectedView.style.display = "none";
+    if (appMain) appMain.style.display = "none";
   }
-  const cls = type === "info" ? "auth-alert auth-alert-info" : "auth-alert auth-alert-error";
-  authAlertBox.innerHTML = `<div class="${cls}">${msg}</div>`;
-}
 
-    function openModal(html) {
-      modalBody.innerHTML = html;
-      modalContainer.classList.add("show");
+  function showAppView() {
+    if (authView) authView.style.display = "none";
+    if (appView) appView.style.display = "flex";
+    if (rejectedView) rejectedView.style.display = "none";
+    if (appMain) appMain.style.display = "flex";
+  }
+
+  function showRejectedView() {
+    if (authView) authView.style.display = "none";
+    if (appView) appView.style.display = "flex";   // keep shell (sidebar/topbar)
+    if (rejectedView) rejectedView.style.display = "flex";
+    if (appMain) appMain.style.display = "none";   // hide normal pages
+  }
+
+  function setAuthAlert(msg, type = "error") {
+    if (!authAlertBox) return;
+    if (!msg) {
+      authAlertBox.innerHTML = "";
+      return;
+    }
+    const cls = type === "info" ? "auth-alert auth-alert-info" : "auth-alert auth-alert-error";
+    authAlertBox.innerHTML = `<div class="${cls}">${msg}</div>`;
+  }
+
+  function openModal(html) {
+    if (!modalContainer || !modalBody) return;
+    modalBody.innerHTML = html;
+    modalContainer.style.display = "flex";
+  }
+
+  function closeModal() {
+    if (!modalContainer || !modalBody) return;
+    modalContainer.style.display = "none";
+    modalBody.innerHTML = "";
+  }
+  window.closeModal = closeModal;
+
+  function money(v) {
+    const n = Number(v) || 0;
+    return n.toFixed(2);
+  }
+
+  function getDateKeyFromDate(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }
+
+  function todayKey() {
+    return getDateKeyFromDate(new Date());
+  }
+
+  function getOrderDateKey(order) {
+    if (order.createdAtLocal) {
+      const d = new Date(order.createdAtLocal);
+      if (!isNaN(d.getTime())) return getDateKeyFromDate(d);
+    }
+    if (order.createdAt && typeof order.createdAt.toDate === "function") {
+      const d = order.createdAt.toDate();
+      return getDateKeyFromDate(d);
+    }
+    if (order.dateKey) return order.dateKey;
+    return "";
+  }
+
+  function getOrderCreatedAt(order) {
+    if (order.createdAtLocal) {
+      const d = new Date(order.createdAtLocal);
+      if (!isNaN(d.getTime())) return d;
+    }
+    if (order.createdAt && typeof order.createdAt.toDate === "function") {
+      return order.createdAt.toDate();
+    }
+    return null;
+  }
+
+  function generateSku() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const datePart = `${y}${m}${day}`;
+    const letters = (brandData?.name || "BRAND")
+      .replace(/[^a-z0-9]/gi,"")
+      .toUpperCase()
+      .slice(0,3) || "BRD";
+    const randomPart = Math.floor(1000 + Math.random()*9000);
+    return `${letters}-${datePart}-${randomPart}`;
+  }
+
+  async function uploadFileToStorage(file, path) {
+    if (!file) return null;
+    const storageRef = ref(storage, path);
+    await uploadBytes(storageRef, file);
+    const url = await getDownloadURL(storageRef);
+    return url;
+  }
+
+  function applyNav(pageId) {
+    navButtons.forEach(btn => {
+      const id = btn.getAttribute("data-page");
+      if (id === pageId) btn.classList.add("active");
+      else btn.classList.remove("active");
+    });
+    pages.forEach(p => {
+      if (p.id === pageId) p.classList.add("active");
+      else p.classList.remove("active");
+    });
+  }
+
+  /* ------------------------------
+     STATUS / BANNER LOGIC
+  ------------------------------ */
+  function applyStatusUI() {
+    const brandStatus  = brandData?.status  || "pending";
+    const vendorStatus = vendorData?.status || "pending";
+
+    let mode = "pending";
+
+    if (vendorStatus === "rejected") {
+      mode = "rejected";
+    } else if (vendorStatus === "suspended" || brandStatus === "suspended") {
+      mode = "suspended";
+    } else if (vendorStatus === "approved" && brandStatus === "active") {
+      mode = "approved";
+    } else {
+      mode = "pending";
     }
 
-    function closeModal() {
-      modalContainer.classList.remove("show");
-      modalBody.innerHTML = "";
-    }
-    window.closeModal = closeModal;
+    effectiveStatus = mode;
 
-    function money(v) {
-      const n = Number(v) || 0;
-      return n.toFixed(2);
+    // reset banner
+    if (statusBanner) {
+      statusBanner.style.display = "none";
+      statusBanner.classList.remove("status-pending","status-active","status-suspended");
+      statusBanner.textContent = "";
     }
 
-    function getDateKeyFromDate(d) {
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      return `${y}-${m}-${day}`;
+    // POS link (static URL for now)
+    const posUrl = "https://luma-events.vercel.app/pos.html";
+    if (posLinkUrlEl) posLinkUrlEl.textContent = posUrl;
+
+    if (btnCopyPosLink) {
+      btnCopyPosLink.disabled = false;
+      btnCopyPosLink.title = "";
+    }
+    if (posStatusHintEl) {
+      posStatusHintEl.textContent = "";
     }
 
-    function todayKey() {
-      return getDateKeyFromDate(new Date());
-    }
-
-    function getOrderDateKey(order) {
-      if (order.createdAtLocal) {
-        const d = new Date(order.createdAtLocal);
-        if (!isNaN(d.getTime())) return getDateKeyFromDate(d);
+    // Rejected = full blocked dashboard
+    if (mode === "rejected") {
+      showRejectedView();
+      if (rejectedEventNameEl) {
+        rejectedEventNameEl.textContent = currentEventName || "this event";
       }
-      if (order.createdAt && typeof order.createdAt.toDate === "function") {
-        const d = order.createdAt.toDate();
-        return getDateKeyFromDate(d);
+      if (rejectedBrandNameEl) {
+        rejectedBrandNameEl.textContent = brandData?.name || "your brand";
       }
-      if (order.dateKey) return order.dateKey;
-      return "";
+      if (rejectedReasonBox) {
+        const reason = vendorData?.rejectionReason || vendorData?.reason || null;
+        if (reason) {
+          rejectedReasonBox.style.display = "block";
+          rejectedReasonBox.textContent = reason;
+        } else {
+          rejectedReasonBox.style.display = "none";
+        }
+      }
+      return;
     }
 
-    function getOrderCreatedAt(order) {
-      if (order.createdAtLocal) {
-        const d = new Date(order.createdAtLocal);
-        if (!isNaN(d.getTime())) return d;
-      }
-      if (order.createdAt && typeof order.createdAt.toDate === "function") {
-        return order.createdAt.toDate();
-      }
-      return null;
-    }
+    // Normal dashboard visible
+    showAppView();
 
-    function generateSku() {
-      const d = new Date();
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      const datePart = `${y}${m}${day}`;
-      const letters = (brandData?.name || "BRAND")
-        .replace(/[^a-z0-9]/gi,"")
-        .toUpperCase()
-        .slice(0,3) || "BRD";
-      const randomPart = Math.floor(1000 + Math.random()*9000);
-      return `${letters}-${datePart}-${randomPart}`;
-    }
+    if (!statusBanner) return;
 
-    async function uploadFileToStorage(file, path) {
-      if (!file) return null;
-      const storageRef = ref(storage, path);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
-      return url;
-    }
-
-    function applyNav(pageId) {
-      navButtons.forEach(btn => {
-        const id = btn.getAttribute("data-page");
-        if (id === pageId) btn.classList.add("active");
-        else btn.classList.remove("active");
-      });
-      pages.forEach(p => {
-        if (p.id === pageId) p.classList.add("active");
-        else p.classList.remove("active");
-      });
-    }
-
-    /* ------------------------------
-       STATUS / BANNER LOGIC
-    ------------------------------ */
-    function applyStatusUI() {
-      const brandStatus  = brandData?.status  || "pending";
-      const vendorStatus = vendorData?.status || "pending";
-
-      let mode = "pending";
-
-      if (vendorStatus === "rejected") {
-        mode = "rejected";
-      } else if (vendorStatus === "suspended" || brandStatus === "suspended") {
-        mode = "suspended";
-      } else if (vendorStatus === "approved" && brandStatus === "active") {
-        mode = "approved";
-      } else {
-        mode = "pending";
-      }
-
-      effectiveStatus = mode;
-
-      // reset
-      if (statusBanner) {
-        statusBanner.style.display = "none";
-        statusBanner.classList.remove(
-          "status-banner-warning",
-          "status-banner-error",
-          "status-banner-success"
-        );
-        statusBanner.textContent = "";
-      }
-
-      // POS gating
-      const posUrl = "https://luma-events.vercel.app/pos.html";
-      if (posLinkUrlEl) posLinkUrlEl.textContent = posUrl;
+    if (mode === "pending") {
+      statusBanner.style.display = "flex";
+      statusBanner.classList.add("status-pending");
+      statusBanner.textContent =
+        "Your vendor application is pending approval. You can prepare your products and staff, but POS and analytics are not active yet.";
 
       if (btnCopyPosLink) {
-        btnCopyPosLink.disabled = false;
-        btnCopyPosLink.title = "";
+        btnCopyPosLink.disabled = true;
+        btnCopyPosLink.title = "POS will be enabled after approval.";
       }
       if (posStatusHintEl) {
-        posStatusHintEl.textContent = "";
+        posStatusHintEl.textContent = "POS will be enabled after approval.";
       }
-
-      // Overlays
-      if (mode === "rejected") {
-        // blocked dashboard
-        showRejectedView();
-        if (rejectedEventNameEl) {
-          rejectedEventNameEl.textContent = currentEventName || "this event";
-        }
-        if (rejectedBrandNameEl) {
-          rejectedBrandNameEl.textContent = brandData?.name || "your brand";
-        }
-        if (rejectedReasonBox) {
-          const reason = vendorData?.rejectionReason || vendorData?.reason || null;
-          if (reason) {
-            rejectedReasonBox.style.display = "block";
-            rejectedReasonBox.textContent = reason;
-          } else {
-            rejectedReasonBox.style.display = "none";
-          }
-        }
-        return;
+      if (overviewNoteEl) {
+        overviewNoteEl.textContent =
+          "Analytics are in preview mode. Final numbers will start counting after approval.";
       }
+    } else if (mode === "suspended") {
+      statusBanner.style.display = "flex";
+      statusBanner.classList.add("status-suspended");
+      statusBanner.textContent =
+        "Your brand has been suspended by the organizer. POS access is disabled, but you can still view data.";
 
-      // normal dashboard visible
-      showAppView();
+      if (btnCopyPosLink) {
+        btnCopyPosLink.disabled = true;
+        btnCopyPosLink.title = "POS is disabled for this event.";
+      }
+      if (posStatusHintEl) {
+        posStatusHintEl.textContent = "POS disabled for this event.";
+      }
+      if (overviewNoteEl) {
+        overviewNoteEl.textContent =
+          "Suspended mode: analytics are view-only; new orders are blocked in the POS.";
+      }
+    } else if (mode === "approved") {
+      statusBanner.style.display = "flex";
+      statusBanner.classList.add("status-active");
+      statusBanner.textContent =
+        "You are approved for this event. POS is active and analytics are live.";
 
-      if (!statusBanner) return;
+      if (posStatusHintEl) {
+        posStatusHintEl.textContent = "Share this POS link with your cashiers.";
+      }
+      if (overviewNoteEl) {
+        overviewNoteEl.textContent =
+          "All analytics reflect net revenue and unique customers based on your orders.";
+      }
+    }
+  }
 
-      if (mode === "pending") {
-        statusBanner.style.display = "flex";
-        statusBanner.classList.add("status-banner-warning");
-        statusBanner.textContent =
-          "Your vendor application is pending approval. You can prepare your products and staff, but POS and analytics are not active yet.";
+  /* ------------------------------
+     LOAD BRAND + EVENT + VENDOR
+  ------------------------------ */
+  async function loadBrandAndStatus() {
+    if (!brandId) throw new Error("No brandId");
 
-        if (btnCopyPosLink) {
-          btnCopyPosLink.disabled = true;
-          btnCopyPosLink.title = "POS will be enabled after approval.";
-        }
-        if (posStatusHintEl) {
-          posStatusHintEl.textContent = "POS will be enabled after approval.";
-        }
-        if (overviewNoteEl) {
-          overviewNoteEl.textContent =
-            "Analytics are in preview mode. Final numbers will start counting after approval.";
-        }
-      } else if (mode === "suspended") {
-        statusBanner.style.display = "flex";
-        statusBanner.classList.add("status-banner-error");
-        statusBanner.textContent =
-          "Your brand has been suspended by the organizer. POS access is disabled, but you can still view data.";
+    const brandRef = doc(db, "brands", brandId);
+    const snap = await getDoc(brandRef);
+    if (!snap.exists()) throw new Error("Brand not found");
+    brandData = snap.data();
 
-        if (btnCopyPosLink) {
-          btnCopyPosLink.disabled = true;
-          btnCopyPosLink.title = "POS is disabled for this event.";
-        }
-        if (posStatusHintEl) {
-          posStatusHintEl.textContent = "POS disabled for this event.";
-        }
-        if (overviewNoteEl) {
-          overviewNoteEl.textContent =
-            "Suspended mode: analytics are view-only; new orders are blocked in the POS.";
-        }
-      } else if (mode === "approved") {
-        statusBanner.style.display = "flex";
-        statusBanner.classList.add("status-banner-success");
-        statusBanner.textContent =
-          "You are approved for this event. POS is active and analytics are live.";
+    // brand name / logo
+    const name = brandData.name || "Brand";
+    if (sidebarBrandName) sidebarBrandName.textContent = name;
+    if (topbarTitle) topbarTitle.textContent = `${name} — Brand Dashboard`;
 
-        if (posStatusHintEl) {
-          posStatusHintEl.textContent = "Share this POS link with your cashiers.";
-        }
-        if (overviewNoteEl) {
-          overviewNoteEl.textContent =
-            "All analytics reflect net revenue and unique customers based on your orders.";
-        }
+    const logoUrl = brandData.logoUrl || brandData.logo || null;
+    if (logoUrl) {
+      sidebarLogo.style.backgroundImage = `url("${logoUrl}")`;
+      sidebarLogo.textContent = "";
+    } else {
+      sidebarLogo.style.backgroundImage = "";
+      sidebarLogo.textContent = name[0]?.toUpperCase() || "B";
+    }
+
+    // determine event
+    currentEventId   = urlEventId || brandData.eventId || null;
+    currentEventName = brandData.eventName || null;
+
+    if (currentEventId) {
+      const evSnap = await getDoc(doc(db, "events", currentEventId));
+      if (evSnap.exists()) {
+        const ev = evSnap.data();
+        const evName = ev.name || ev.title || currentEventName || "Event";
+        currentEventName = evName;
       }
     }
 
-    /* ------------------------------
-       LOAD BRAND + EVENT + VENDOR
-    ------------------------------ */
-    async function loadBrandAndStatus() {
-      if (!brandId) throw new Error("No brandId");
-
-      const brandRef = doc(db, "brands", brandId);
-      const snap = await getDoc(brandRef);
-      if (!snap.exists()) throw new Error("Brand not found");
-      brandData = snap.data();
-
-      // brand name / logo
-      const name = brandData.name || "Brand";
-      sidebarBrandName.textContent = name;
-      topbarTitle.textContent = `${name} — Brand Dashboard`;
-
-      const logoUrl = brandData.logoUrl || brandData.logo || null;
-      if (logoUrl) {
-        sidebarLogo.style.backgroundImage = `url("${logoUrl}")`;
-        sidebarLogo.textContent = "";
-      } else {
-        sidebarLogo.style.backgroundImage = "";
-        sidebarLogo.textContent = name[0]?.toUpperCase() || "B";
+    if (currentEventName) {
+      if (sidebarEventLabel) sidebarEventLabel.textContent = currentEventName;
+      if (topbarSub) {
+        topbarSub.textContent = `Sales and POS dashboard for "${currentEventName}".`;
       }
-
-      // determine event
-      currentEventId = urlEventId || brandData.eventId || null;
-      currentEventName = brandData.eventName || null;
-
-      if (currentEventId) {
-        const evSnap = await getDoc(doc(db, "events", currentEventId));
-        if (evSnap.exists()) {
-          const ev = evSnap.data();
-          const evName = ev.name || ev.title || currentEventName || "Event";
-          currentEventName = evName;
-        }
+      if (qs("#event-name-title")) {
+        qs("#event-name-title").textContent = currentEventName;
       }
-
-      if (currentEventName) {
-        if (sidebarEventLabel) sidebarEventLabel.textContent = currentEventName;
-        if (topbarSub) {
-          topbarSub.textContent = `Sales and POS dashboard for "${currentEventName}".`;
-        }
-        if (qs("#event-name-title")) {
-          qs("#event-name-title").textContent = currentEventName;
-        }
-        if (settingsEventNameEl) {
-          settingsEventNameEl.value = currentEventName;
-        }
-        if (authEventChip) {
-          authEventChip.textContent = `You are managing: ${currentEventName}`;
-        }
+      if (settingsEventNameEl) {
+        settingsEventNameEl.value = currentEventName;
       }
-
-      // settings prefill
-      if (settingsBrandNameEl) settingsBrandNameEl.value = name;
-      if (settingsBrandCountryEl) settingsBrandCountryEl.value = brandData.country || "";
-
-      // vendor doc
-      vendorData = null;
-      if (currentEventId) {
-        let vendorSnap = null;
-        if (urlVendorId) {
-          const vr = await getDoc(
-            doc(db, "events", currentEventId, "vendors", urlVendorId)
-          );
-          if (vr.exists()) vendorSnap = vr;
-        }
-        if (!vendorSnap) {
-          const qVendor = query(
-            collection(db, "events", currentEventId, "vendors"),
-            where("brandId", "==", brandId),
-            limit(1)
-          );
-          const vSnap = await getDocs(qVendor);
-          if (!vSnap.empty) vendorSnap = vSnap.docs[0];
-        }
-        if (vendorSnap && vendorSnap.exists()) {
-          vendorData = { id: vendorSnap.id, ...vendorSnap.data() };
-        }
+      if (authEventChip) {
+        authEventChip.textContent = `You are managing: ${currentEventName}`;
       }
-
-      if (settingsStatusEl) {
-        const bStatus = brandData.status || "pending";
-        const vStatus = vendorData?.status || "pending";
-        settingsStatusEl.value = `Brand: ${bStatus} / Vendor: ${vStatus}`;
-      }
-
-      applyStatusUI();
     }
 
-    /* ------------------------------
-       LOAD PRODUCTS
-    ------------------------------ */
-    async function loadProducts() {
-      products = [];
-      if (!brandId) return;
-      const prodsRef = collection(doc(db, "brands", brandId), "products");
-      const snap = await getDocs(prodsRef);
-      products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      renderProducts();
-      renderLowStockPanel();
-    }
+    // settings prefill
+    if (settingsBrandNameEl)    settingsBrandNameEl.value    = name;
+    if (settingsBrandCountryEl) settingsBrandCountryEl.value = brandData.country || "";
 
-    function renderProducts() {
-      if (!productsTableWrapper) return;
+    // vendor doc
+    vendorData = null;
+    if (currentEventId) {
+      let vendorSnap = null;
 
-      const search = (productsSearchInput?.value || "").toLowerCase();
-      const sort = productsSortSelect?.value || "name-asc";
-
-      let list = products.slice();
-
-      if (search) {
-        list = list.filter(p => {
-          const s = `${p.name || ""} ${p.sku || ""}`.toLowerCase();
-          return s.includes(search);
-        });
+      if (urlVendorId) {
+        const vr = await getDoc(
+          doc(db, "events", currentEventId, "vendors", urlVendorId)
+        );
+        if (vr.exists()) vendorSnap = vr;
       }
 
-      list.sort((a,b) => {
-        const nameA = (a.name || "").toLowerCase();
-        const nameB = (b.name || "").toLowerCase();
-        const priceA = Number(a.price || 0);
-        const priceB = Number(b.price || 0);
-        const stockA = Number(a.stock || 0);
-        const stockB = Number(b.stock || 0);
-
-        switch (sort) {
-          case "name-desc": return nameB.localeCompare(nameA);
-          case "price-asc": return priceA - priceB;
-          case "price-desc": return priceB - priceA;
-          case "stock-asc": return stockA - stockB;
-          case "stock-desc": return stockB - stockA;
-          case "name-asc":
-          default: return nameA.localeCompare(nameB);
-        }
-      });
-
-      if (!list.length) {
-        productsTableWrapper.innerHTML =
-          `<div class="table-empty">No products yet. Add your first product.</div>`;
-        return;
+      if (!vendorSnap) {
+        const qVendor = query(
+          collection(db, "events", currentEventId, "vendors"),
+          where("brandId", "==", brandId),
+          limit(1)
+        );
+        const vSnap = await getDocs(qVendor);
+        if (!vSnap.empty) vendorSnap = vSnap.docs[0];
       }
-
-      const rows = list.map(p => {
-        const img = p.imageUrl
-          ? `<div class="product-thumb" style="background-image:url('${p.imageUrl}')"></div>`
-          : `<div class="product-thumb product-thumb-placeholder">No image</div>`;
-        const variantsLabel = (Array.isArray(p.variants) && p.variants.length)
-          ? p.variants.map(v => v.name).join(", ")
-          : "-";
-        const active = p.isActive === false ? "Inactive" : "Active";
-
-        return `
-          <tr>
-            <td>${img}</td>
-            <td>${p.name || "-"}</td>
-            <td>${p.sku || "-"}</td>
-            <td>${money(p.price)}</td>
-            <td>${Number(p.stock || 0)}</td>
-            <td>${variantsLabel}</td>
-            <td>${active}</td>
-            <td>
-              <button class="btn btn-ghost btn-xs" data-action="edit-product" data-id="${p.id}">Edit</button>
-              <button class="btn btn-danger btn-xs" data-action="delete-product" data-id="${p.id}">Delete</button>
-            </td>
-          </tr>
-        `;
-      }).join("");
-
-      productsTableWrapper.innerHTML = `
-        <table>
-          <thead>
-            <tr>
-              <th>Image</th>
-              <th>Name</th>
-              <th>SKU</th>
-              <th>Price</th>
-              <th>Stock</th>
-              <th>Variants</th>
-              <th>Status</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      `;
-
-      productsTableWrapper
-        .querySelectorAll("button[data-action]")
-        .forEach(btn => {
-          const id = btn.getAttribute("data-id");
-          const action = btn.getAttribute("data-action");
-          btn.addEventListener("click", () => {
-            const p = products.find(x => x.id === id);
-            if (action === "edit-product") openProductModal(p);
-            if (action === "delete-product") confirmDeleteProduct(id);
-          });
-        });
+      if (vendorSnap && vendorSnap.exists()) {
+        vendorData = { id: vendorSnap.id, ...vendorSnap.data() };
+      }
     }
 
-    function renderLowStockPanel() {
-      if (!lowStockPanel) return;
-      const low = products.filter(p => {
-        const stock = Number(p.stock || 0);
-        const threshold = p.lowStockThreshold != null
-          ? Number(p.lowStockThreshold)
-          : 5;
-        return stock <= threshold;
-      });
-      if (!low.length) {
-        lowStockPanel.style.display = "none";
-        return;
-      }
-      lowStockPanel.style.display = "block";
-      lowStockTitle.textContent = `Low stock alerts (${low.length})`;
-      lowStockList.innerHTML = low.map(p => {
-        const s = Number(p.stock || 0);
-        return `<div>• ${p.name || "Unnamed product"} — <span class="low-stock">${s}</span> left</div>`;
-      }).join("");
+    if (settingsStatusEl) {
+      const bStatus = brandData.status || "pending";
+      const vStatus = vendorData?.status || "pending";
+      settingsStatusEl.value = `Brand: ${bStatus} / Vendor: ${vStatus}`;
     }
 
-    function openProductModal(product) {
-      const isEdit = !!product;
-      const title = isEdit ? "Edit product" : "Add product";
+    applyStatusUI();
+  }
 
-      const vName  = Array.isArray(product?.variants) && product.variants[0]?.name
-        ? product.variants[0].name
-        : "";
-      const vLabels = Array.isArray(product?.variants) && product.variants[0]?.labels
-        ? product.variants[0].labels.join(", ")
-        : "";
+  /* ------------------------------
+     LOAD PRODUCTS
+  ------------------------------ */
+  async function loadProducts() {
+    products = [];
+    if (!brandId) return;
+    const prodsRef = collection(doc(db, "brands", brandId), "products");
+    const snap = await getDocs(prodsRef);
+    products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderProducts();
+    renderLowStockPanel();
+  }
 
-      openModal(`
-        <div class="modal-title">${title}</div>
-        <form id="product-form">
-          <div class="field">
-            <div class="field-label">Name</div>
-            <input id="prod-name" class="field-input" required value="${product?.name || ""}"/>
-          </div>
-          <div class="field">
-            <div class="field-label">Price</div>
-            <input id="prod-price" class="field-input" type="number" min="0" step="0.01" required value="${product?.price ?? ""}"/>
-          </div>
-          <div class="field">
-            <div class="field-label">Stock</div>
-            <input id="prod-stock" class="field-input" type="number" min="0" step="1" required value="${product?.stock ?? 0}"/>
-          </div>
-          <div class="field">
-            <div class="field-label">SKU (auto if left empty)</div>
-            <input id="prod-sku" class="field-input" value="${product?.sku || ""}"/>
-          </div>
-          <div class="field">
-            <div class="field-label">Code (optional)</div>
-            <input id="prod-code" class="field-input" value="${product?.code || ""}"/>
-          </div>
-          <div class="field">
-            <div class="field-label">Variants (optional)</div>
-            <div class="field-hint">Example: Name = Size, Options = S,M,L</div>
-            <input id="prod-variant-name" class="field-input" placeholder="Group name (e.g. Size)" value="${vName}"/>
-            <input id="prod-variant-labels" class="field-input" placeholder="Comma separated options" value="${vLabels}"/>
-          </div>
-          <div class="field">
-            <div class="field-label">Product image</div>
-            <input id="prod-image" class="field-input" type="file" accept="image/*"/>
-            <div class="field-hint">Will be stored under brands/${brandId || "brandId"}/products/{productId}/main.jpg</div>
-          </div>
-          <div class="field">
-            <label style="font-size:12px;">
-              <input id="prod-active" type="checkbox" ${product?.isActive === false ? "" : "checked"}/> Active
-            </label>
-          </div>
-          <div class="modal-actions">
-            <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-            <button type="submit" class="btn btn-primary">${isEdit ? "Save changes" : "Create product"}</button>
-          </div>
-        </form>
-      `);
+  function renderProducts() {
+    if (!productsTableWrapper) return;
 
-      const form = qs("#product-form");
-      const fileInput = qs("#prod-image");
+    const search = (productsSearchInput?.value || "").toLowerCase();
+    const sort   = productsSortSelect?.value || "name-asc";
 
-      form.addEventListener("submit", async e => {
-        e.preventDefault();
-        if (!brandId) return;
+    let list = products.slice();
 
-        const name  = qs("#prod-name").value.trim();
-        const price = Number(qs("#prod-price").value || 0);
-        const stock = Number(qs("#prod-stock").value || 0);
-        let sku     = qs("#prod-sku").value.trim();
-        const code  = qs("#prod-code").value.trim() || null;
-        const vNameVal = qs("#prod-variant-name").value.trim();
-        const vLabelsVal = qs("#prod-variant-labels").value.trim();
-        const isActive = qs("#prod-active").checked;
-
-        if (!name) {
-          alert("Enter product name.");
-          return;
-        }
-        if (!price && price !== 0) {
-          alert("Enter product price.");
-          return;
-        }
-
-        if (!sku) {
-          sku = generateSku();
-        }
-
-        const variants = [];
-        if (vNameVal && vLabelsVal) {
-          const labelsArr = vLabelsVal
-            .split(",")
-            .map(x => x.trim())
-            .filter(Boolean);
-          if (labelsArr.length) {
-            variants.push({ name: vNameVal, labels: labelsArr });
-          }
-        }
-
-        const baseData = {
-          name,
-          price,
-          stock,
-          sku,
-          code,
-          variants,
-          isActive,
-          updatedAt: serverTimestamp()
-        };
-
-        const prodsRef = collection(doc(db, "brands", brandId), "products");
-
-        try {
-          if (product) {
-            const prodRef = doc(prodsRef, product.id);
-            await updateDoc(prodRef, baseData);
-
-            if (fileInput && fileInput.files[0]) {
-              const path = `brands/${brandId}/products/${product.id}/main.jpg`;
-              const url = await uploadFileToStorage(fileInput.files[0], path);
-              await updateDoc(prodRef, { imageUrl: url });
-            }
-          } else {
-            const newRef = await addDoc(prodsRef, {
-              ...baseData,
-              createdAt: serverTimestamp()
-            });
-            if (fileInput && fileInput.files[0]) {
-              const path = `brands/${brandId}/products/${newRef.id}/main.jpg`;
-              const url = await uploadFileToStorage(fileInput.files[0], path);
-              await updateDoc(newRef, { imageUrl: url });
-            }
-          }
-
-          await loadProducts();
-          closeModal();
-        } catch (err) {
-          console.error("Error saving product", err);
-          alert("Failed to save product. Try again.");
-        }
+    if (search) {
+      list = list.filter(p => {
+        const s = `${p.name || ""} ${p.sku || ""}`.toLowerCase();
+        return s.includes(search);
       });
     }
 
-    async function confirmDeleteProduct(productId) {
-      if (!brandId || !productId) return;
-      if (!confirm("Delete this product?")) return;
-      const refProd = doc(collection(doc(db, "brands", brandId), "products"), productId);
-      try {
-        await updateDoc(refProd, { isActive: false });
-        await loadProducts();
-      } catch (err) {
-        console.error("Error deleting product", err);
-        alert("Failed to delete product.");
+    list.sort((a,b) => {
+      const nameA  = (a.name || "").toLowerCase();
+      const nameB  = (b.name || "").toLowerCase();
+      const priceA = Number(a.price || 0);
+      const priceB = Number(b.price || 0);
+      const stockA = Number(a.stock || 0);
+      const stockB = Number(b.stock || 0);
+
+      switch (sort) {
+        case "name-desc": return nameB.localeCompare(nameA);
+        case "price-asc": return priceA - priceB;
+        case "price-desc":return priceB - priceA;
+        case "stock-asc": return stockA - stockB;
+        case "stock-desc":return stockB - stockA;
+        case "name-asc":
+        default:          return nameA.localeCompare(nameB);
       }
+    });
+
+    if (!list.length) {
+      productsTableWrapper.innerHTML =
+        `<div class="table-empty">No products yet. Add your first product.</div>`;
+      return;
     }
 
-    /* ------------------------------
-       LOAD STAFF
-    ------------------------------ */
-    async function loadStaff() {
-      staff = [];
-      if (!brandId) return;
-      const snap = await getDocs(collection(doc(db, "brands", brandId), "staff"));
-      staff = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      renderStaff();
-    }
+    const rows = list.map(p => {
+      const img = p.imageUrl
+        ? `<div class="product-thumb" style="background-image:url('${p.imageUrl}')"></div>`
+        : `<div class="product-thumb product-thumb-placeholder">No image</div>`;
+      const variantsLabel = (Array.isArray(p.variants) && p.variants.length)
+        ? p.variants.map(v => v.name).join(", ")
+        : "-";
+      const active = p.isActive === false ? "Inactive" : "Active";
 
-    function renderStaff() {
-      if (!staffTableWrapper) return;
-      const search = (staffSearchInput?.value || "").toLowerCase();
-
-      let list = staff.slice();
-      if (search) {
-        list = list.filter(s => {
-          const sText = `${s.name || ""} ${s.username || ""}`.toLowerCase();
-          return sText.includes(search);
-        });
-      }
-
-      if (!list.length) {
-        staffTableWrapper.innerHTML =
-          `<div class="table-empty">No staff yet. Add your first POS user.</div>`;
-        return;
-      }
-
-      const rows = list.map(s => {
-        const role = s.role || "cashier";
-        const active = s.isActive === false ? "Inactive" : "Active";
-        return `
-          <tr>
-            <td>${s.name || "-"}</td>
-            <td>${s.username || "-"}</td>
-            <td>${role}</td>
-            <td>${active}</td>
-            <td>
-              <button class="btn btn-ghost btn-xs" data-action="edit-staff" data-id="${s.id}">Edit</button>
-              <button class="btn btn-danger btn-xs" data-action="delete-staff" data-id="${s.id}">Delete</button>
-            </td>
-          </tr>
-        `;
-      }).join("");
-
-      staffTableWrapper.innerHTML = `
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Username</th>
-              <th>Role</th>
-              <th>Status</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      `;
-
-      staffTableWrapper
-        .querySelectorAll("button[data-action]")
-        .forEach(btn => {
-          const id = btn.getAttribute("data-id");
-          const action = btn.getAttribute("data-action");
-          btn.addEventListener("click", () => {
-            const user = staff.find(x => x.id === id);
-            if (action === "edit-staff") openStaffModal(user);
-            if (action === "delete-staff") confirmDeleteStaff(id);
-          });
-        });
-    }
-
-    function openStaffModal(user) {
-      const isEdit = !!user;
-      const title = isEdit ? "Edit POS user" : "Add POS user";
-
-      openModal(`
-        <div class="modal-title">${title}</div>
-        <form id="staff-form">
-          <div class="field">
-            <div class="field-label">Name</div>
-            <input id="staff-name" class="field-input" required value="${user?.name || ""}"/>
-          </div>
-          <div class="field">
-            <div class="field-label">Username</div>
-            <input id="staff-username" class="field-input" required value="${user?.username || ""}"/>
-          </div>
-          <div class="field">
-            <div class="field-label">PIN</div>
-            <input id="staff-pin" class="field-input" placeholder="POS PIN" value="${user?.pin || ""}"/>
-          </div>
-          <div class="field">
-            <div class="field-label">Role</div>
-            <select id="staff-role" class="field-input">
-              <option value="cashier" ${user?.role === "cashier" ? "selected" : ""}>Cashier</option>
-              <option value="staff" ${user?.role === "staff" ? "selected" : ""}>Staff</option>
-              <option value="brand_owner" ${user?.role === "brand_owner" ? "selected" : ""}>Brand owner</option>
-            </select>
-          </div>
-          <div class="field">
-            <label style="font-size:12px;">
-              <input id="staff-active" type="checkbox" ${user?.isActive === false ? "" : "checked"}/> Active
-            </label>
-          </div>
-          <div class="modal-actions">
-            <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-            <button type="submit" class="btn btn-primary">${isEdit ? "Save changes" : "Create user"}</button>
-          </div>
-        </form>
-      `);
-
-      const form = qs("#staff-form");
-      form.addEventListener("submit", async e => {
-        e.preventDefault();
-        if (!brandId) return;
-
-        const name     = qs("#staff-name").value.trim();
-        const username = qs("#staff-username").value.trim();
-        const pin      = qs("#staff-pin").value.trim();
-        const role     = qs("#staff-role").value || "cashier";
-        const isActive = qs("#staff-active").checked;
-
-        if (!name || !username) {
-          alert("Enter name and username.");
-          return;
-        }
-
-        const data = {
-          name,
-          username,
-          pin: pin || null,
-          role,
-          isActive,
-          eventId: currentEventId || null,
-          updatedAt: serverTimestamp()
-        };
-
-        const staffRef = collection(doc(db, "brands", brandId), "staff");
-        try {
-          if (user) {
-            await updateDoc(doc(staffRef, user.id), data);
-          } else {
-            await addDoc(staffRef, {
-              ...data,
-              createdAt: serverTimestamp()
-            });
-          }
-          await loadStaff();
-          closeModal();
-        } catch (err) {
-          console.error("Error saving staff", err);
-          alert("Failed to save staff user.");
-        }
-      });
-    }
-
-    async function confirmDeleteStaff(id) {
-      if (!brandId || !id) return;
-      if (!confirm("Delete this POS user?")) return;
-      const staffRef = collection(doc(db, "brands", brandId), "staff");
-      try {
-        await updateDoc(doc(staffRef, id), { isActive: false });
-        await loadStaff();
-      } catch (err) {
-        console.error("Error deleting staff", err);
-        alert("Failed to delete staff user.");
-      }
-    }
-
-    /* ------------------------------
-       LOAD ORDERS (brands/{brandId}/orders)
-    ------------------------------ */
-    async function loadOrders() {
-      orders = [];
-      if (!brandId) return;
-      const ordersRef = collection(doc(db, "brands", brandId), "orders");
-      const snap = await getDocs(ordersRef);
-      orders = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      computeAnalyticsFromOrders();
-      renderOrders();
-      renderRecentOrders();
-      rebuildCustomersFromOrders();
-      renderCustomers();
-    }
-
-    function computeAnalyticsFromOrders() {
-      const today = todayKey();
-      let todayNet = 0;
-      let todaySalesCount = 0;
-      let todayReturnsCount = 0;
-
-      let totalNet = 0;
-      let totalCount = 0;
-      const uniqueCustomersSet = new Set();
-
-      for (const o of orders) {
-        const total = Number(o.total || 0);
-        const isReturn = !!o.isReturn || o.type === "return";
-        const dKey = getOrderDateKey(o);
-        const sign = isReturn ? -1 : 1;
-        const netVal = Math.abs(total) * sign;
-
-        totalNet += netVal;
-        totalCount += 1;
-
-        if (dKey === today) {
-          todayNet += netVal;
-          if (isReturn) todayReturnsCount += 1;
-          else todaySalesCount += 1;
-        }
-
-        const custKey =
-          o.customerId ||
-          o.customerEmail ||
-          o.customerPhone ||
-          (o.customerName && o.customerName.toLowerCase()) ||
-          null;
-        if (custKey) uniqueCustomersSet.add(custKey);
-      }
-
-      if (effectiveStatus !== "approved") {
-        // still show numbers but they might be "preview"
-      }
-
-      if (dashSalesTodayEl)   dashSalesTodayEl.textContent   = money(todayNet);
-      if (dashOrdersTodayEl)  dashOrdersTodayEl.textContent  = String(todaySalesCount);
-      if (dashReturnsTodayEl) dashReturnsTodayEl.textContent = String(todayReturnsCount);
-      if (dashUniqueCustEl)   dashUniqueCustEl.textContent   = String(uniqueCustomersSet.size);
-
-      if (ordersTotalSalesEl) ordersTotalSalesEl.textContent = money(totalNet);
-      if (ordersTotalCountEl) ordersTotalCountEl.textContent = String(totalCount);
-    }
-
-    function renderRecentOrders() {
-      if (!recentOrdersWrapper) return;
-
-      if (!orders.length) {
-        recentOrdersWrapper.innerHTML =
-          `<div class="table-empty">No orders yet.</div>`;
-        return;
-      }
-
-      const list = orders.slice().sort((a,b) => {
-        const da = getOrderCreatedAt(a);
-        const db = getOrderCreatedAt(b);
-        const ta = da ? da.getTime() : 0;
-        const tb = db ? db.getTime() : 0;
-        return tb - ta;
-      }).slice(0, 10);
-
-      const rows = list.map(o => {
-        const d = getOrderCreatedAt(o);
-        const dateStr = d ? d.toLocaleString() : getOrderDateKey(o) || "-";
-        const isReturn = !!o.isReturn || o.type === "return";
-        const typeLabel = isReturn ? "Return" : "Sale";
-        return `
-          <tr>
-            <td>${o.orderId || o.id}</td>
-            <td>${dateStr}</td>
-            <td>${typeLabel}</td>
-            <td>${money(o.total)}</td>
-            <td><button class="btn btn-ghost btn-xs" data-open-order="${o.id}">Open</button></td>
-          </tr>
-        `;
-      }).join("");
-
-      recentOrdersWrapper.innerHTML = `
-        <table>
-          <thead>
-            <tr>
-              <th>Order</th>
-              <th>Created at</th>
-              <th>Type</th>
-              <th>Total</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      `;
-
-      recentOrdersWrapper
-        .querySelectorAll("button[data-open-order]")
-        .forEach(btn => {
-          const id = btn.getAttribute("data-open-order");
-          btn.addEventListener("click", () => {
-            const o = orders.find(x => x.id === id);
-            if (o) openOrderModal(o);
-          });
-        });
-    }
-
-    function renderOrders() {
-      if (!ordersTableWrapper) return;
-
-      if (!orders.length) {
-        ordersTableWrapper.innerHTML =
-          `<div class="table-empty">No orders yet.</div>`;
-        return;
-      }
-
-      const search = (ordersSearchInput?.value || "").toLowerCase();
-      const typeFilter = ordersFilterTypeSel?.value || "all";
-      const payFilter  = ordersFilterPaySel?.value || "all";
-      const sort       = ordersSortSelect?.value || "date-desc";
-
-      let list = orders.slice();
-
-      if (search) {
-        list = list.filter(o => {
-          const s = `${o.orderId || o.id || ""} ${o.customerName || ""}`.toLowerCase();
-          return s.includes(search);
-        });
-      }
-
-      if (typeFilter !== "all") {
-        list = list.filter(o => {
-          const isReturn = !!o.isReturn || o.type === "return";
-          if (typeFilter === "sale") return !isReturn;
-          if (typeFilter === "return") return isReturn;
-          return true;
-        });
-      }
-
-      if (payFilter !== "all") {
-        list = list.filter(o => {
-          const pm = (o.paymentMethod || "").toLowerCase();
-          if (payFilter === "cash") return pm.includes("cash");
-          if (payFilter === "card") return pm.includes("card") || pm.includes("visa") || pm.includes("master");
-          return true;
-        });
-      }
-
-      list.sort((a,b) => {
-        const ta = getOrderCreatedAt(a)?.getTime() || 0;
-        const tb = getOrderCreatedAt(b)?.getTime() || 0;
-        const totalA = Number(a.total || 0);
-        const totalB = Number(b.total || 0);
-        switch (sort) {
-          case "date-asc":   return ta - tb;
-          case "total-desc": return totalB - totalA;
-          case "total-asc":  return totalA - totalB;
-          case "date-desc":
-          default:           return tb - ta;
-        }
-      });
-
-      const rows = list.map(o => {
-        const d = getOrderCreatedAt(o);
-        const dateStr = d ? d.toLocaleString() : getOrderDateKey(o) || "-";
-        const isReturn = !!o.isReturn || o.type === "return";
-        const typeLabel = isReturn ? "Return" : "Sale";
-        const customerName = o.customerName || o.customer?.name || "-";
-        const paymentMethod = o.paymentMethod || "-";
-        return `
-          <tr>
-            <td>${o.orderId || o.id}</td>
-            <td>${dateStr}</td>
-            <td>${typeLabel}</td>
-            <td>${money(o.total)}</td>
-            <td>${customerName}</td>
-            <td>${paymentMethod}</td>
-            <td>
-              <button class="btn btn-ghost btn-xs" data-open-order="${o.id}">Open</button>
-            </td>
-          </tr>
-        `;
-      }).join("");
-
-      ordersTableWrapper.innerHTML = `
-        <table>
-          <thead>
-            <tr>
-              <th>Order</th>
-              <th>Date</th>
-              <th>Type</th>
-              <th>Total</th>
-              <th>Customer</th>
-              <th>Payment</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      `;
-
-      ordersTableWrapper
-        .querySelectorAll("button[data-open-order]")
-        .forEach(btn => {
-          const id = btn.getAttribute("data-open-order");
-          btn.addEventListener("click", () => {
-            const o = orders.find(x => x.id === id);
-            if (o) openOrderModal(o);
-          });
-        });
-    }
-
-    function openOrderModal(order) {
-      const items = Array.isArray(order.items) ? order.items : [];
-      const rows = items.map(it => `
+      return `
         <tr>
-          <td>${it.name || "-"}</td>
-          <td>${it.code || it.productId || "-"}</td>
-          <td>${Number(it.qty || 0)}</td>
-          <td>${money(it.price)}</td>
-          <td>${money(it.lineTotal)}</td>
+          <td>${img}</td>
+          <td>${p.name || "-"}</td>
+          <td>${p.sku || "-"}</td>
+          <td>${money(p.price)}</td>
+          <td>${Number(p.stock || 0)}</td>
+          <td>${variantsLabel}</td>
+          <td>${active}</td>
+          <td>
+            <button class="btn btn-ghost btn-xs" data-action="edit-product" data-id="${p.id}">Edit</button>
+            <button class="btn btn-danger btn-xs" data-action="delete-product" data-id="${p.id}">Delete</button>
+          </td>
         </tr>
-      `).join("");
+      `;
+    }).join("");
 
-      const isReturn = !!order.isReturn || order.type === "return";
-      const typeLabel = isReturn ? "Return" : "Sale";
+    productsTableWrapper.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Image</th>
+            <th>Name</th>
+            <th>SKU</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Variants</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
 
-      openModal(`
-        <div class="modal-title">Order ${order.orderId || order.id}</div>
-        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">
-          Type: ${typeLabel} • Payment: ${order.paymentMethod || "-"}
+    productsTableWrapper
+      .querySelectorAll("button[data-action]")
+      .forEach(btn => {
+        const id     = btn.getAttribute("data-id");
+        const action = btn.getAttribute("data-action");
+        btn.addEventListener("click", () => {
+          const p = products.find(x => x.id === id);
+          if (action === "edit-product")   openProductModal(p);
+          if (action === "delete-product") confirmDeleteProduct(id);
+        });
+      });
+  }
+
+  function renderLowStockPanel() {
+    if (!lowStockPanel) return;
+    const low = products.filter(p => {
+      const stock     = Number(p.stock || 0);
+      const threshold = p.lowStockThreshold != null
+        ? Number(p.lowStockThreshold)
+        : 5;
+      return stock <= threshold;
+    });
+    if (!low.length) {
+      lowStockPanel.style.display = "none";
+      return;
+    }
+    lowStockPanel.style.display = "block";
+    lowStockTitle.textContent = `Low stock alerts (${low.length})`;
+    lowStockList.innerHTML = low.map(p => {
+      const s = Number(p.stock || 0);
+      return `<div>• ${p.name || "Unnamed product"} — <span class="low-stock">${s}</span> left</div>`;
+    }).join("");
+  }
+
+  function openProductModal(product) {
+    const isEdit = !!product;
+    const title  = isEdit ? "Edit product" : "Add product";
+
+    const vName   = Array.isArray(product?.variants) && product.variants[0]?.name
+      ? product.variants[0].name
+      : "";
+    const vLabels = Array.isArray(product?.variants) && product.variants[0]?.labels
+      ? product.variants[0].labels.join(", ")
+      : "";
+
+    openModal(`
+      <div class="modal-title">${title}</div>
+      <form id="product-form">
+        <div class="field">
+          <div class="field-label">Name</div>
+          <input id="prod-name" class="field-input" required value="${product?.name || ""}"/>
         </div>
-        <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px;">
-          <thead>
-            <tr>
-              <th style="text-align:left;padding:4px 6px;border-bottom:1px solid var(--border);">Item</th>
-              <th style="text-align:left;padding:4px 6px;border-bottom:1px solid var(--border);">Code</th>
-              <th style="text-align:left;padding:4px 6px;border-bottom:1px solid var(--border);">Qty</th>
-              <th style="text-align:left;padding:4px 6px;border-bottom:1px solid var(--border);">Price</th>
-              <th style="text-align:left;padding:4px 6px;border-bottom:1px solid var(--border);">Line total</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${rows || `<tr><td colspan="5" style="padding:6px;">No line items recorded.</td></tr>`}
-          </tbody>
-        </table>
-        <div style="font-size:12px;margin-bottom:6px;">
-          Subtotal: <strong>${money(order.subtotal)}</strong><br/>
-          Discount: <strong>${money(order.discountAmount)}</strong><br/>
-          Service: <strong>${money(order.serviceAmount)}</strong><br/>
-          Tax: <strong>${money(order.taxAmount)}</strong><br/>
-          Total: <strong>${money(order.total)}</strong>
+        <div class="field">
+          <div class="field-label">Price</div>
+          <input id="prod-price" class="field-input" type="number" min="0" step="0.01" required value="${product?.price ?? ""}"/>
         </div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">
-          Customer: ${order.customerName || "-"}${order.customerEmail ? " • " + order.customerEmail : ""}${order.customerPhone ? " • " + order.customerPhone : ""}
+        <div class="field">
+          <div class="field-label">Stock</div>
+          <input id="prod-stock" class="field-input" type="number" min="0" step="1" required value="${product?.stock ?? 0}"/>
+        </div>
+        <div class="field">
+          <div class="field-label">SKU (auto if left empty)</div>
+          <input id="prod-sku" class="field-input" value="${product?.sku || ""}"/>
+        </div>
+        <div class="field">
+          <div class="field-label">Code (optional)</div>
+          <input id="prod-code" class="field-input" value="${product?.code || ""}"/>
+        </div>
+        <div class="field">
+          <div class="field-label">Variants (optional)</div>
+          <div class="field-hint">Example: Name = Size, Options = S,M,L</div>
+          <input id="prod-variant-name" class="field-input" placeholder="Group name (e.g. Size)" value="${vName}"/>
+          <input id="prod-variant-labels" class="field-input" placeholder="Comma separated options" value="${vLabels}"/>
+        </div>
+        <div class="field">
+          <div class="field-label">Product image</div>
+          <input id="prod-image" class="field-input" type="file" accept="image/*"/>
+          <div class="field-hint">Will be stored under brands/${brandId || "brandId"}/products/{productId}/main.jpg</div>
+        </div>
+        <div class="field">
+          <label style="font-size:12px;">
+            <input id="prod-active" type="checkbox" ${product?.isActive === false ? "" : "checked"}/> Active
+          </label>
         </div>
         <div class="modal-actions">
-          <button type="button" class="btn btn-ghost" onclick="closeModal()">Close</button>
+          <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">${isEdit ? "Save changes" : "Create product"}</button>
         </div>
-      `);
+      </form>
+    `);
+
+    const form      = qs("#product-form");
+    const fileInput = qs("#prod-image");
+
+    form.addEventListener("submit", async e => {
+      e.preventDefault();
+      if (!brandId) return;
+
+      const name        = qs("#prod-name").value.trim();
+      const price       = Number(qs("#prod-price").value || 0);
+      const stock       = Number(qs("#prod-stock").value || 0);
+      let   sku         = qs("#prod-sku").value.trim();
+      const code        = qs("#prod-code").value.trim() || null;
+      const vNameVal    = qs("#prod-variant-name").value.trim();
+      const vLabelsVal  = qs("#prod-variant-labels").value.trim();
+      const isActive    = qs("#prod-active").checked;
+
+      if (!name) {
+        alert("Enter product name.");
+        return;
+      }
+      if (!price && price !== 0) {
+        alert("Enter product price.");
+        return;
+      }
+
+      if (!sku) {
+        sku = generateSku();
+      }
+
+      const variants = [];
+      if (vNameVal && vLabelsVal) {
+        const labelsArr = vLabelsVal
+          .split(",")
+          .map(x => x.trim())
+          .filter(Boolean);
+        if (labelsArr.length) {
+          variants.push({ name: vNameVal, labels: labelsArr });
+        }
+      }
+
+      const baseData = {
+        name,
+        price,
+        stock,
+        sku,
+        code,
+        variants,
+        isActive,
+        updatedAt: serverTimestamp()
+      };
+
+      const prodsRef = collection(doc(db, "brands", brandId), "products");
+
+      try {
+        if (product) {
+          const prodRef = doc(prodsRef, product.id);
+          await updateDoc(prodRef, baseData);
+
+          if (fileInput && fileInput.files[0]) {
+            const path = `brands/${brandId}/products/${product.id}/main.jpg`;
+            const url  = await uploadFileToStorage(fileInput.files[0], path);
+            await updateDoc(prodRef, { imageUrl: url });
+          }
+        } else {
+          const newRef = await addDoc(prodsRef, {
+            ...baseData,
+            createdAt: serverTimestamp()
+          });
+          if (fileInput && fileInput.files[0]) {
+            const path = `brands/${brandId}/products/${newRef.id}/main.jpg`;
+            const url  = await uploadFileToStorage(fileInput.files[0], path);
+            await updateDoc(newRef, { imageUrl: url });
+          }
+        }
+
+        await loadProducts();
+        closeModal();
+      } catch (err) {
+        console.error("Error saving product", err);
+        alert("Failed to save product. Try again.");
+      }
+    });
+  }
+
+  async function confirmDeleteProduct(productId) {
+    if (!brandId || !productId) return;
+    if (!confirm("Delete this product?")) return;
+    const refProd = doc(collection(doc(db, "brands", brandId), "products"), productId);
+    try {
+      await updateDoc(refProd, { isActive: false });
+      await loadProducts();
+    } catch (err) {
+      console.error("Error deleting product", err);
+      alert("Failed to delete product.");
+    }
+  }
+
+  /* ------------------------------
+     LOAD STAFF
+  ------------------------------ */
+  async function loadStaff() {
+    staff = [];
+    if (!brandId) return;
+    const snap = await getDocs(collection(doc(db, "brands", brandId), "staff"));
+    staff = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderStaff();
+  }
+
+  function renderStaff() {
+    if (!staffTableWrapper) return;
+    const search = (staffSearchInput?.value || "").toLowerCase();
+
+    let list = staff.slice();
+    if (search) {
+      list = list.filter(s => {
+        const sText = `${s.name || ""} ${s.username || ""}`.toLowerCase();
+        return sText.includes(search);
+      });
     }
 
-    /* ------------------------------
-       CUSTOMERS from ORDERS
-    ------------------------------ */
-    function rebuildCustomersFromOrders() {
-      const map = new Map();
-      for (const o of orders) {
-        const key =
-          o.customerId ||
-          o.customerEmail ||
-          o.customerPhone ||
-          (o.customerName && o.customerName.toLowerCase());
-        if (!key) continue;
+    if (!list.length) {
+      staffTableWrapper.innerHTML =
+        `<div class="table-empty">No staff yet. Add your first POS user.</div>`;
+      return;
+    }
 
-        const isReturn = !!o.isReturn || o.type === "return";
-        const total = Number(o.total || 0);
-        const val = isReturn ? -Math.abs(total) : Math.abs(total);
+    const rows = list.map(s => {
+      const role   = s.role || "cashier";
+      const active = s.isActive === false ? "Inactive" : "Active";
+      return `
+        <tr>
+          <td>${s.name || "-"}</td>
+          <td>${s.username || "-"}</td>
+          <td>${role}</td>
+          <td>${active}</td>
+          <td>
+            <button class="btn btn-ghost btn-xs" data-action="edit-staff" data-id="${s.id}">Edit</button>
+            <button class="btn btn-danger btn-xs" data-action="delete-staff" data-id="${s.id}">Delete</button>
+          </td>
+        </tr>
+      `;
+    }).join("");
 
-        if (!map.has(key)) {
-          map.set(key, {
-            id: key,
-            name: o.customerName || "-",
-            email: o.customerEmail || "",
-            phone: o.customerPhone || "",
-            ordersCount: 0,
-            totalSpent: 0
+    staffTableWrapper.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Username</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+
+    staffTableWrapper
+      .querySelectorAll("button[data-action]")
+      .forEach(btn => {
+        const id     = btn.getAttribute("data-id");
+        const action = btn.getAttribute("data-action");
+        btn.addEventListener("click", () => {
+          const user = staff.find(x => x.id === id);
+          if (action === "edit-staff")   openStaffModal(user);
+          if (action === "delete-staff") confirmDeleteStaff(id);
+        });
+      });
+  }
+
+  function openStaffModal(user) {
+    const isEdit = !!user;
+    const title  = isEdit ? "Edit POS user" : "Add POS user";
+
+    openModal(`
+      <div class="modal-title">${title}</div>
+      <form id="staff-form">
+        <div class="field">
+          <div class="field-label">Name</div>
+          <input id="staff-name" class="field-input" required value="${user?.name || ""}"/>
+        </div>
+        <div class="field">
+          <div class="field-label">Username</div>
+          <input id="staff-username" class="field-input" required value="${user?.username || ""}"/>
+        </div>
+        <div class="field">
+          <div class="field-label">PIN</div>
+          <input id="staff-pin" class="field-input" placeholder="POS PIN" value="${user?.pin || ""}"/>
+        </div>
+        <div class="field">
+          <div class="field-label">Role</div>
+          <select id="staff-role" class="field-input">
+            <option value="cashier" ${user?.role === "cashier" ? "selected" : ""}>Cashier</option>
+            <option value="staff" ${user?.role === "staff" ? "selected" : ""}>Staff</option>
+            <option value="brand_owner" ${user?.role === "brand_owner" ? "selected" : ""}>Brand owner</option>
+          </select>
+        </div>
+        <div class="field">
+          <label style="font-size:12px;">
+            <input id="staff-active" type="checkbox" ${user?.isActive === false ? "" : "checked"}/> Active
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">${isEdit ? "Save changes" : "Create user"}</button>
+        </div>
+      </form>
+    `);
+
+    const form = qs("#staff-form");
+    form.addEventListener("submit", async e => {
+      e.preventDefault();
+      if (!brandId) return;
+
+      const name     = qs("#staff-name").value.trim();
+      const username = qs("#staff-username").value.trim();
+      const pin      = qs("#staff-pin").value.trim();
+      const role     = qs("#staff-role").value || "cashier";
+      const isActive = qs("#staff-active").checked;
+
+      if (!name || !username) {
+        alert("Enter name and username.");
+        return;
+      }
+
+      const data = {
+        name,
+        username,
+        pin: pin || null,
+        role,
+        isActive,
+        eventId: currentEventId || null,
+        updatedAt: serverTimestamp()
+      };
+
+      const staffRef = collection(doc(db, "brands", brandId), "staff");
+      try {
+        if (user) {
+          await updateDoc(doc(staffRef, user.id), data);
+        } else {
+          await addDoc(staffRef, {
+            ...data,
+            createdAt: serverTimestamp()
           });
         }
-        const c = map.get(key);
-        c.ordersCount += 1;
-        c.totalSpent += val;
+        await loadStaff();
+        closeModal();
+      } catch (err) {
+        console.error("Error saving staff", err);
+        alert("Failed to save staff user.");
       }
-      customers = Array.from(map.values());
+    });
+  }
+
+  async function confirmDeleteStaff(id) {
+    if (!brandId || !id) return;
+    if (!confirm("Delete this POS user?")) return;
+    const staffRef = collection(doc(db, "brands", brandId), "staff");
+    try {
+      await updateDoc(doc(staffRef, id), { isActive: false });
+      await loadStaff();
+    } catch (err) {
+      console.error("Error deleting staff", err);
+      alert("Failed to delete staff user.");
+    }
+  }
+
+  /* ------------------------------
+     LOAD ORDERS (brands/{brandId}/orders)
+  ------------------------------ */
+  async function loadOrders() {
+    orders = [];
+    if (!brandId) return;
+    const ordersRef = collection(doc(db, "brands", brandId), "orders");
+    const snap = await getDocs(ordersRef);
+    orders = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    computeAnalyticsFromOrders();
+    renderOrders();
+    renderRecentOrders();
+    rebuildCustomersFromOrders();
+    renderCustomers();
+  }
+
+  function computeAnalyticsFromOrders() {
+    const today = todayKey();
+    let todayNet          = 0;
+    let todaySalesCount   = 0;
+    let todayReturnsCount = 0;
+
+    let totalNet   = 0;
+    let totalCount = 0;
+    const uniqueCustomersSet = new Set();
+
+    for (const o of orders) {
+      const total    = Number(o.total || 0);
+      const isReturn = !!o.isReturn || o.type === "return";
+      const dKey     = getOrderDateKey(o);
+      const sign     = isReturn ? -1 : 1;
+      const netVal   = Math.abs(total) * sign;
+
+      totalNet   += netVal;
+      totalCount += 1;
+
+      if (dKey === today) {
+        todayNet += netVal;
+        if (isReturn) todayReturnsCount += 1;
+        else          todaySalesCount   += 1;
+      }
+
+      const custKey =
+        o.customerId ||
+        o.customerEmail ||
+        o.customerPhone ||
+        (o.customerName && o.customerName.toLowerCase()) ||
+        null;
+      if (custKey) uniqueCustomersSet.add(custKey);
     }
 
-    function renderCustomers() {
-      if (!customersTableWrapper) return;
+    if (dashSalesTodayEl)   dashSalesTodayEl.textContent   = money(todayNet);
+    if (dashOrdersTodayEl)  dashOrdersTodayEl.textContent  = String(todaySalesCount);
+    if (dashReturnsTodayEl) dashReturnsTodayEl.textContent = String(todayReturnsCount);
+    if (dashUniqueCustEl)   dashUniqueCustEl.textContent   = String(uniqueCustomersSet.size);
 
-      const totalCustomers = customers.length;
-      const totalRevenue = customers.reduce((sum,c) => sum + (c.totalSpent || 0), 0);
+    if (ordersTotalSalesEl) ordersTotalSalesEl.textContent = money(totalNet);
+    if (ordersTotalCountEl) ordersTotalCountEl.textContent = String(totalCount);
+  }
 
-      if (customersTotalEl) customersTotalEl.textContent = String(totalCustomers);
-      if (customersAvgSpendEl) {
-        const avg = totalCustomers ? totalRevenue / totalCustomers : 0;
-        customersAvgSpendEl.textContent = money(avg);
+  function renderRecentOrders() {
+    if (!recentOrdersWrapper) return;
+
+    if (!orders.length) {
+      recentOrdersWrapper.innerHTML =
+        `<div class="table-empty">No orders yet.</div>`;
+      return;
+    }
+
+    const list = orders.slice().sort((a,b) => {
+      const da = getOrderCreatedAt(a);
+      const db = getOrderCreatedAt(b);
+      const ta = da ? da.getTime() : 0;
+      const tb = db ? db.getTime() : 0;
+      return tb - ta;
+    }).slice(0, 10);
+
+    const rows = list.map(o => {
+      const d        = getOrderCreatedAt(o);
+      const dateStr  = d ? d.toLocaleString() : getOrderDateKey(o) || "-";
+      const isReturn = !!o.isReturn || o.type === "return";
+      const typeLabel= isReturn ? "Return" : "Sale";
+      return `
+        <tr>
+          <td>${o.orderId || o.id}</td>
+          <td>${dateStr}</td>
+          <td>${typeLabel}</td>
+          <td>${money(o.total)}</td>
+          <td><button class="btn btn-ghost btn-xs" data-open-order="${o.id}">Open</button></td>
+        </tr>
+      `;
+    }).join("");
+
+    recentOrdersWrapper.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Order</th>
+            <th>Created at</th>
+            <th>Type</th>
+            <th>Total</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+
+    recentOrdersWrapper
+      .querySelectorAll("button[data-open-order]")
+      .forEach(btn => {
+        const id = btn.getAttribute("data-open-order");
+        btn.addEventListener("click", () => {
+          const o = orders.find(x => x.id === id);
+          if (o) openOrderModal(o);
+        });
+      });
+  }
+
+  function renderOrders() {
+    if (!ordersTableWrapper) return;
+
+    if (!orders.length) {
+      ordersTableWrapper.innerHTML =
+        `<div class="table-empty">No orders yet.</div>`;
+      return;
+    }
+
+    const search     = (ordersSearchInput?.value || "").toLowerCase();
+    const typeFilter = ordersFilterTypeSel?.value || "all";
+    const payFilter  = ordersFilterPaySel?.value || "all";
+    const sort       = ordersSortSelect?.value || "date-desc";
+
+    let list = orders.slice();
+
+    if (search) {
+      list = list.filter(o => {
+        const s = `${o.orderId || o.id || ""} ${o.customerName || ""}`.toLowerCase();
+        return s.includes(search);
+      });
+    }
+
+    if (typeFilter !== "all") {
+      list = list.filter(o => {
+        const isReturn = !!o.isReturn || o.type === "return";
+        if (typeFilter === "sale")   return !isReturn;
+        if (typeFilter === "return") return isReturn;
+        return true;
+      });
+    }
+
+    if (payFilter !== "all") {
+      list = list.filter(o => {
+        const pm = (o.paymentMethod || "").toLowerCase();
+        if (payFilter === "cash") return pm.includes("cash");
+        if (payFilter === "card") return pm.includes("card") || pm.includes("visa") || pm.includes("master");
+        return true;
+      });
+    }
+
+    list.sort((a,b) => {
+      const ta     = getOrderCreatedAt(a)?.getTime() || 0;
+      const tb     = getOrderCreatedAt(b)?.getTime() || 0;
+      const totalA = Number(a.total || 0);
+      const totalB = Number(b.total || 0);
+      switch (sort) {
+        case "date-asc":   return ta - tb;
+        case "total-desc": return totalB - totalA;
+        case "total-asc":  return totalA - totalB;
+        case "date-desc":
+        default:           return tb - ta;
       }
+    });
 
-      const search = (customersSearchInput?.value || "").toLowerCase();
-      const sort   = customersSortSelect?.value || "spend-desc";
+    const rows = list.map(o => {
+      const d           = getOrderCreatedAt(o);
+      const dateStr     = d ? d.toLocaleString() : getOrderDateKey(o) || "-";
+      const isReturn    = !!o.isReturn || o.type === "return";
+      const typeLabel   = isReturn ? "Return" : "Sale";
+      const customerName= o.customerName || o.customer?.name || "-";
+      const paymentMethod = o.paymentMethod || "-";
+      return `
+        <tr>
+          <td>${o.orderId || o.id}</td>
+          <td>${dateStr}</td>
+          <td>${typeLabel}</td>
+          <td>${money(o.total)}</td>
+          <td>${customerName}</td>
+          <td>${paymentMethod}</td>
+          <td>
+            <button class="btn btn-ghost btn-xs" data-open-order="${o.id}">Open</button>
+          </td>
+        </tr>
+      `;
+    }).join("");
 
-      let list = customers.slice();
+    ordersTableWrapper.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Order</th>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Total</th>
+            <th>Customer</th>
+            <th>Payment</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
 
-      if (search) {
-        list = list.filter(c => {
-          const s = `${c.name || ""} ${c.email || ""} ${c.phone || ""}`.toLowerCase();
-          return s.includes(search);
+    ordersTableWrapper
+      .querySelectorAll("button[data-open-order]")
+      .forEach(btn => {
+        const id = btn.getAttribute("data-open-order");
+        btn.addEventListener("click", () => {
+          const o = orders.find(x => x.id === id);
+          if (o) openOrderModal(o);
+        });
+      });
+  }
+
+  function openOrderModal(order) {
+    const items = Array.isArray(order.items) ? order.items : [];
+    const rows = items.map(it => `
+      <tr>
+        <td>${it.name || "-"}</td>
+        <td>${it.code || it.productId || "-"}</td>
+        <td>${Number(it.qty || 0)}</td>
+        <td>${money(it.price)}</td>
+        <td>${money(it.lineTotal)}</td>
+      </tr>
+    `).join("");
+
+    const isReturn  = !!order.isReturn || order.type === "return";
+    const typeLabel = isReturn ? "Return" : "Sale";
+
+    openModal(`
+      <div class="modal-title">Order ${order.orderId || order.id}</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">
+        Type: ${typeLabel} • Payment: ${order.paymentMethod || "-"}
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px;">
+        <thead>
+          <tr>
+            <th style="text-align:left;padding:4px 6px;border-bottom:1px solid var(--border);">Item</th>
+            <th style="text-align:left;padding:4px 6px;border-bottom:1px solid var(--border);">Code</th>
+            <th style="text-align:left;padding:4px 6px;border-bottom:1px solid var(--border);">Qty</th>
+            <th style="text-align:left;padding:4px 6px;border-bottom:1px solid var(--border);">Price</th>
+            <th style="text-align:left;padding:4px 6px;border-bottom:1px solid var(--border);">Line total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows || `<tr><td colspan="5" style="padding:6px;">No line items recorded.</td></tr>`}
+        </tbody>
+      </table>
+      <div style="font-size:12px;margin-bottom:6px;">
+        Subtotal: <strong>${money(order.subtotal)}</strong><br/>
+        Discount: <strong>${money(order.discountAmount)}</strong><br/>
+        Service: <strong>${money(order.serviceAmount)}</strong><br/>
+        Tax: <strong>${money(order.taxAmount)}</strong><br/>
+        Total: <strong>${money(order.total)}</strong>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">
+        Customer: ${order.customerName || "-"}${order.customerEmail ? " • " + order.customerEmail : ""}${order.customerPhone ? " • " + order.customerPhone : ""}
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" onclick="closeModal()">Close</button>
+      </div>
+    `);
+  }
+
+  /* ------------------------------
+     CUSTOMERS from ORDERS
+  ------------------------------ */
+  function rebuildCustomersFromOrders() {
+    const map = new Map();
+    for (const o of orders) {
+      const key =
+        o.customerId ||
+        o.customerEmail ||
+        o.customerPhone ||
+        (o.customerName && o.customerName.toLowerCase());
+      if (!key) continue;
+
+      const isReturn = !!o.isReturn || o.type === "return";
+      const total    = Number(o.total || 0);
+      const val      = isReturn ? -Math.abs(total) : Math.abs(total);
+
+      if (!map.has(key)) {
+        map.set(key, {
+          id: key,
+          name:  o.customerName || "-",
+          email: o.customerEmail || "",
+          phone: o.customerPhone || "",
+          ordersCount: 0,
+          totalSpent:  0
         });
       }
+      const c = map.get(key);
+      c.ordersCount += 1;
+      c.totalSpent  += val;
+    }
+    customers = Array.from(map.values());
+  }
 
-      list.sort((a,b) => {
-        const spendA = Number(a.totalSpent || 0);
-        const spendB = Number(b.totalSpent || 0);
-        const ordA   = Number(a.ordersCount || 0);
-        const ordB   = Number(b.ordersCount || 0);
-        const nameA  = (a.name || "").toLowerCase();
-        const nameB  = (b.name || "").toLowerCase();
+  function renderCustomers() {
+    if (!customersTableWrapper) return;
 
-        switch (sort) {
-          case "spend-asc":  return spendA - spendB;
-          case "orders-desc":return ordB - ordA;
-          case "orders-asc": return ordA - ordB;
-          case "name-asc":   return nameA.localeCompare(nameB);
-          case "spend-desc":
-          default:           return spendB - spendA;
-        }
+    const totalCustomers = customers.length;
+    const totalRevenue   = customers.reduce((sum,c) => sum + (c.totalSpent || 0), 0);
+
+    if (customersTotalEl)      customersTotalEl.textContent      = String(totalCustomers);
+    if (customersAvgSpendEl) {
+      const avg = totalCustomers ? totalRevenue / totalCustomers : 0;
+      customersAvgSpendEl.textContent = money(avg);
+    }
+
+    const search = (customersSearchInput?.value || "").toLowerCase();
+    const sort   = customersSortSelect?.value || "spend-desc";
+
+    let list = customers.slice();
+
+    if (search) {
+      list = list.filter(c => {
+        const s = `${c.name || ""} ${c.email || ""} ${c.phone || ""}`.toLowerCase();
+        return s.includes(search);
       });
+    }
 
-      if (!list.length) {
-        customersTableWrapper.innerHTML =
-          `<div class="table-empty">No customers detected yet.</div>`;
+    list.sort((a,b) => {
+      const spendA = Number(a.totalSpent || 0);
+      const spendB = Number(b.totalSpent || 0);
+      const ordA   = Number(a.ordersCount || 0);
+      const ordB   = Number(b.ordersCount || 0);
+      const nameA  = (a.name || "").toLowerCase();
+      const nameB  = (b.name || "").toLowerCase();
+
+      switch (sort) {
+        case "spend-asc":   return spendA - spendB;
+        case "orders-desc": return ordB - ordA;
+      case "orders-asc":  return ordA - ordB;
+        case "name-asc":    return nameA.localeCompare(nameB);
+        case "spend-desc":
+        default:            return spendB - spendA;
+      }
+    });
+
+    if (!list.length) {
+      customersTableWrapper.innerHTML =
+        `<div class="table-empty">No customers detected yet.</div>`;
+      return;
+    }
+
+    const rows = list.map(c => `
+      <tr>
+        <td>${c.name || "-"}</td>
+        <td>${c.email || "-"}</td>
+        <td>${c.phone || "-"}</td>
+        <td>${c.ordersCount || 0}</td>
+        <td>${money(c.totalSpent)}</td>
+      </tr>
+    `).join("");
+
+    customersTableWrapper.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Orders</th>
+            <th>Total spent</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+  }
+
+  /* ------------------------------
+     SETTINGS SAVE
+  ------------------------------ */
+  async function saveSettings() {
+    if (!brandId) return;
+    const name    = settingsBrandNameEl?.value.trim()    || brandData?.name || "Brand";
+    const country = settingsBrandCountryEl?.value.trim() || "";
+
+    const upd      = { name, country };
+    const logoFile = settingsBrandLogoEl?.files?.[0] || null;
+
+    const brandRef = doc(db, "brands", brandId);
+
+    try {
+      if (logoFile) {
+        const path = `brands/${brandId}/branding/logo.jpg`;
+        const url  = await uploadFileToStorage(logoFile, path);
+        upd.logoUrl = url;
+      }
+      await updateDoc(brandRef, upd);
+      await loadBrandAndStatus();
+      alert("Settings saved.");
+    } catch (err) {
+      console.error("Error saving settings", err);
+      alert("Failed to save settings.");
+    }
+  }
+
+  /* ------------------------------
+     AUTH: LOGIN + CREATE BRAND
+  ------------------------------ */
+  function switchAuthTab(tab) {
+    if (!loginForm || !createForm || !tabLogin || !tabCreate) return;
+    if (tab === "login") {
+      tabLogin.classList.add("active");
+      tabCreate.classList.remove("active");
+      loginForm.style.display  = "block";
+      createForm.style.display = "none";
+    } else {
+      tabLogin.classList.remove("active");
+      tabCreate.classList.add("active");
+      loginForm.style.display  = "none";
+      createForm.style.display = "block";
+    }
+  }
+
+  if (tabLogin) {
+    tabLogin.addEventListener("click", () => switchAuthTab("login"));
+  }
+  if (tabCreate) {
+    tabCreate.addEventListener("click", () => switchAuthTab("create"));
+  }
+
+  if (loginForm) {
+    loginForm.addEventListener("submit", async e => {
+      e.preventDefault();
+      setAuthAlert("");
+      const email = qs("#login-email")?.value.trim();
+      const pass  = qs("#login-password")?.value;
+      if (!email || !pass) {
+        setAuthAlert("Enter email and password.");
+        return;
+      }
+      try {
+        await signInWithEmailAndPassword(auth, email, pass);
+      } catch (err) {
+        console.error("Login error", err);
+        let msg = "Login failed.";
+        if (err.code === "auth/user-not-found") msg = "User not found.";
+        if (err.code === "auth/wrong-password") msg = "Wrong password.";
+        setAuthAlert(msg);
+      }
+    });
+  }
+
+  if (createForm) {
+    createForm.addEventListener("submit", async e => {
+      e.preventDefault();
+      setAuthAlert("");
+
+      const brandName = qs("#brand-name")?.value.trim();
+      const country   = qs("#brand-country")?.value.trim();
+      const ownerName = qs("#owner-name")?.value.trim();
+      const email     = qs("#owner-email")?.value.trim();
+      const password  = qs("#owner-password")?.value;
+
+      if (!brandName || !ownerName || !email || !password) {
+        setAuthAlert("Fill all required fields.");
+        return;
+      }
+      if (password.length < 6) {
+        setAuthAlert("Password must be at least 6 characters.");
         return;
       }
 
-      const rows = list.map(c => `
-        <tr>
-          <td>${c.name || "-"}</td>
-          <td>${c.email || "-"}</td>
-          <td>${c.phone || "-"}</td>
-          <td>${c.ordersCount || 0}</td>
-          <td>${money(c.totalSpent)}</td>
-        </tr>
-      `).join("");
-
-      customersTableWrapper.innerHTML = `
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Orders</th>
-              <th>Total spent</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      `;
-    }
-
-    /* ------------------------------
-       SETTINGS SAVE
-    ------------------------------ */
-    async function saveSettings() {
-      if (!brandId) return;
-      const name    = settingsBrandNameEl?.value.trim() || brandData?.name || "Brand";
-      const country = settingsBrandCountryEl?.value.trim() || "";
-
-      const upd = { name, country };
-      const logoFile = settingsBrandLogoEl?.files?.[0] || null;
-
-      const brandRef = doc(db, "brands", brandId);
-
       try {
-        if (logoFile) {
-          const path = `brands/${brandId}/branding/logo.jpg`;
-          const url = await uploadFileToStorage(logoFile, path);
-          upd.logoUrl = url;
-        }
-        await updateDoc(brandRef, upd);
-        await loadBrandAndStatus();
-        alert("Settings saved.");
-      } catch (err) {
-        console.error("Error saving settings", err);
-        alert("Failed to save settings.");
-      }
-    }
+        isCreatingBrand = true;
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        const user = cred.user;
+        await updateProfile(user, { displayName: ownerName });
 
-    /* ------------------------------
-       AUTH: LOGIN + CREATE BRAND
-    ------------------------------ */
-    function switchAuthTab(tab) {
-      if (!loginForm || !createForm || !tabLogin || !tabCreate) return;
-      if (tab === "login") {
-        tabLogin.classList.add("active");
-        tabCreate.classList.remove("active");
-        loginForm.style.display  = "block";
-        createForm.style.display = "none";
-      } else {
-        tabLogin.classList.remove("active");
-        tabCreate.classList.add("active");
-        loginForm.style.display  = "none";
-        createForm.style.display = "block";
-      }
-    }
+        // brand
+        const brandRef = await addDoc(collection(db, "brands"), {
+          name: brandName,
+          country: country || "",
+          ownerUserId: user.uid,
+          ownerEmail: email,
+          status: "pending",
+          eventId: urlEventId || null,
+          eventName: currentEventName || null,
+          createdAt: serverTimestamp()
+        });
 
-    if (tabLogin) {
-      tabLogin.addEventListener("click", () => switchAuthTab("login"));
-    }
-    if (tabCreate) {
-      tabCreate.addEventListener("click", () => switchAuthTab("create"));
-    }
+        // userBrands
+        await setDoc(doc(db, "userBrands", user.uid), {
+          primaryBrandId: brandRef.id,
+          brandIds: [brandRef.id]
+        });
 
-    if (loginForm) {
-      loginForm.addEventListener("submit", async e => {
-        e.preventDefault();
-        setAuthAlert("");
-        const email = qs("#login-email")?.value.trim();
-        const pass  = qs("#login-password")?.value;
-        if (!email || !pass) {
-          setAuthAlert("Enter email and password.");
-          return;
-        }
-        try {
-          await signInWithEmailAndPassword(auth, email, pass);
-        } catch (err) {
-          console.error("Login error", err);
-          let msg = "Login failed.";
-          if (err.code === "auth/user-not-found") msg = "User not found.";
-          if (err.code === "auth/wrong-password") msg = "Wrong password.";
-          setAuthAlert(msg);
-        }
-      });
-    }
+        // users
+        await setDoc(doc(db, "users", user.uid), {
+          uid: user.uid,
+          name: ownerName,
+          email,
+          primaryBrandId: brandRef.id,
+          role: "brand_owner",
+          createdAt: serverTimestamp()
+        });
 
-    if (createForm) {
-      createForm.addEventListener("submit", async e => {
-        e.preventDefault();
-        setAuthAlert("");
-
-        const brandName   = qs("#create-brand-name")?.value.trim();
-        const country     = qs("#create-brand-country")?.value.trim();
-        const ownerName   = qs("#create-owner-name")?.value.trim();
-        const email       = qs("#create-owner-email")?.value.trim();
-        const password    = qs("#create-owner-password")?.value;
-
-        if (!brandName || !ownerName || !email || !password) {
-          setAuthAlert("Fill all required fields.");
-          return;
-        }
-        if (password.length < 6) {
-          setAuthAlert("Password must be at least 6 characters.");
-          return;
-        }
-
-        try {
-          isCreatingBrand = true;
-          const cred = await createUserWithEmailAndPassword(auth, email, password);
-          const user = cred.user;
-          await updateProfile(user, { displayName: ownerName });
-
-          // brand
-          const brandRef = await addDoc(collection(db, "brands"), {
-            name: brandName,
-            country: country || "",
-            ownerUserId: user.uid,
-            ownerEmail: email,
+        // vendor doc (optional, if eventId provided) -> pending
+        if (urlEventId) {
+          await addDoc(collection(doc(db, "events", urlEventId), "vendors"), {
+            brandId: brandRef.id,
+            brandName,
             status: "pending",
-            eventId: urlEventId || null,
-            eventName: currentEventName || null,
+            ownerEmail: email,
             createdAt: serverTimestamp()
           });
-
-          // userBrands
-          await setDoc(doc(db, "userBrands", user.uid), {
-            primaryBrandId: brandRef.id,
-            brandIds: [brandRef.id]
-          });
-
-          // users
-          await setDoc(doc(db, "users", user.uid), {
-            uid: user.uid,
-            name: ownerName,
-            email,
-            primaryBrandId: brandRef.id,
-            role: "brand_owner",
-            createdAt: serverTimestamp()
-          });
-
-          // vendor doc (optional, if eventId provided) -> pending
-          if (urlEventId) {
-            await addDoc(collection(doc(db, "events", urlEventId), "vendors"), {
-              brandId: brandRef.id,
-              brandName,
-              status: "pending",
-              ownerEmail: email,
-              createdAt: serverTimestamp()
-            });
-          }
-
-          // from here, auth state listener will continue
-        } catch (err) {
-          console.error("Create brand error", err);
-          let msg = "Failed to create brand.";
-          if (err.code === "auth/email-already-in-use") {
-            msg = "Email already in use.";
-          }
-          setAuthAlert(msg);
-        } finally {
-          isCreatingBrand = false;
-        }
-      });
-    }
-
-    /* ------------------------------
-       AUTH STATE
-    ------------------------------ */
-    onAuthStateChanged(auth, async user => {
-      currentUser = user || null;
-
-      if (!user) {
-        brandId = null;
-        brandData = null;
-        vendorData = null;
-        orders = [];
-        products = [];
-        staff = [];
-        customers = [];
-        showAuthView();
-        return;
-      }
-
-      if (isCreatingBrand) {
-        // let create flow finish, then this will run again
-        return;
-      }
-
-      try {
-        // read userBrands/{uid} to get primaryBrandId
-        const ubSnap = await getDoc(doc(db, "userBrands", user.uid));
-        if (!ubSnap.exists()) {
-          setAuthAlert("No brand linked to this account yet. Use 'Create brand' to get started.");
-          showAuthView();
-          return;
-        }
-        const ub = ubSnap.data();
-        brandId = ub.primaryBrandId || (Array.isArray(ub.brandIds) ? ub.brandIds[0] : null);
-        if (!brandId) {
-          setAuthAlert("No brand found for your account.");
-          showAuthView();
-          return;
         }
 
-        await loadBrandAndStatus();
-        await loadProducts();
-        await loadStaff();
-        await loadOrders();
-
-        showAppView();
+        // from here, auth state listener will continue
       } catch (err) {
-        console.error("Error loading dashboard", err);
-        setAuthAlert("Error loading your brand dashboard. Contact support.");
-        showAuthView();
+        console.error("Create brand error", err);
+        let msg = "Failed to create brand.";
+        if (err.code === "auth/email-already-in-use") {
+          msg = "Email already in use.";
+        }
+        setAuthAlert(msg);
+      } finally {
+        isCreatingBrand = false;
       }
     });
+  }
 
-    /* ------------------------------
-       NAV + FILTER HANDLERS
-    ------------------------------ */
-    navButtons.forEach(btn => {
-      btn.addEventListener("click", () => {
-        const pageId = btn.getAttribute("data-page");
-        if (pageId) applyNav(pageId);
-      });
+  /* ------------------------------
+     AUTH STATE
+  ------------------------------ */
+  onAuthStateChanged(auth, async user => {
+    currentUser = user || null;
+
+    if (!user) {
+      brandId   = null;
+      brandData = null;
+      vendorData= null;
+      orders    = [];
+      products  = [];
+      staff     = [];
+      customers = [];
+      showAuthView();
+      return;
+    }
+
+    if (isCreatingBrand) {
+      // let create flow finish, then this will run again
+      return;
+    }
+
+    try {
+      // read userBrands/{uid} to get primaryBrandId
+      const ubSnap = await getDoc(doc(db, "userBrands", user.uid));
+      if (!ubSnap.exists()) {
+        setAuthAlert("No brand linked to this account yet. Use 'Create brand' to get started.");
+        showAuthView();
+        return;
+      }
+      const ub = ubSnap.data();
+      brandId  = ub.primaryBrandId || (Array.isArray(ub.brandIds) ? ub.brandIds[0] : null);
+      if (!brandId) {
+        setAuthAlert("No brand found for your account.");
+        showAuthView();
+        return;
+      }
+
+      await loadBrandAndStatus();
+      await loadProducts();
+      await loadStaff();
+      await loadOrders();
+
+      showAppView();
+    } catch (err) {
+      console.error("Error loading dashboard", err);
+      setAuthAlert("Error loading your brand dashboard. Contact support.");
+      showAuthView();
+    }
+  });
+
+  /* ------------------------------
+     NAV + FILTER HANDLERS
+  ------------------------------ */
+  navButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const pageId = btn.getAttribute("data-page");
+      if (pageId) applyNav(pageId);
     });
+  });
 
-    if (btnLogout) {
-      btnLogout.addEventListener("click", async () => {
-        await signOut(auth);
-      });
-    }
-    if (btnRejectedLogout) {
-      btnRejectedLogout.addEventListener("click", async () => {
-        await signOut(auth);
-      });
-    }
+  if (btnLogout) {
+    btnLogout.addEventListener("click", async () => {
+      await signOut(auth);
+    });
+  }
+  if (btnRejectedLogout) {
+    btnRejectedLogout.addEventListener("click", async () => {
+      await signOut(auth);
+    });
+  }
 
-    if (btnCopyPosLink && posLinkUrlEl) {
-      btnCopyPosLink.addEventListener("click", async () => {
-        const text = posLinkUrlEl.textContent || "";
-        try {
-          await navigator.clipboard.writeText(text);
-          posStatusHintEl.textContent = "POS link copied.";
-        } catch {
-          alert("Copy failed. You can copy the link manually.");
-        }
-      });
-    }
+  if (btnCopyPosLink && posLinkUrlEl) {
+    btnCopyPosLink.addEventListener("click", async () => {
+      const text = posLinkUrlEl.textContent || "";
+      try {
+        await navigator.clipboard.writeText(text);
+        if (posStatusHintEl) posStatusHintEl.textContent = "POS link copied.";
+      } catch {
+        alert("Copy failed. You can copy the link manually.");
+      }
+    });
+  }
 
-    if (productsSearchInput) {
-      productsSearchInput.addEventListener("input", renderProducts);
-    }
-    if (productsSortSelect) {
-      productsSortSelect.addEventListener("change", renderProducts);
-    }
-    if (btnAddProduct) {
-      btnAddProduct.addEventListener("click", () => openProductModal(null));
-    }
+  if (productsSearchInput) {
+    productsSearchInput.addEventListener("input", renderProducts);
+  }
+  if (productsSortSelect) {
+    productsSortSelect.addEventListener("change", renderProducts);
+  }
+  if (btnAddProduct) {
+    btnAddProduct.addEventListener("click", () => openProductModal(null));
+  }
 
-    if (staffSearchInput) {
-      staffSearchInput.addEventListener("input", renderStaff);
-    }
-    if (btnAddStaff) {
-      btnAddStaff.addEventListener("click", () => openStaffModal(null));
-    }
+  if (staffSearchInput) {
+    staffSearchInput.addEventListener("input", renderStaff);
+  }
+  if (btnAddStaff) {
+    btnAddStaff.addEventListener("click", () => openStaffModal(null));
+  }
 
-    if (customersSearchInput) {
-      customersSearchInput.addEventListener("input", renderCustomers);
-    }
-    if (customersSortSelect) {
-      customersSortSelect.addEventListener("change", renderCustomers);
-    }
+  if (customersSearchInput) {
+    customersSearchInput.addEventListener("input", renderCustomers);
+  }
+  if (customersSortSelect) {
+    customersSortSelect.addEventListener("change", renderCustomers);
+  }
 
-    if (ordersSearchInput) {
-      ordersSearchInput.addEventListener("input", renderOrders);
-    }
-    if (ordersFilterTypeSel) {
-      ordersFilterTypeSel.addEventListener("change", renderOrders);
-    }
-    if (ordersFilterPaySel) {
-      ordersFilterPaySel.addEventListener("change", renderOrders);
-    }
-    if (ordersSortSelect) {
-      ordersSortSelect.addEventListener("change", renderOrders);
-    }
+  if (ordersSearchInput) {
+    ordersSearchInput.addEventListener("input", renderOrders);
+  }
+  if (ordersFilterTypeSel) {
+    ordersFilterTypeSel.addEventListener("change", renderOrders);
+  }
+  if (ordersFilterPaySel) {
+    ordersFilterPaySel.addEventListener("change", renderOrders);
+  }
+  if (ordersSortSelect) {
+    ordersSortSelect.addEventListener("change", renderOrders);
+  }
 
-    if (btnSaveSettings) {
-      btnSaveSettings.addEventListener("click", saveSettings);
-    }
-  </script>
+  if (btnSaveSettings) {
+    btnSaveSettings.addEventListener("click", saveSettings);
+  }
+</script>
 </body>
 </html>
 
