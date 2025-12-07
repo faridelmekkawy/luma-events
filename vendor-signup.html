@@ -130,14 +130,6 @@
       margin-top:3px;
     }
 
-    .checkbox-row{
-      display:flex;
-      align-items:center;
-      gap:6px;
-      font-size:12px;
-      margin-bottom:8px;
-    }
-
     .btn{
       border:none;border-radius:999px;
       padding:9px 12px;
@@ -166,6 +158,29 @@
       margin:10px 0;
       border:none;
       border-top:1px dashed var(--border);
+    }
+
+    .info-steps{
+      margin-top:12px;
+      padding:10px 10px 8px;
+      background:var(--panel-soft);
+      border-radius:12px;
+      border:1px dashed var(--border);
+      font-size:11px;
+      color:var(--muted);
+    }
+    .info-steps-title{
+      font-weight:600;
+      font-size:11px;
+      color:var(--ink);
+      margin-bottom:6px;
+    }
+    .info-steps ol{
+      padding-left:16px;
+    }
+    .info-steps li{
+      margin-bottom:4px;
+      line-height:1.4;
     }
   </style>
 </head>
@@ -205,15 +220,6 @@
         <input id="category" class="field-input" placeholder="Coffee, food, desserts, accessories, clothing…"/>
       </div>
 
-      <div class="field">
-        <div class="field-label">
-          <span>What will you sell?</span>
-          <span class="field-required">Required</span>
-        </div>
-        <textarea id="products-desc" class="field-input" rows="3"
-          placeholder="Short description of your products, price range, special items…"></textarea>
-      </div>
-
       <hr class="divider"/>
 
       <!-- CONTACT -->
@@ -248,36 +254,11 @@
         </div>
         <input id="password" class="field-input" type="password" placeholder="Minimum 6 characters"/>
         <div class="field-hint">
-          You’ll use this email + password to access your Luma Store OS dashboard.
+          You’ll use this email + password to access your Luma Store OS brand dashboard.
         </div>
-      </div>
-
-      <div class="field">
-        <div class="field-label">
-          <span>Instagram / social</span>
-          <span style="font-size:10px;color:var(--muted);">Optional</span>
-        </div>
-        <input id="instagram" class="field-input" placeholder="@handle or link"/>
       </div>
 
       <hr class="divider"/>
-
-      <!-- EVENT DETAILS -->
-      <div class="field">
-        <div class="field-label">
-          <span>Booth type / size preference</span>
-          <span style="font-size:10px;color:var(--muted);">Optional</span>
-        </div>
-        <input id="booth-type" class="field-input" placeholder="E.g. 3x3m, corner booth, food truck, etc."/>
-      </div>
-
-      <div class="checkbox-row">
-        <input id="need-pos" type="checkbox"/>
-        <label for="need-pos">I need Luma POS for this event</label>
-      </div>
-      <div class="field-hint">
-        If checked, we will create a POS branch for your booth and send you a login link.
-      </div>
 
       <div class="field">
         <div class="field-label">
@@ -293,8 +274,18 @@
       </button>
     </form>
 
+    <div class="info-steps">
+      <div class="info-steps-title">What happens after you register?</div>
+      <ol>
+        <li><strong>Step 1 —</strong> We review and approve your application (you’ll get a WhatsApp / email update).</li>
+        <li><strong>Step 2 —</strong> You log into your Brand Dashboard to add products and upload photos.</li>
+        <li><strong>Step 3 —</strong> You create cashier users for your booth and share the POS link with them.</li>
+        <li><strong>Step 4 —</strong> During the event, all orders, reports, and analytics are linked to this event.</li>
+      </ol>
+    </div>
+
     <div class="auth-footer">
-      After submitting, your brand dashboard will open so you can add products and prepare your POS.
+      Your application will be reviewed by the event organizer. You’ll receive access details once approved.
     </div>
   </div>
 </div>
@@ -308,7 +299,7 @@
     getAuth, createUserWithEmailAndPassword, updateProfile
   } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
-  // 🔐 Your events Firebase config
+  // 🔐 Your events Firebase config (UNCHANGED)
   const firebaseConfig = {
     apiKey:"AIzaSyA80bAAGPuyscnTVS-zwrxE9Jp3tPiS1gM",
     authDomain:"events-339ce.firebaseapp.com",
@@ -322,7 +313,7 @@
   const db  = getFirestore(app);
   const auth = getAuth(app);
 
-  // 👉 change this if your brand dashboard file has a different name/path
+  // Brand dashboard file
   const BRAND_DASHBOARD_URL = "brand.html";
 
   const qs  = s => document.querySelector(s);
@@ -332,6 +323,8 @@
   const subtitleEl     = qs("#auth-subtitle");
   const form           = qs("#vendor-form");
   const submitBtn      = qs("#btn-submit");
+
+  let currentEventMeta = null; // will hold the loaded event doc data
 
   function showAlert(msg, type="error"){
     const cls =
@@ -352,9 +345,32 @@
     return new URLSearchParams(window.location.search).get(key);
   }
 
+  function formatEventDate(value){
+    if(!value) return "";
+    try{
+      let d = value;
+      if(typeof d === "object" && typeof d.toDate === "function"){
+        d = d.toDate();
+      }
+      if(d instanceof Date){
+        return d.toLocaleDateString("en-EG", {
+          day:"2-digit",
+          month:"short",
+          year:"numeric"
+        });
+      }
+      if(typeof d === "string"){
+        return d;
+      }
+    }catch(e){
+      console.warn("Failed to format date", e);
+    }
+    return "";
+  }
+
   const eventId = getQueryParam("eventId");
 
-  // Load event name/date to show in header
+  // Load event name/dates/location to show in header
   async function loadEventMeta(){
     if(!eventId){
       eventChip.textContent = "Missing eventId in URL. Ask the organizer for the correct link.";
@@ -372,22 +388,38 @@
         return;
       }
       const data = snap.data();
+      currentEventMeta = { id: eventId, ...data };
+
       const name = data.name || data.title || "Event";
-      const date = data.date || data.startDate || "";
+      const startStr = formatEventDate(data.startDate);
+      const endStr   = formatEventDate(data.endDate);
       const location = data.location || "";
 
-      eventChip.textContent = [
-        name,
-        date ? `• ${date}` : "",
-        location ? `• ${location}` : ""
-      ].filter(Boolean).join(" ");
+      let datePart = "";
+      if(startStr && endStr){
+        if(startStr === endStr){
+          datePart = startStr;
+        }else{
+          datePart = `${startStr} – ${endStr}`;
+        }
+      }else if(startStr || endStr){
+        datePart = startStr || endStr;
+      }
 
+      const pieces = [
+        name,
+        datePart ? `• ${datePart}` : "",
+        location ? `• ${location}` : ""
+      ].filter(Boolean);
+
+      eventChip.textContent = pieces.join(" ");
       subtitleEl.textContent = `Apply to join "${name}" as a vendor.`;
       eventLogoCircle.textContent = (name[0] || "E").toUpperCase();
     }catch(err){
       console.error(err);
       eventChip.textContent = "Error loading event.";
-      showAlert("Error loading event details. Check console.", "error");
+      showAlert("Error loading event details. Please try again or contact the organizer.", "error");
+      form.style.display = "none";
     }
   }
 
@@ -401,21 +433,21 @@
       showAlert("Missing eventId. Cannot submit application.", "error");
       return;
     }
+    if(!currentEventMeta){
+      showAlert("Event details are still loading. Please wait a moment and try again.", "error");
+      return;
+    }
 
     const brandName   = qs("#brand-name").value.trim();
     const category    = qs("#category").value.trim();
-    const products    = qs("#products-desc").value.trim();
     const ownerName   = qs("#owner-name").value.trim();
     const phone       = qs("#phone").value.trim();
     const email       = qs("#email").value.trim();
     const password    = qs("#password").value;
-    const instagram   = qs("#instagram").value.trim();
-    const boothType   = qs("#booth-type").value.trim();
-    const needPos     = qs("#need-pos").checked;
     const notes       = qs("#notes").value.trim();
 
-    if(!brandName || !category || !products || !ownerName || !phone || !email || !password){
-      showAlert("Please fill all required fields (brand, category, products, contact, phone, email, password).","error");
+    if(!brandName || !category || !ownerName || !phone || !email || !password){
+      showAlert("Please fill all required fields (brand, category, contact name, phone, email, password).","error");
       return;
     }
     if(password.length < 6){
@@ -427,86 +459,82 @@
     submitBtn.textContent = "Creating your dashboard…";
 
     try{
+      const eventName = currentEventMeta.name || currentEventMeta.title || "Event";
+
       // 1) Create auth user = brand owner (auto-logged in)
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       const user = cred.user;
       await updateProfile(user, { displayName: ownerName });
 
-      // 2) Create brand
+      // 2) Create brand in `brands`
       const brandRef = await addDoc(collection(db, "brands"), {
         name: brandName,
-        country: null,
+        status: "active",                 // brand is active by default
         ownerUserId: user.uid,
         ownerEmail: email,
-        status: "active",
-        vat: 0,
-        serviceFee: 0,
-        sendEmail: false,
-        eventId,                  // link brand to this event
+        eventId: eventId,
+        eventName: eventName,
         createdAt: serverTimestamp()
       });
       const brandId = brandRef.id;
 
-      // 3) Link user to brand (userBrands + users)
+      // 3) Create ONE main branch for this event in `brands/{brandId}/branches`
+      const mainBranchRef = await addDoc(collection(brandRef, "branches"), {
+        name: "Event Booth",
+        code: "EVENT",
+        isActive: true,
+        eventId: eventId,
+        createdAt: serverTimestamp()
+      });
+      const branchId = mainBranchRef.id;
+
+      // 4) userBrands/{uid}
       await setDoc(doc(db, "userBrands", user.uid), {
         primaryBrandId: brandId,
         brandIds: [brandId]
       });
 
+      // 5) users/{uid}
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
         name: ownerName,
-        email,
+        email: email,
         primaryBrandId: brandId,
         role: "brand_owner",
         createdAt: serverTimestamp()
       });
 
-      // 4) Create main branch for this event
-      const mainBranchRef = await addDoc(collection(brandRef, "branches"), {
-        name: "Event Booth",
-        code: "EVENT",
-        isActive: true,
-        eventId,
-        createdAt: serverTimestamp()
-      });
-      const branchId = mainBranchRef.id;
-
-      // 5) Staff record for owner (under brand's staff)
+      // (Optional but useful) staff record for owner under brand's staff
       await setDoc(doc(brandRef, "staff", user.uid), {
         userId: user.uid,
         name: ownerName,
-        email,
+        email: email,
         role: "brand_owner",
         isActive: true,
-        branchId,
+        branchId: branchId,
         createdAt: serverTimestamp()
       });
 
-      // 6) Vendor doc under this event
+      // 6) Vendor doc in `events/{eventId}/vendors`
       await addDoc(collection(db, "events", eventId, "vendors"), {
-        brandName,
+        brandName: brandName,
         brandNameLower: brandName.toLowerCase(),
-        category,
-        productsDescription: products,
-        ownerName,
-        phone,
-        email,
-        instagram,
-        boothType,
-        needPos,
-        notes,
-        eventId,
-        brandId,
-        branchId,
+        category: category,
+        ownerName: ownerName,
+        phone: phone,
+        email: email,
+        notes: notes,
+        eventId: eventId,
+        brandId: brandId,
+        branchId: branchId,
         ownerUserId: user.uid,
-        status: "pending",  // can be flipped to 'approved' by event owner dashboard
+        status: "pending",              // vendor application starts as pending
         createdAt: serverTimestamp()
       });
 
-      // 7) Redirect straight to Brand Dashboard
-      // user is already logged in, brand.html will pick up brandId via userBrands
-      const targetUrl = `${BRAND_DASHBOARD_URL}?eventId=${encodeURIComponent(eventId)}`;
+      // 7) Redirect to Brand Dashboard with brandId + eventId
+      const targetUrl =
+        `${BRAND_DASHBOARD_URL}?brandId=${encodeURIComponent(brandId)}&eventId=${encodeURIComponent(eventId)}`;
       window.location.href = targetUrl;
 
     }catch(err){
