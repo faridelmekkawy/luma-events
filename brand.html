@@ -924,30 +924,32 @@
     /* ------------------------------
        DOM REFERENCES
     ------------------------------ */
-    const authView     = qs("#auth-view");
-    const appView      = qs("#app-view");
-    const rejectedView = qs("#rejected-view");
+const authView     = qs("#auth-view");
+const appView      = qs("#app-view");
+const rejectedView = qs("#rejected-state"); // matches HTML
+const appMain      = qs("#app-main");       // inner main app
 
-    // auth
-    const loginForm     = qs("#login-form");
-    const createForm    = qs("#create-form");
-    const tabLogin      = qs("#tab-login");
-    const tabCreate     = qs("#tab-create");
-    const authAlertBox  = qs("#auth-alert");
-    const authEventChip = qs("#auth-event-chip");
+// auth
+const authAlertBox  = qs("#auth-alert-container");
 
-    // header / sidebar
-    const sidebarLogo       = qs("#sidebar-brand-logo");
-    const sidebarBrandName  = qs("#sidebar-brand-name");
-    const sidebarEventLabel = qs("#sidebar-event-label");
-    const topbarTitle       = qs("#topbar-brand-title");
-    const topbarSub         = qs("#topbar-subtitle");
+// overview KPIs
+const dashSalesTodayEl   = qs("#dash-sales-today");
+const dashOrdersTodayEl  = qs("#dash-orders-today");
+const dashReturnsTodayEl = qs("#dash-orders-returns-today"); // real ID
 
-    // banner + rejected
-    const statusBanner          = qs("#status-banner");
-    const rejectedReasonBox     = qs("#rejected-reason");
-    const rejectedEventNameEl   = qs("#rejected-event-name");
-    const rejectedBrandNameEl   = qs("#rejected-brand-name");
+// POS card
+const posLinkUrlEl    = qs("#pos-link-text");
+const posStatusHintEl = qs("#pos-card-status");
+
+// overview recent orders
+const recentOrdersWrapper = qs("#table-recent-orders");
+
+// banner + rejected
+const rejectedReasonBox   = qs("#rejected-reason-box");
+// these IDs don't exist in HTML but safe to keep (guarded with if)
+const rejectedEventNameEl = qs("#rejected-event-name");
+const rejectedBrandNameEl = qs("#rejected-brand-name");
+
     const btnRejectedLogout     = qs("#btn-rejected-logout");
 
     // overview KPIs
@@ -1033,29 +1035,34 @@
     /* ------------------------------
        HELPERS
     ------------------------------ */
-    function showAuthView() {
-      authView.style.display = "block";
-      appView.style.display = "none";
-      rejectedView.style.display = "none";
-    }
+function showAuthView() {
+  if (authView) authView.style.display = "block";
+  if (appView) appView.style.display = "none";
+}
 
-    function showAppView() {
-      authView.style.display = "none";
-      appView.style.display = "flex";
-      rejectedView.style.display = "none";
-    }
+function showAppView() {
+  if (authView) authView.style.display = "none";
+  if (appView) appView.style.display = "flex";
+  if (rejectedView) rejectedView.style.display = "none";
+  if (appMain) appMain.style.display = "flex";
+}
 
-    function showRejectedView() {
-      authView.style.display = "none";
-      appView.style.display = "none";
-      rejectedView.style.display = "flex";
-    }
+function showRejectedView() {
+  if (authView) authView.style.display = "none";
+  if (appView) appView.style.display = "flex";   // shell stays
+  if (rejectedView) rejectedView.style.display = "flex";
+  if (appMain) appMain.style.display = "none";
+}
 
-    function setAuthAlert(msg) {
-      if (!authAlertBox) return;
-      authAlertBox.textContent = msg || "";
-      authAlertBox.style.display = msg ? "block" : "none";
-    }
+ function setAuthAlert(msg, type = "error") {
+  if (!authAlertBox) return;
+  if (!msg) {
+    authAlertBox.innerHTML = "";
+    return;
+  }
+  const cls = type === "info" ? "auth-alert auth-alert-info" : "auth-alert auth-alert-error";
+  authAlertBox.innerHTML = `<div class="${cls}">${msg}</div>`;
+}
 
     function openModal(html) {
       modalBody.innerHTML = html;
