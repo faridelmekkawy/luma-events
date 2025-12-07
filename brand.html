@@ -1508,36 +1508,42 @@
     }
 
     /* LOAD ORDERS (filtered by eventId if provided) */
-    async function loadOrders() {
-      ordersList = [];
-      if (!brandId) return;
+async function loadOrders() {
+  ordersList = [];
+  if (!brandId) return;
 
-      const constraints = [where("brandId", "==", brandId)];
-      if (eventId) constraints.push(where("eventId", "==", eventId));
+  const brandRef = doc(db, "brands", brandId);
+  const ordersRef = collection(brandRef, "orders");
+  const oSnap = await getDocs(ordersRef);
 
-      const qRef = query(collection(db, "orders"), ...constraints);
-      const oSnap = await getDocs(qRef);
-      ordersList = oSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-      updateOrdersAnalytics();
-    }
+  ordersList = oSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+  updateOrdersAnalytics();
+}
+
 
     /* REALTIME ORDERS (filtered by eventId if provided) */
-    function listenToOrdersRealtime() {
-      if (!brandId) return;
-      if (ordersUnsub) ordersUnsub();
+function listenToOrdersRealtime() {
+  if (!brandId) return;
+  if (ordersUnsub) ordersUnsub();
 
-      const constraints = [where("brandId", "==", brandId)];
-      if (eventId) constraints.push(where("eventId", "==", eventId));
-      const qRef = query(collection(db, "orders"), ...constraints);
+  const brandRef = doc(db, "brands", brandId);
+  const ordersRef = collection(brandRef, "orders");
 
-      ordersUnsub = onSnapshot(qRef, snap => {
-        ordersList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        updateDashboardUI();
-        updateOrdersAnalytics();
-        renderOrdersTable();
-        renderRecentOrdersTable();
-      });
-    }
+  ordersUnsub = onSnapshot(ordersRef, snap => {
+    ordersList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    updateDashboardUI();
+    updateOrdersAnalytics();
+    renderOrdersTable();
+    renderRecentOrdersTable();
+
+    const stats = buildCashierAnalytics();
+    renderTopStaff(stats);
+    renderCashierTables(stats);
+    renderCashierPaymentChart(stats);
+  });
+}
+
 
     /* LOAD DISCOUNTS */
     async function loadDiscounts() {
