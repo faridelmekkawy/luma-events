@@ -34,6 +34,94 @@
       color:var(--ink);
     }
 
+    /* AUTH WRAPPER */
+    .auth-wrapper{
+      width:100%;
+      max-width:460px;
+      background:var(--panel);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      border:1px solid rgba(148,163,184,.3);
+      padding:18px;
+      margin:40px auto;
+    }
+    .auth-header{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-bottom:10px;
+    }
+    .auth-logo{
+      width:38px;height:38px;border-radius:999px;
+      background:linear-gradient(135deg,#2563eb,#a855f7);
+      display:flex;align-items:center;justify-content:center;
+      color:#fff;font-weight:700;font-size:18px;
+      overflow:hidden;
+      background-size:cover;
+      background-position:center;
+    }
+    .auth-title{font-size:17px;font-weight:700;}
+    .auth-subtitle{font-size:11px;color:var(--muted);margin-top:2px;}
+
+    .auth-tabs{
+      display:flex;gap:6px;margin:10px 0 12px;
+    }
+    .auth-tab{
+      flex:1;
+      padding:6px 8px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:var(--panel-soft);
+      color:var(--muted);
+      font-size:12px;
+      cursor:pointer;
+      text-align:center;
+    }
+    .auth-tab.active{
+      background:var(--accent-soft);
+      border-color:var(--accent-soft);
+      color:var(--accent-strong);
+      font-weight:600;
+    }
+    .auth-alert{
+      padding:8px 10px;
+      border-radius:10px;
+      font-size:11px;
+      margin-bottom:10px;
+    }
+    .auth-alert-error{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;}
+    .auth-alert-info{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;}
+
+    .field{margin-bottom:10px;}
+    .field-label{font-size:11px;margin-bottom:4px;color:#4b5563;}
+    .field-input,.field-select{
+      width:100%;padding:8px;border-radius:9px;
+      border:1px solid var(--border);background:#f9fafb;font-size:12px;
+    }
+    .field-input:focus,.field-select:focus{
+      outline:none;border-color:var(--accent);box-shadow:0 0 0 1px var(--accent-soft);
+    }
+    .field-hint{font-size:10px;color:var(--muted);margin-top:3px;}
+
+    .btn{
+      border:none;border-radius:999px;
+      padding:8px 12px;font-size:12px;font-weight:600;
+      cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+      gap:6px;
+    }
+    .btn-primary{background:var(--accent);color:#fff;}
+    .btn-primary:hover{background:var(--accent-strong);}
+    .btn-ghost{
+      background:transparent;color:var(--accent-strong);
+      border:1px solid var(--accent-soft);
+    }
+    .btn-ghost:hover{background:var(--accent-soft);}
+    .btn-danger{background:var(--danger);color:#fff;}
+    .btn-danger:hover{background:#b91c1c;}
+
+    .auth-footer{text-align:center;margin-top:8px;font-size:10px;color:var(--muted);}
+
+    /* APP LAYOUT */
     .app-shell{
       max-width:1200px;
       margin:24px auto 32px;
@@ -78,6 +166,20 @@
       font-size:11px;
       color:var(--muted);
       margin-top:4px;
+    }
+
+    .topbar-right{
+      display:flex;
+      flex-direction:column;
+      align-items:flex-end;
+      gap:6px;
+    }
+    .topbar-select{
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:var(--panel-soft);
+      font-size:11px;
     }
 
     .date-filter{
@@ -402,7 +504,7 @@
         flex-direction:column;
         align-items:flex-start;
       }
-      .date-filter{
+      .topbar-right{
         align-items:flex-start;
       }
       .section-grid,
@@ -416,211 +518,303 @@
   </style>
 </head>
 <body>
-<div class="app-shell">
-  <!-- HEADER -->
-  <header class="topbar">
-    <div class="topbar-main">
-      <div id="event-avatar" class="event-avatar">E</div>
-      <div>
-        <div id="event-name" class="topbar-title">Event analytics</div>
-        <div id="event-sub" class="topbar-sub">POS analytics across all brands for this event</div>
-        <div id="event-meta" class="topbar-meta"></div>
-      </div>
-    </div>
-    <div class="date-filter">
-      <span class="date-filter-label">Date view</span>
-      <div id="date-chip-container" class="chip-row">
-        <!-- chips injected by JS -->
-      </div>
-    </div>
-  </header>
 
-  <!-- LOADING / ERROR -->
-  <div id="loading-card" class="card loading-card">
-    <div class="loading-dot"></div>
-    <div>Loading event analytics…</div>
+<!-- AUTH VIEW -->
+<div id="auth-view" class="auth-wrapper">
+  <div class="auth-header">
+    <div class="auth-logo">E</div>
+    <div>
+      <div class="auth-title">Luma Events — Owner Analytics</div>
+      <div id="auth-subtitle" class="auth-subtitle">
+        Sign in to see POS analytics or create your first event.
+      </div>
+    </div>
   </div>
-  <div id="error-card" class="card error-card" style="display:none;"></div>
 
-  <!-- HERO KPIs -->
-  <section id="kpi-section" style="display:none;">
-    <div class="cards-grid">
-      <div class="card">
-        <div class="card-title">
-          <span>Total POS Revenue</span>
-          <span id="kpi-peak-badge" class="card-badge" style="display:none;"></span>
-        </div>
-        <div id="kpi-total-revenue" class="card-number">0.00</div>
-        <div class="card-note">Sum of all POS sales for the current view (excl. refunds).</div>
-      </div>
-      <div class="card">
-        <div class="card-title">Total Orders</div>
-        <div id="kpi-total-orders" class="card-number">0</div>
-        <div class="card-note">Number of POS orders in this event / day.</div>
-      </div>
-      <div class="card">
-        <div class="card-title">Total Items Sold</div>
-        <div id="kpi-total-items" class="card-number">0</div>
-        <div class="card-note">Sum of all item quantities in non-refund orders.</div>
-      </div>
-      <div class="card">
-        <div class="card-title">Average Order Value</div>
-        <div id="kpi-aov" class="card-number">0.00</div>
-        <div class="card-note">Revenue ÷ orders for current filter.</div>
-      </div>
-      <div class="card">
-        <div class="card-title">Total Returns</div>
-        <div id="kpi-returns" class="card-number">0.00</div>
-        <div class="card-note">Total value of refund orders (absolute).</div>
-      </div>
-      <div class="card">
-        <div class="card-title">Net Revenue</div>
-        <div id="kpi-net-revenue" class="card-number">0.00</div>
-        <div class="card-note">Total POS revenue minus refunds.</div>
-      </div>
-      <div class="card">
-        <div class="card-title">Active Brands</div>
-        <div id="kpi-active-brands" class="card-number">0</div>
-        <div class="card-note">Brands with ≥ 1 non-refund order.</div>
-      </div>
+  <div id="auth-alert-container"></div>
+
+  <div class="auth-tabs">
+    <button type="button" id="tab-login" class="auth-tab active">Sign in</button>
+    <button type="button" id="tab-signup" class="auth-tab">Create account &amp; event</button>
+  </div>
+
+  <!-- LOGIN FORM -->
+  <form id="login-form">
+    <div class="field">
+      <div class="field-label">Email</div>
+      <input id="login-email" class="field-input" type="email" placeholder="you@example.com"/>
     </div>
-  </section>
-
-  <!-- ROW 2: TIMELINE + PEAK HOUR -->
-  <section id="timeline-section" style="display:none;">
-    <div class="section-grid">
-      <!-- Revenue timeline -->
-      <div class="card">
-        <div class="section-title">Revenue timeline</div>
-        <div class="section-sub" id="timeline-subtitle">Revenue aggregation for current view.</div>
-        <div id="timeline-mode-toggle" class="chip-row" style="margin-bottom:8px;">
-          <button type="button" class="chip small active" data-mode="day">By day</button>
-          <button type="button" class="chip small" data-mode="hour">By hour</button>
-        </div>
-        <div class="chart-wrapper">
-          <canvas id="revenueTimelineChart"></canvas>
-          <div id="timeline-empty" class="chart-empty" style="display:none;">No POS data yet.</div>
-        </div>
-      </div>
-
-      <!-- Peak hour -->
-      <div class="card">
-        <div class="section-title">Peak hour</div>
-        <div class="section-sub" id="peak-subtitle">Highest 1-hour window in the current view.</div>
-        <div style="margin-top:4px;">
-          <div style="font-size:11px;color:var(--muted);">Peak window</div>
-          <div id="peak-range" style="font-size:14px;font-weight:600;margin-bottom:6px;">—</div>
-
-          <div style="display:flex;gap:12px;margin-bottom:10px;">
-            <div>
-              <div style="font-size:11px;color:var(--muted);">Revenue</div>
-              <div id="peak-revenue" style="font-size:14px;font-weight:700;">0.00</div>
-            </div>
-            <div>
-              <div style="font-size:11px;color:var(--muted);">Orders</div>
-              <div id="peak-orders" style="font-size:14px;font-weight:700;">0</div>
-            </div>
-          </div>
-
-          <div class="chart-wrapper small">
-            <canvas id="peakHourSparkline"></canvas>
-            <div id="peak-empty" class="chart-empty" style="display:none;">No hourly data yet.</div>
-          </div>
-        </div>
-      </div>
+    <div class="field">
+      <div class="field-label">Password</div>
+      <input id="login-password" class="field-input" type="password" placeholder="Your password"/>
     </div>
-  </section>
+    <button type="submit" id="login-btn" class="btn btn-primary" style="width:100%;">Sign in</button>
+  </form>
 
-  <!-- ROW 3: TOP VENDORS -->
-  <section id="vendors-section" style="display:none;">
-    <div class="section-grid-3">
-      <div class="card">
-        <div class="section-title">Top vendors</div>
-        <div class="section-sub">Top 3 brands by revenue for current filter.</div>
-        <div id="top-vendor-cards" class="vendor-cards">
-          <!-- Filled by JS -->
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="section-title">Vendors by revenue</div>
-        <div class="section-sub">Top vendors (max 8) by total revenue.</div>
-        <div class="chart-wrapper" style="margin-bottom:10px;">
-          <canvas id="vendorsBarChart"></canvas>
-          <div id="vendors-chart-empty" class="chart-empty" style="display:none;">No vendor sales yet.</div>
-        </div>
-
-        <!-- Vendor table (TABLE #1) -->
-        <div id="vendor-table-wrapper" class="table-wrapper">
-          <!-- table injected -->
-        </div>
-      </div>
+  <!-- SIGNUP FORM -->
+  <form id="signup-form" style="display:none;">
+    <div class="field">
+      <div class="field-label">Your name</div>
+      <input id="signup-name" class="field-input" placeholder="Full name"/>
     </div>
-  </section>
-
-  <!-- ROW 4: PRODUCTS & RETURNS -->
-  <section id="products-section" style="display:none;">
-    <div class="section-grid">
-      <div class="card">
-        <div class="section-title">Top products by revenue</div>
-        <div class="section-sub">Top 5–8 products from POS items (non-refunds).</div>
-        <div class="chart-wrapper">
-          <canvas id="topProductsChart"></canvas>
-          <div id="products-chart-empty" class="chart-empty" style="display:none;">No product-level data (items) found.</div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="section-title">Problem products (returns)</div>
-        <div class="section-sub">Products with highest return % (based on items.qty).</div>
-
-        <!-- TABLE #2 -->
-        <div id="problem-products-table-wrapper" class="table-wrapper">
-          <!-- table injected -->
-        </div>
-      </div>
+    <div class="field">
+      <div class="field-label">Email</div>
+      <input id="signup-email" class="field-input" type="email" placeholder="you@example.com"/>
     </div>
-  </section>
-
-  <!-- ROW 5: PAYMENT MIX + LIVE FEED -->
-  <section id="payments-section" style="display:none;">
-    <div class="section-grid">
-      <div class="card">
-        <div class="section-title">Payment methods</div>
-        <div class="section-sub">Share of Cash / Card / Wallet / Other.</div>
-        <div class="chart-wrapper small">
-          <canvas id="paymentDonutChart"></canvas>
-          <div id="payment-chart-empty" class="chart-empty" style="display:none;">No payment data yet.</div>
-        </div>
-        <div id="payment-stats" class="payment-stats"></div>
-      </div>
-
-      <div class="card">
-        <div class="section-title">Live activity</div>
-        <div class="section-sub">Last 10 orders in the current view.</div>
-        <div id="live-feed-empty" class="table-empty" style="display:none;">No orders yet.</div>
-        <div id="live-feed-list" class="feed-list"></div>
-      </div>
+    <div class="field">
+      <div class="field-label">Password</div>
+      <input id="signup-password" class="field-input" type="password" placeholder="Minimum 6 characters"/>
     </div>
-  </section>
+
+    <div class="field">
+      <div class="field-label">Event name</div>
+      <input id="signup-event-name" class="field-input" placeholder="Lokamania 5, Soueast Owners, ..."/>
+    </div>
+    <div class="field">
+      <div class="field-label">Location</div>
+      <input id="signup-event-location" class="field-input" placeholder="Cairo Festival City, Dubai, ..."/>
+    </div>
+    <div class="field">
+      <div class="field-label">Start date</div>
+      <input id="signup-event-start-date" class="field-input" type="date"/>
+    </div>
+    <div class="field">
+      <div class="field-label">End date</div>
+      <input id="signup-event-end-date" class="field-input" type="date"/>
+    </div>
+
+    <button type="submit" id="signup-btn" class="btn btn-primary" style="width:100%;">Create account &amp; event</button>
+    <div class="field-hint" style="margin-top:6px;">
+      This creates your owner account, first event document, and links everything in Firestore.
+    </div>
+  </form>
+
+  <div class="auth-footer">
+    After signing in, you’ll see a single analytics page per event with all POS metrics.
+  </div>
 </div>
 
-<!-- FIREBASE + ANALYTICS LOGIC -->
+<!-- APP VIEW -->
+<div id="app-view" style="display:none;">
+  <div class="app-shell">
+    <!-- HEADER -->
+    <header class="topbar">
+      <div class="topbar-main">
+        <div id="event-avatar" class="event-avatar">E</div>
+        <div>
+          <div id="event-name" class="topbar-title">Event analytics</div>
+          <div id="event-sub" class="topbar-sub">POS analytics across all brands for this event</div>
+          <div id="event-meta" class="topbar-meta"></div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <select id="event-select" class="topbar-select">
+          <!-- events filled by JS -->
+        </select>
+        <div class="date-filter">
+          <span class="date-filter-label">Date view</span>
+          <div id="date-chip-container" class="chip-row">
+            <!-- chips injected by JS -->
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- SECTION TABS -->
+    <div class="chip-row" id="section-tabs" style="margin-bottom:12px;">
+      <button type="button" class="chip small active" data-target="#kpi-section">Overview</button>
+      <button type="button" class="chip small" data-target="#timeline-section">Timeline</button>
+      <button type="button" class="chip small" data-target="#vendors-section">Vendors</button>
+      <button type="button" class="chip small" data-target="#products-section">Products</button>
+      <button type="button" class="chip small" data-target="#payments-section">Payments &amp; Live</button>
+    </div>
+
+    <!-- LOADING / ERROR -->
+    <div id="loading-card" class="card loading-card">
+      <div class="loading-dot"></div>
+      <div>Loading event analytics…</div>
+    </div>
+    <div id="error-card" class="card error-card" style="display:none;"></div>
+
+    <!-- ROW 1 – HERO KPIs -->
+    <section id="kpi-section" style="display:none;">
+      <div class="cards-grid">
+        <div class="card">
+          <div class="card-title">
+            <span>Total POS Revenue</span>
+            <span id="kpi-peak-badge" class="card-badge" style="display:none;"></span>
+          </div>
+          <div id="kpi-total-revenue" class="card-number">0.00</div>
+          <div class="card-note">Sum of all POS sales for the current view (excl. refunds).</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Total Orders</div>
+          <div id="kpi-total-orders" class="card-number">0</div>
+          <div class="card-note">Number of POS orders in this event / day.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Total Items Sold</div>
+          <div id="kpi-total-items" class="card-number">0</div>
+          <div class="card-note">Sum of all item quantities in non-refund orders.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Average Order Value</div>
+          <div id="kpi-aov" class="card-number">0.00</div>
+          <div class="card-note">Revenue ÷ orders for current filter.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Total Returns</div>
+          <div id="kpi-returns" class="card-number">0.00</div>
+          <div class="card-note">Total value of refund orders (absolute).</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Net Revenue</div>
+          <div id="kpi-net-revenue" class="card-number">0.00</div>
+          <div class="card-note">Total POS revenue minus refunds.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Active Brands</div>
+          <div id="kpi-active-brands" class="card-number">0</div>
+          <div class="card-note">Brands with ≥ 1 non-refund order.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ROW 2 – TIMELINE + PEAK HOUR -->
+    <section id="timeline-section" style="display:none;">
+      <div class="section-grid">
+        <div class="card">
+          <div class="section-title">Revenue timeline</div>
+          <div class="section-sub" id="timeline-subtitle">Revenue aggregation for current view.</div>
+          <div id="timeline-mode-toggle" class="chip-row" style="margin-bottom:8px;">
+            <button type="button" class="chip small active" data-mode="day">By day</button>
+            <button type="button" class="chip small" data-mode="hour">By hour</button>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="revenueTimelineChart"></canvas>
+            <div id="timeline-empty" class="chart-empty" style="display:none;">No POS data yet.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">Peak hour</div>
+          <div class="section-sub" id="peak-subtitle">Highest 1-hour window in the current view.</div>
+          <div style="margin-top:4px;">
+            <div style="font-size:11px;color:var(--muted);">Peak window</div>
+            <div id="peak-range" style="font-size:14px;font-weight:600;margin-bottom:6px;">—</div>
+
+            <div style="display:flex;gap:12px;margin-bottom:10px;">
+              <div>
+                <div style="font-size:11px;color:var(--muted);">Revenue</div>
+                <div id="peak-revenue" style="font-size:14px;font-weight:700;">0.00</div>
+              </div>
+              <div>
+                <div style="font-size:11px;color:var(--muted);">Orders</div>
+                <div id="peak-orders" style="font-size:14px;font-weight:700;">0</div>
+              </div>
+            </div>
+
+            <div class="chart-wrapper small">
+              <canvas id="peakHourSparkline"></canvas>
+              <div id="peak-empty" class="chart-empty" style="display:none;">No hourly data yet.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ROW 3 – VENDORS -->
+    <section id="vendors-section" style="display:none;">
+      <div class="section-grid-3">
+        <div class="card">
+          <div class="section-title">Top vendors</div>
+          <div class="section-sub">Top 3 brands by revenue for current filter.</div>
+          <div id="top-vendor-cards" class="vendor-cards"></div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">Vendors by revenue</div>
+          <div class="section-sub">Top vendors (max 8) by total revenue.</div>
+          <div class="chart-wrapper" style="margin-bottom:10px;">
+            <canvas id="vendorsBarChart"></canvas>
+            <div id="vendors-chart-empty" class="chart-empty" style="display:none;">No vendor sales yet.</div>
+          </div>
+
+          <div id="vendor-table-wrapper" class="table-wrapper"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ROW 4 – PRODUCTS & RETURNS -->
+    <section id="products-section" style="display:none;">
+      <div class="section-grid">
+        <div class="card">
+          <div class="section-title">Top products by revenue</div>
+          <div class="section-sub">Top 5–8 products from POS items (non-refunds).</div>
+          <div class="chart-wrapper">
+            <canvas id="topProductsChart"></canvas>
+            <div id="products-chart-empty" class="chart-empty" style="display:none;">No product-level data (items) found.</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title">Problem products (returns)</div>
+          <div class="section-sub">Products with highest return % (based on items.qty).</div>
+          <div id="problem-products-table-wrapper" class="table-wrapper"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ROW 5 – PAYMENTS + LIVE ACTIVITY -->
+    <section id="payments-section" style="display:none;">
+      <div class="section-grid">
+        <div class="card">
+          <div class="section-title">Payment methods</div>
+          <div class="section-sub">Share of Cash / Card / Wallet / Other.</div>
+          <div class="chart-wrapper small">
+            <canvas id="paymentDonutChart"></canvas>
+            <div id="payment-chart-empty" class="chart-empty" style="display:none;">No payment data yet.</div>
+          </div>
+          <div id="payment-stats" class="payment-stats"></div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">Live activity</div>
+          <div class="section-sub">Last 10 orders in the current view.</div>
+          <div id="live-feed-empty" class="table-empty" style="display:none;">No orders yet.</div>
+          <div id="live-feed-list" class="feed-list"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import {
     getFirestore,
     doc,
     getDoc,
+    setDoc,
+    addDoc,
+    getDocs,
     collection,
     collectionGroup,
     query,
     where,
-    onSnapshot
+    orderBy,
+    onSnapshot,
+    serverTimestamp
   } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-  // -----------------------------
-  // FIREBASE CONFIG
-  // -----------------------------
+  import {
+    getAuth,
+    onAuthStateChanged,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    updateProfile,
+    signOut
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
   const firebaseConfig = {
     apiKey: "AIzaSyA80bAAGPuyscnTVS-zwrxE9Jp3tPiS1gM",
     authDomain: "events-339ce.firebaseapp.com",
@@ -632,20 +826,39 @@
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+  const auth = getAuth(app);
 
-  // -----------------------------
-  // DOM SHORTCUTS
-  // -----------------------------
   const qs = (s) => document.querySelector(s);
 
+  /* AUTH DOM */
+  const authView = qs("#auth-view");
+  const appView  = qs("#app-view");
+  const authSubtitle = qs("#auth-subtitle");
+  const authAlertContainer = qs("#auth-alert-container");
+  const tabLogin  = qs("#tab-login");
+  const tabSignup = qs("#tab-signup");
+  const loginForm = qs("#login-form");
+  const signupForm = qs("#signup-form");
+
+  const loginEmailEl = qs("#login-email");
+  const loginPasswordEl = qs("#login-password");
+
+  const signupNameEl = qs("#signup-name");
+  const signupEmailEl = qs("#signup-email");
+  const signupPasswordEl = qs("#signup-password");
+  const signupEventNameEl = qs("#signup-event-name");
+  const signupEventLocationEl = qs("#signup-event-location");
+  const signupEventStartEl = qs("#signup-event-start-date");
+  const signupEventEndEl = qs("#signup-event-end-date");
+
+  /* APP DOM */
   const loadingCard = qs("#loading-card");
   const errorCard = qs("#error-card");
-
   const eventAvatarEl = qs("#event-avatar");
   const eventNameEl = qs("#event-name");
   const eventSubEl = qs("#event-sub");
   const eventMetaEl = qs("#event-meta");
-
+  const eventSelectEl = qs("#event-select");
   const dateChipContainer = qs("#date-chip-container");
 
   const kpiSection = qs("#kpi-section");
@@ -682,29 +895,192 @@
 
   const paymentChartEmptyEl = qs("#payment-chart-empty");
   const paymentStatsEl = qs("#payment-stats");
-
   const liveFeedListEl = qs("#live-feed-list");
   const liveFeedEmptyEl = qs("#live-feed-empty");
 
-  // -----------------------------
-  // STATE
-  // -----------------------------
-  const params = new URLSearchParams(window.location.search);
-  const eventIdFromUrl = params.get("eventId");
+  /* SECTION TABS */
+  const sectionTabs = document.querySelectorAll("#section-tabs .chip");
 
-  let currentEventId = eventIdFromUrl || null;
+  function showAuthView() {
+    if (authView) authView.style.display = "block";
+    if (appView)  appView.style.display = "none";
+  }
+  function showAppView() {
+    if (authView) authView.style.display = "none";
+    if (appView)  appView.style.display = "block";
+  }
+
+  function showAuthAlert(message, type="error"){
+    const cls = type === "error" ? "auth-alert-error" : "auth-alert-info";
+    authAlertContainer.innerHTML = `<div class="auth-alert ${cls}">${message}</div>`;
+  }
+  function clearAuthAlert(){
+    authAlertContainer.innerHTML = "";
+  }
+
+  // auth tab switching
+  tabLogin?.addEventListener("click", () => {
+    tabLogin.classList.add("active");
+    tabSignup.classList.remove("active");
+    loginForm.style.display = "block";
+    signupForm.style.display = "none";
+    authSubtitle.textContent = "Sign in to see your event analytics.";
+  });
+  tabSignup?.addEventListener("click", () => {
+    tabSignup.classList.add("active");
+    tabLogin.classList.remove("active");
+    loginForm.style.display = "none";
+    signupForm.style.display = "block";
+    authSubtitle.textContent = "Create your first event and analytics dashboard.";
+  });
+
+  // LOGIN
+  loginForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearAuthAlert();
+    const email = loginEmailEl?.value.trim();
+    const pw = loginPasswordEl?.value;
+    if (!email || !pw) {
+      showAuthAlert("Enter email and password.");
+      return;
+    }
+    try{
+      await signInWithEmailAndPassword(auth, email, pw);
+    }catch(err){
+      console.error("Login error:", err);
+      let msg = "Login failed.";
+      if (err.code === "auth/user-not-found") msg = "User not found.";
+      if (err.code === "auth/wrong-password") msg = "Wrong password.";
+      showAuthAlert(msg);
+    }
+  });
+
+  // SIGNUP + CREATE EVENT
+  signupForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearAuthAlert();
+
+    const fullName = signupNameEl?.value.trim();
+    const email    = signupEmailEl?.value.trim();
+    const pw       = signupPasswordEl?.value;
+    const eventName     = signupEventNameEl?.value.trim();
+    const eventLocation = signupEventLocationEl?.value.trim();
+    const startDate     = signupEventStartEl?.value.trim();
+    const endDate       = signupEventEndEl?.value.trim() || startDate;
+
+    if (!fullName || !email || !pw || !eventName) {
+      showAuthAlert("Fill all required fields (name, email, password, event name).");
+      return;
+    }
+    if (pw.length < 6) {
+      showAuthAlert("Password must be at least 6 characters.");
+      return;
+    }
+
+    try{
+      const cred = await createUserWithEmailAndPassword(auth, email, pw);
+      const user = cred.user;
+      await updateProfile(user, { displayName: fullName });
+
+      await setDoc(doc(db,"eventOwners",user.uid),{
+        uid:user.uid,
+        name:fullName,
+        email,
+        createdAt:serverTimestamp()
+      });
+
+      const eventRef = await addDoc(collection(db,"events"),{
+        name:eventName,
+        location:eventLocation || null,
+        startDate:startDate || null,
+        endDate:endDate || startDate || null,
+        ownerUserId:user.uid,
+        status:"active",
+        createdAt:serverTimestamp()
+      });
+      const eventId = eventRef.id;
+
+      await setDoc(
+        doc(db,"ownerEvents",user.uid),
+        { primaryEventId:eventId, eventIds:[eventId] },
+        { merge:true }
+      );
+    }catch(err){
+      console.error("Signup error:",err);
+      let msg = "Signup failed.";
+      if (err.code === "auth/email-already-in-use") msg = "Email already in use.";
+      showAuthAlert(msg);
+    }
+  });
+
+  // BASIC HELPERS
+  function showLoading(show){
+    if(!loadingCard) return;
+    loadingCard.style.display = show ? "flex" : "none";
+  }
+  function showError(message){
+    if(!errorCard) return;
+    errorCard.textContent = message;
+    errorCard.style.display = "block";
+  }
+  function clearError(){
+    if(!errorCard) return;
+    errorCard.textContent = "";
+    errorCard.style.display = "none";
+  }
+  function formatCurrency(num){
+    const v = Number(num) || 0;
+    return v.toFixed(2);
+  }
+  function getOrderDate(order){
+    const v = order.createdAtLocal || order.createdAt;
+    if(!v) return null;
+    try{
+      if(typeof v === "string"){
+        const d = new Date(v);
+        return isNaN(d.getTime()) ? null : d;
+      }
+      if(v && typeof v.toDate === "function"){
+        return v.toDate();
+      }
+    }catch(e){ return null; }
+    return null;
+  }
+  function dateToYMD(d){
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const day = String(d.getDate()).padStart(2,"0");
+    return `${y}-${m}-${day}`;
+  }
+
+  function classifyPaymentMethod(methodRaw){
+    if(!methodRaw) return "Other";
+    const s = String(methodRaw).toLowerCase();
+    if(s.includes("cash")) return "Cash";
+    if(s.includes("card") || s.includes("visa") || s.includes("master")) return "Card";
+    if(s.includes("wallet") || s.includes("vodafone") || s.includes("fawry")) return "Wallet";
+    return "Other";
+  }
+  function paymentIconFor(method){
+    switch(method){
+      case "Cash": return "💵";
+      case "Card": return "💳";
+      case "Wallet": return "📱";
+      default: return "🧾";
+    }
+  }
+
+  // STATE
+  let currentUser = null;
+  let eventsList = [];
+  let currentEventId = null;
   let currentEventData = null;
 
   let vendors = [];
   let orders = [];
-  let brandCache = {}; // brandId -> { name, logoUrl }
+  let brandCache = {};
 
-  let dateRange = {
-    startStr:null,
-    endStr:null,
-    days:[]
-  };
-
+  let dateRange = { startStr:null, endStr:null, days:[] };
   let currentDateFilter = "all"; // "all" or "YYYY-MM-DD"
   let currentTimelineMode = "day"; // "day" | "hour"
 
@@ -717,48 +1093,20 @@
   let unsubVendors = null;
   let unsubOrders = null;
 
-  // -----------------------------
-  // UTILITIES
-  // -----------------------------
-  function showLoading(show){
-    if(!loadingCard) return;
-    loadingCard.style.display = show ? "flex" : "none";
-  }
+  // SECTION TABS scroll
+  sectionTabs.forEach(btn => {
+    btn.addEventListener("click", () => {
+      sectionTabs.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
 
-  function showError(message){
-    if(!errorCard) return;
-    errorCard.textContent = message;
-    errorCard.style.display = "block";
-  }
-
-  function formatCurrency(num){
-    const v = Number(num) || 0;
-    return v.toFixed(2);
-  }
-
-  function getOrderDate(order){
-    const v = order.createdAtLocal || order.createdAt;
-    if(!v) return null;
-    try{
-      if(typeof v === "string"){
-        const d = new Date(v);
-        return isNaN(d.getTime()) ? null : d;
-      }
-      if (v && typeof v.toDate === "function"){
-        return v.toDate();
-      }
-    }catch(e){
-      return null;
-    }
-    return null;
-  }
-
-  function dateToYMD(d){
-    const y = d.getFullYear();
-    const m = String(d.getMonth()+1).padStart(2,"0");
-    const day = String(d.getDate()).padStart(2,"0");
-    return `${y}-${m}-${day}`;
-  }
+      const targetSelector = btn.dataset.target;
+      const target = targetSelector ? document.querySelector(targetSelector) : null;
+      if (!target) return;
+      const rect = target.getBoundingClientRect();
+      const offsetTop = rect.top + window.pageYOffset - 80;
+      window.scrollTo({ top:offsetTop, behavior:"smooth" });
+    });
+  });
 
   function buildEventDateRange(ev){
     const startStr = ev.startDate || ev.date || null;
@@ -788,14 +1136,14 @@
       if(snap.exists()){
         const data = snap.data();
         brandCache[brandId] = {
-          name: data.name || data.brandName || "",
-          logoUrl: data.logoUrl || null
+          name:data.name || data.brandName || "",
+          logoUrl:data.logoUrl || null
         };
       }else{
         brandCache[brandId] = {};
       }
     }catch(e){
-      console.warn("Error loading brand", brandId, e);
+      console.warn("Error loading brand",brandId,e);
       brandCache[brandId] = {};
     }
   }
@@ -811,49 +1159,20 @@
 
   function applyDateFilter(allOrders){
     if(!allOrders || !allOrders.length) return [];
-    if(currentDateFilter === "all"){
-      return [...allOrders].sort((a,b)=>{
-        const da = getOrderDate(a);
-        const db = getOrderDate(b);
-        if(!da || !db) return 0;
-        return da - db;
-      });
-    }
-    return allOrders
-      .filter(o=>{
-        const d = getOrderDate(o);
-        if(!d) return false;
-        return dateToYMD(d) === currentDateFilter;
-      })
-      .sort((a,b)=>{
-        const da = getOrderDate(a);
-        const db = getOrderDate(b);
-        if(!da || !db) return 0;
-        return da - db;
-      });
+    const sorted = [...allOrders].sort((a,b)=>{
+      const da = getOrderDate(a);
+      const db = getOrderDate(b);
+      if(!da || !db) return 0;
+      return da - db;
+    });
+    if(currentDateFilter === "all") return sorted;
+    return sorted.filter(o=>{
+      const d = getOrderDate(o);
+      if(!d) return false;
+      return dateToYMD(d) === currentDateFilter;
+    });
   }
 
-  function classifyPaymentMethod(methodRaw){
-    if(!methodRaw) return "Other";
-    const s = String(methodRaw).toLowerCase();
-    if(s.includes("cash")) return "Cash";
-    if(s.includes("card") || s.includes("visa") || s.includes("master")) return "Card";
-    if(s.includes("wallet") || s.includes("vodafone") || s.includes("fawry")) return "Wallet";
-    return "Other";
-  }
-
-  function paymentIconFor(method){
-    switch(method){
-      case "Cash": return "💵";
-      case "Card": return "💳";
-      case "Wallet": return "📱";
-      default: return "🧾";
-    }
-  }
-
-  // -----------------------------
-  // DATE FILTER CHIPS
-  // -----------------------------
   function renderDateChips(){
     if(!dateChipContainer) return;
     dateChipContainer.innerHTML = "";
@@ -878,16 +1197,13 @@
       btn.addEventListener("click",()=>{
         const val = btn.dataset.date;
         if(!val) return;
-        currentDateFilter = val === "all" ? "all" : val;
-        renderDateChips(); // re-render to update active
+        currentDateFilter = (val === "all") ? "all" : val;
+        renderDateChips();
         recomputeAnalytics();
       });
     });
   }
 
-  // -----------------------------
-  // TIMELINE MODE TOGGLE
-  // -----------------------------
   function setupTimelineToggle(){
     if(!timelineToggleEl) return;
     timelineToggleEl.querySelectorAll(".chip").forEach(btn=>{
@@ -897,14 +1213,11 @@
         currentTimelineMode = mode;
         timelineToggleEl.querySelectorAll(".chip").forEach(b=>b.classList.remove("active"));
         btn.classList.add("active");
-        recomputeAnalytics(); // just re-render charts
+        recomputeAnalytics();
       });
     });
   }
 
-  // -----------------------------
-  // KPIs
-  // -----------------------------
   function renderKpis(filtered){
     let grossSales = 0;
     let totalOrders = 0;
@@ -932,32 +1245,29 @@
     const aov = totalOrders ? grossSales / totalOrders : 0;
     const net = grossSales - returnAmount;
 
-    if(kpiTotalRevenueEl) kpiTotalRevenueEl.textContent = formatCurrency(grossSales);
-    if(kpiTotalOrdersEl) kpiTotalOrdersEl.textContent = String(totalOrders);
-    if(kpiTotalItemsEl) kpiTotalItemsEl.textContent = String(totalItems);
-    if(kpiAovEl) kpiAovEl.textContent = formatCurrency(aov);
-    if(kpiReturnsEl) kpiReturnsEl.textContent = formatCurrency(returnAmount);
-    if(kpiNetRevenueEl) kpiNetRevenueEl.textContent = formatCurrency(net);
-    if(kpiActiveBrandsEl) kpiActiveBrandsEl.textContent = String(activeBrandIds.size);
+    kpiTotalRevenueEl.textContent = formatCurrency(grossSales);
+    kpiTotalOrdersEl.textContent = String(totalOrders);
+    kpiTotalItemsEl.textContent  = String(totalItems);
+    kpiAovEl.textContent         = formatCurrency(aov);
+    kpiReturnsEl.textContent     = formatCurrency(returnAmount);
+    kpiNetRevenueEl.textContent  = formatCurrency(net);
+    kpiActiveBrandsEl.textContent= String(activeBrandIds.size);
 
     kpiSection.style.display = "block";
   }
 
-  // -----------------------------
-  // REVENUE TIMELINE
-  // -----------------------------
   function renderRevenueTimeline(filtered){
     const ctx = document.getElementById("revenueTimelineChart");
     if(!ctx || typeof Chart === "undefined") return;
 
     const buckets = {};
-    const byHourMode = currentTimelineMode === "hour";
+    const byHour = currentTimelineMode === "hour";
 
     filtered.forEach(o=>{
-      if(o.isReturn) return; // revenue: only non-refunds
+      if(o.isReturn) return;
       const d = getOrderDate(o);
       if(!d) return;
-      if(byHourMode){
+      if(byHour){
         const key = `${dateToYMD(d)} ${String(d.getHours()).padStart(2,"0")}:00`;
         buckets[key] = (buckets[key] || 0) + (Number(o.total) || 0);
       }else{
@@ -970,13 +1280,13 @@
     const data = labels.map(k => buckets[k]);
 
     if(!labels.length){
-      if(timelineEmptyEl) timelineEmptyEl.style.display = "flex";
+      timelineEmptyEl.style.display = "flex";
     }else{
-      if(timelineEmptyEl) timelineEmptyEl.style.display = "none";
+      timelineEmptyEl.style.display = "none";
     }
 
     if(currentDateFilter === "all"){
-      timelineSubtitleEl.textContent = byHourMode
+      timelineSubtitleEl.textContent = byHour
         ? "Revenue by hour across the whole event."
         : "Revenue by day across the whole event.";
     }else{
@@ -985,20 +1295,12 @@
 
     const chartData = {
       labels,
-      datasets:[{
-        label:"Revenue",
-        data,
-        fill:true,
-        tension:0.25
-      }]
+      datasets:[{ label:"Revenue", data, fill:true, tension:0.25 }]
     };
-
-    const chartOptions = {
+    const options = {
       responsive:true,
       maintainAspectRatio:false,
-      plugins:{
-        legend:{ display:false }
-      },
+      plugins:{ legend:{ display:false } },
       scales:{
         x:{ ticks:{ font:{ size:10 } } },
         y:{ ticks:{ font:{ size:10 } } }
@@ -1006,28 +1308,21 @@
     };
 
     if(!revenueTimelineChart){
-      revenueTimelineChart = new Chart(ctx, {
-        type:"line",
-        data:chartData,
-        options:chartOptions
-      });
+      revenueTimelineChart = new Chart(ctx,{ type:"line", data:chartData, options });
     }else{
       revenueTimelineChart.data = chartData;
-      revenueTimelineChart.options = chartOptions;
+      revenueTimelineChart.options = options;
       revenueTimelineChart.update();
     }
 
     timelineSection.style.display = "block";
   }
 
-  // -----------------------------
-  // PEAK HOUR
-  // -----------------------------
   function renderPeakHour(filtered){
     const ctx = document.getElementById("peakHourSparkline");
     if(!ctx || typeof Chart === "undefined") return;
 
-    const buckets = {}; // key: "YYYY-MM-DD HH:00"
+    const buckets = {};
     filtered.forEach(o=>{
       const d = getOrderDate(o);
       if(!d) return;
@@ -1045,7 +1340,7 @@
       peakRangeEl.textContent = "—";
       peakRevenueEl.textContent = "0.00";
       peakOrdersEl.textContent = "0";
-      if(peakEmptyEl) peakEmptyEl.style.display = "flex";
+      peakEmptyEl.style.display = "flex";
       if(kpiPeakBadgeEl) kpiPeakBadgeEl.style.display = "none";
       peakSubtitleEl.textContent = "No hourly data yet.";
       if(peakHourSparklineChart){
@@ -1055,92 +1350,70 @@
       return;
     }
 
-    // find best hour by revenue
     let bestKey = null;
     let bestRevenue = -Infinity;
     let bestOrders = 0;
-    entries.forEach(([key, val])=>{
+    entries.forEach(([key,val])=>{
       if(val.revenue > bestRevenue){
         bestRevenue = val.revenue;
-        bestOrders = val.orders;
-        bestKey = key;
+        bestOrders  = val.orders;
+        bestKey     = key;
       }
     });
 
     const [dateStr, hourStr] = bestKey.split(" ");
-    const hourNum = parseInt(hourStr,10) || 0;
-    const nextHour = String((hourNum+1)%24).padStart(2,"0") + ":00";
-    const simpleHourRange = `${hourStr}–${nextHour}`;
-
-    // For display: if viewing General, include date, else only hour
-    let displayRange = simpleHourRange;
+    const hourNum  = parseInt(hourStr,10) || 0;
+    const nextHour = String((hourNum+1)%24).padStart(2,"0")+":00";
+    const simpleRange = `${hourStr}–${nextHour}`;
+    let displayRange = simpleRange;
     if(currentDateFilter === "all"){
-      displayRange = `${dateStr} • ${simpleHourRange}`;
+      displayRange = `${dateStr} • ${simpleRange}`;
       peakSubtitleEl.textContent = "Highest 1-hour window across the event.";
     }else{
       peakSubtitleEl.textContent = "Highest 1-hour window in the selected day.";
     }
 
-    peakRangeEl.textContent = displayRange;
+    peakRangeEl.textContent   = displayRange;
     peakRevenueEl.textContent = formatCurrency(bestRevenue);
-    peakOrdersEl.textContent = String(bestOrders);
+    peakOrdersEl.textContent  = String(bestOrders);
 
-    // badge on top revenue card
     if(kpiPeakBadgeEl){
-      kpiPeakBadgeEl.textContent = simpleHourRange;
+      kpiPeakBadgeEl.textContent = simpleRange;
       kpiPeakBadgeEl.style.display = "inline-block";
     }
 
-    // sparkline data: convert to hours vs revenue (ordered)
     const labels = entries.map(([key]) => key.split(" ")[1]);
-    const data = entries.map(([,val]) => val.revenue);
+    const data   = entries.map(([,val]) => val.revenue);
 
-    const sparkData = {
-      labels,
-      datasets:[{
-        data,
-        fill:false,
-        tension:0.25
-      }]
-    };
-    const sparkOptions = {
+    const sparkData = { labels, datasets:[{ data, fill:false, tension:0.25 }] };
+    const sparkOpts = {
       responsive:true,
       maintainAspectRatio:false,
       plugins:{ legend:{ display:false } },
-      scales:{
-        x:{ display:false },
-        y:{ display:false }
-      },
+      scales:{ x:{ display:false }, y:{ display:false } },
       elements:{ point:{ radius:0 } }
     };
 
     if(!peakHourSparklineChart){
-      peakHourSparklineChart = new Chart(ctx,{
-        type:"line",
-        data:sparkData,
-        options:sparkOptions
-      });
+      peakHourSparklineChart = new Chart(ctx,{ type:"line", data:sparkData, options:sparkOpts });
     }else{
       peakHourSparklineChart.data = sparkData;
-      peakHourSparklineChart.options = sparkOptions;
+      peakHourSparklineChart.options = sparkOpts;
       peakHourSparklineChart.update();
     }
 
-    if(peakEmptyEl) peakEmptyEl.style.display = labels.length ? "none" : "flex";
+    peakEmptyEl.style.display = labels.length ? "none" : "flex";
     timelineSection.style.display = "block";
   }
 
-  // -----------------------------
-  // TOP VENDORS
-  // -----------------------------
   function computeVendorMetrics(filtered){
-    const map = {}; // brandId -> metrics
+    const map = {};
     filtered.forEach(o=>{
       const brandId = o.brandId || "_unknown";
       if(!map[brandId]){
         map[brandId] = {
           brandId,
-          brandName: o.brandName || o.vendorBrandName || "Brand",
+          brandName:o.brandName || o.vendorBrandName || "Brand",
           revenue:0,
           orders:0,
           refunds:0,
@@ -1151,39 +1424,33 @@
       const isReturn = !!o.isReturn;
       if(isReturn){
         map[brandId].refunds += Math.abs(amt);
-        map[brandId].net -= Math.abs(amt);
+        map[brandId].net     -= Math.abs(amt);
       }else{
         map[brandId].revenue += amt;
-        map[brandId].orders += 1;
-        map[brandId].net += amt;
+        map[brandId].orders  += 1;
+        map[brandId].net     += amt;
       }
     });
-
     return Object.values(map).sort((a,b)=>b.revenue - a.revenue);
   }
 
-  function renderTopVendorCards(vendorMetrics, totalRevenue){
+  function renderTopVendorCards(vendorMetrics,totalRevenue){
     topVendorCardsEl.innerHTML = "";
     const top3 = vendorMetrics.slice(0,3);
-
     if(!top3.length){
-      const msg = document.createElement("div");
-      msg.className = "table-empty";
-      msg.textContent = "No vendor sales yet.";
-      topVendorCardsEl.appendChild(msg);
+      topVendorCardsEl.innerHTML = `<div class="table-empty">No vendor sales yet.</div>`;
       vendorsSection.style.display = "block";
       return;
     }
-
-    top3.forEach((v, idx)=>{
+    top3.forEach((v,idx)=>{
       const display = getBrandDisplay(v.brandId, v.brandName);
-      const share = totalRevenue > 0 ? (v.revenue / totalRevenue) * 100 : 0;
+      const share   = totalRevenue>0 ? (v.revenue/totalRevenue)*100 : 0;
 
       const card = document.createElement("div");
       card.className = "card";
       card.innerHTML = `
         <div class="vendor-card-header">
-          <div class="vendor-logo" id="vendor-logo-${idx+1}">${(display.name || "B").charAt(0).toUpperCase()}</div>
+          <div class="vendor-logo">${(display.name||"B").charAt(0).toUpperCase()}</div>
           <div>
             <div class="vendor-name">${display.name || v.brandName}</div>
             <div class="vendor-rank">Top vendor #${idx+1}</div>
@@ -1192,80 +1459,56 @@
         <div class="vendor-revenue">EGP ${formatCurrency(v.revenue)}</div>
         <div class="vendor-share">${share.toFixed(1)}% of event revenue</div>
       `;
-      topVendorCardsEl.appendChild(card);
-
-      if(display.logoUrl){
-        const logoEl = card.querySelector(".vendor-logo");
-        if(logoEl){
-          logoEl.style.backgroundImage = `url("${display.logoUrl}")`;
-          logoEl.textContent = "";
-        }
+      const logoEl = card.querySelector(".vendor-logo");
+      if(display.logoUrl && logoEl){
+        logoEl.style.backgroundImage = `url("${display.logoUrl}")`;
+        logoEl.textContent = "";
       }
+      topVendorCardsEl.appendChild(card);
     });
-
     vendorsSection.style.display = "block";
   }
 
   function renderVendorsChart(vendorMetrics){
     const ctx = document.getElementById("vendorsBarChart");
     if(!ctx || typeof Chart === "undefined") return;
-
     const top = vendorMetrics.slice(0,8);
-    const labels = top.map(v => getBrandDisplay(v.brandId, v.brandName).name);
-    const data = top.map(v => v.revenue);
+    const labels = top.map(v => getBrandDisplay(v.brandId,v.brandName).name);
+    const data   = top.map(v => v.revenue);
 
     if(!labels.length){
-      if(vendorsChartEmptyEl) vendorsChartEmptyEl.style.display = "flex";
+      vendorsChartEmptyEl.style.display = "flex";
     }else{
-      if(vendorsChartEmptyEl) vendorsChartEmptyEl.style.display = "none";
+      vendorsChartEmptyEl.style.display = "none";
     }
-
-    const chartData = {
-      labels,
-      datasets:[{
-        data,
-        label:"Revenue",
-        borderWidth:1
-      }]
-    };
+    const chartData = { labels, datasets:[{ data, label:"Revenue", borderWidth:1 }] };
     const options = {
       indexAxis:"y",
       responsive:true,
       maintainAspectRatio:false,
-      plugins:{
-        legend:{ display:false }
-      },
+      plugins:{ legend:{ display:false } },
       scales:{
         x:{ ticks:{ font:{ size:10 } } },
         y:{ ticks:{ font:{ size:10 } } }
       }
     };
-
     if(!vendorsBarChart){
-      vendorsBarChart = new Chart(ctx,{
-        type:"bar",
-        data:chartData,
-        options
-      });
+      vendorsBarChart = new Chart(ctx,{ type:"bar", data:chartData, options });
     }else{
       vendorsBarChart.data = chartData;
       vendorsBarChart.options = options;
       vendorsBarChart.update();
     }
-
     vendorsSection.style.display = "block";
   }
 
-  function renderVendorTable(vendorMetrics, totalNet){
+  function renderVendorTable(vendorMetrics,totalNet){
     if(!vendorTableWrapperEl) return;
-
     if(!vendorMetrics.length){
       vendorTableWrapperEl.innerHTML = `<div class="table-empty">No vendor sales yet.</div>`;
       return;
     }
-
     const rows = vendorMetrics.slice(0,10);
-
     let html = `
       <table>
         <thead>
@@ -1279,55 +1522,42 @@
         </thead>
         <tbody>
     `;
-
-    rows.forEach((v, idx)=>{
-      const netShare = totalNet > 0 ? (v.net / totalNet)*100 : 0;
+    rows.forEach((v,idx)=>{
+      const netShare = totalNet>0 ? (v.net/totalNet)*100 : 0;
       html += `
         <tr>
           <td>${idx+1}</td>
-          <td>${getBrandDisplay(v.brandId, v.brandName).name}</td>
+          <td>${getBrandDisplay(v.brandId,v.brandName).name}</td>
           <td>EGP ${formatCurrency(v.revenue)}</td>
           <td>${v.orders}</td>
-          <td>${isFinite(netShare) ? netShare.toFixed(1) : "0.0"}%</td>
+          <td>${isFinite(netShare)?netShare.toFixed(1):"0.0"}%</td>
         </tr>
       `;
     });
-
     html += `</tbody></table>`;
     vendorTableWrapperEl.innerHTML = html;
   }
 
-  // -----------------------------
-  // PRODUCTS & RETURNS
-  // -----------------------------
   function computeProductMetrics(filtered){
-    const map = {}; // key: brandId|name
+    const map = {};
     filtered.forEach(o=>{
       if(!Array.isArray(o.items)) return;
       const brandId = o.brandId || "_unknown";
       const brandName = o.brandName || o.vendorBrandName || "Brand";
       const isReturn = !!o.isReturn;
-
       o.items.forEach(it=>{
-        const name = it.name || it.productName || "Product";
-        const qty = Number(it.qty) || 0;
-        const lineTotal = Number(it.lineTotal) || (Number(it.price)||0) * qty;
+        const name      = it.name || it.productName || "Product";
+        const qty       = Number(it.qty) || 0;
+        const lineTotal = Number(it.lineTotal) || (Number(it.price)||0)*qty;
         const key = `${brandId}|||${name}`;
         if(!map[key]){
-          map[key] = {
-            brandId,
-            brandName,
-            productName:name,
-            soldQty:0,
-            soldRevenue:0,
-            returnQty:0
-          };
+          map[key] = { brandId, brandName, productName:name, soldQty:0, soldRevenue:0, returnQty:0 };
         }
         if(isReturn){
           map[key].returnQty += Math.abs(qty);
         }else{
-          map[key].soldQty += qty;
-          map[key].soldRevenue += lineTotal;
+          map[key].soldQty    += qty;
+          map[key].soldRevenue+= lineTotal;
         }
       });
     });
@@ -1337,28 +1567,20 @@
   function renderTopProductsChart(productMetrics){
     const ctx = document.getElementById("topProductsChart");
     if(!ctx || typeof Chart === "undefined") return;
-
-    const candidates = productMetrics.filter(p => p.soldRevenue > 0);
+    const candidates = productMetrics.filter(p=>p.soldRevenue>0);
     candidates.sort((a,b)=>b.soldRevenue - a.soldRevenue);
     const top = candidates.slice(0,8);
-    const labels = top.map(p => p.productName);
-    const data = top.map(p => p.soldRevenue);
+    const labels = top.map(p=>p.productName);
+    const data   = top.map(p=>p.soldRevenue);
 
     if(!labels.length){
-      if(productsChartEmptyEl) productsChartEmptyEl.style.display = "flex";
+      productsChartEmptyEl.style.display = "flex";
     }else{
-      if(productsChartEmptyEl) productsChartEmptyEl.style.display = "none";
+      productsChartEmptyEl.style.display = "none";
     }
 
-    const chartData = {
-      labels,
-      datasets:[{
-        label:"Revenue",
-        data,
-        borderWidth:1
-      }]
-    };
-    const options = {
+    const chartData = { labels, datasets:[{ label:"Revenue", data, borderWidth:1 }] };
+    const options   = {
       responsive:true,
       maintainAspectRatio:false,
       plugins:{ legend:{ display:false } },
@@ -1369,29 +1591,20 @@
     };
 
     if(!topProductsChart){
-      topProductsChart = new Chart(ctx,{
-        type:"bar",
-        data:chartData,
-        options
-      });
+      topProductsChart = new Chart(ctx,{ type:"bar", data:chartData, options });
     }else{
       topProductsChart.data = chartData;
       topProductsChart.options = options;
       topProductsChart.update();
     }
-
     productsSection.style.display = "block";
   }
 
   function renderProblemProductsTable(productMetrics){
     if(!problemProductsTableWrapperEl) return;
-
     const rows = productMetrics
-      .filter(p => p.soldQty > 0 && p.returnQty > 0)
-      .map(p => ({
-        ...p,
-        returnPct: (p.returnQty / p.soldQty) * 100
-      }))
+      .filter(p=>p.soldQty>0 && p.returnQty>0)
+      .map(p=>({ ...p, returnPct:(p.returnQty/p.soldQty)*100 }))
       .sort((a,b)=>b.returnPct - a.returnPct)
       .slice(0,10);
 
@@ -1412,25 +1625,20 @@
         </thead>
         <tbody>
     `;
-
     rows.forEach(p=>{
       html += `
         <tr>
           <td>${p.productName}</td>
-          <td>${getBrandDisplay(p.brandId, p.brandName).name}</td>
+          <td>${getBrandDisplay(p.brandId,p.brandName).name}</td>
           <td class="tag-danger">${p.returnQty}</td>
           <td class="tag-danger">${p.returnPct.toFixed(1)}%</td>
         </tr>
       `;
     });
-
     html += `</tbody></table>`;
     problemProductsTableWrapperEl.innerHTML = html;
   }
 
-  // -----------------------------
-  // PAYMENT MIX
-  // -----------------------------
   function renderPaymentMix(filtered){
     const ctx = document.getElementById("paymentDonutChart");
     if(!ctx || typeof Chart === "undefined") return;
@@ -1451,69 +1659,49 @@
     });
 
     const labels = ["Cash","Card","Wallet","Other"];
-    const data = labels.map(l => stats[l].amount);
+    const data   = labels.map(l=>stats[l].amount);
 
-    if(!data.some(v => v > 0)){
-      if(paymentChartEmptyEl) paymentChartEmptyEl.style.display = "flex";
+    if(!data.some(v=>v>0)){
+      paymentChartEmptyEl.style.display = "flex";
     }else{
-      if(paymentChartEmptyEl) paymentChartEmptyEl.style.display = "none";
+      paymentChartEmptyEl.style.display = "none";
     }
 
-    const chartData = {
-      labels,
-      datasets:[{
-        data
-      }]
-    };
-    const options = {
+    const chartData = { labels, datasets:[{ data }] };
+    const options   = {
       responsive:true,
       maintainAspectRatio:false,
       plugins:{ legend:{ position:"bottom", labels:{ font:{ size:10 } } } }
     };
 
     if(!paymentDonutChart){
-      paymentDonutChart = new Chart(ctx,{
-        type:"doughnut",
-        data:chartData,
-        options
-      });
+      paymentDonutChart = new Chart(ctx,{ type:"doughnut", data:chartData, options });
     }else{
       paymentDonutChart.data = chartData;
       paymentDonutChart.options = options;
       paymentDonutChart.update();
     }
 
-    // mini stats
-    if(paymentStatsEl){
-      paymentStatsEl.innerHTML = "";
-      labels.forEach(l=>{
-        const s = stats[l];
-        const pill = document.createElement("div");
-        pill.className = "payment-pill";
-        pill.innerHTML = `
-          <strong>${l}</strong>
-          EGP ${formatCurrency(s.amount)} • ${s.orders} orders
-        `;
-        paymentStatsEl.appendChild(pill);
-      });
-    }
+    paymentStatsEl.innerHTML = "";
+    labels.forEach(l=>{
+      const s = stats[l];
+      const pill = document.createElement("div");
+      pill.className = "payment-pill";
+      pill.innerHTML = `<strong>${l}</strong>EGP ${formatCurrency(s.amount)} • ${s.orders} orders`;
+      paymentStatsEl.appendChild(pill);
+    });
 
     paymentsSection.style.display = "block";
   }
 
-  // -----------------------------
-  // LIVE ACTIVITY FEED
-  // -----------------------------
   function renderLiveFeed(filtered){
     if(!liveFeedListEl || !liveFeedEmptyEl) return;
-
     const sorted = [...filtered].sort((a,b)=>{
       const da = getOrderDate(a);
       const db = getOrderDate(b);
       if(!da || !db) return 0;
       return db - da;
     });
-
     const last10 = sorted.slice(0,10);
 
     if(!last10.length){
@@ -1526,15 +1714,14 @@
     liveFeedEmptyEl.style.display = "none";
     liveFeedListEl.innerHTML = "";
 
-    // compute avg for high-value badge
-    let sum = 0; let count = 0;
+    let sum = 0, count = 0;
     filtered.forEach(o=>{
       if(o.isReturn) return;
       sum += Number(o.total) || 0;
       count++;
     });
-    const avg = count ? sum / count : 0;
-    const highThreshold = avg * 2 || 0;
+    const avg = count ? sum/count : 0;
+    const highThreshold = avg*2 || 0;
 
     last10.forEach(o=>{
       const d = getOrderDate(o);
@@ -1542,21 +1729,19 @@
       const amt = Number(o.total) || 0;
       const isReturn = !!o.isReturn;
       const method = classifyPaymentMethod(o.paymentMethod);
-      const icon = paymentIconFor(method);
-
+      const icon   = paymentIconFor(method);
       const timeStr = d
         ? d.toLocaleTimeString("en-EG",{hour:"2-digit",minute:"2-digit"})
         : "";
 
-      const item = document.createElement("div");
-      item.className = "feed-item";
-
       const badges = [];
       if(isReturn) badges.push(`<span class="badge refund">Refund</span>`);
-      if(!isReturn && amt >= highThreshold && highThreshold > 0){
+      if(!isReturn && amt>=highThreshold && highThreshold>0){
         badges.push(`<span class="badge high">High value</span>`);
       }
 
+      const item = document.createElement("div");
+      item.className = "feed-item";
       item.innerHTML = `
         <div class="feed-meta">
           <div class="feed-brand">${display.name}</div>
@@ -1574,34 +1759,13 @@
     paymentsSection.style.display = "block";
   }
 
-  // -----------------------------
-  // RECOMPUTE ALL ANALYTICS
-  // -----------------------------
   function recomputeAnalytics(){
     const filtered = applyDateFilter(orders);
-
-    if(!filtered.length){
-      // still show empty KPIs
-      renderKpis(filtered);
-      renderRevenueTimeline(filtered);
-      renderPeakHour(filtered);
-      const vendorMetricsEmpty = computeVendorMetrics(filtered);
-      renderTopVendorCards(vendorMetricsEmpty,0);
-      renderVendorsChart(vendorMetricsEmpty);
-      renderVendorTable(vendorMetricsEmpty,0);
-      const prodMetricsEmpty = computeProductMetrics(filtered);
-      renderTopProductsChart(prodMetricsEmpty);
-      renderProblemProductsTable(prodMetricsEmpty);
-      renderPaymentMix(filtered);
-      renderLiveFeed(filtered);
-      return;
-    }
-
     renderKpis(filtered);
 
     const vendorMetrics = computeVendorMetrics(filtered);
-    const totalRevenue = vendorMetrics.reduce((sum,v)=>sum+v.revenue,0);
-    const totalNet = vendorMetrics.reduce((sum,v)=>sum+v.net,0);
+    const totalRevenue  = vendorMetrics.reduce((sum,v)=>sum+v.revenue,0);
+    const totalNet      = vendorMetrics.reduce((sum,v)=>sum+v.net,0);
 
     renderRevenueTimeline(filtered);
     renderPeakHour(filtered);
@@ -1618,110 +1782,164 @@
     renderLiveFeed(filtered);
   }
 
-  // -----------------------------
-  // LOAD EVENT & SUBSCRIBE DATA
-  // -----------------------------
-  async function initDashboard(){
-    if(!currentEventId){
+  async function loadEventsForOwner(uid){
+    eventsList = [];
+    const qEvents = query(
+      collection(db,"events"),
+      where("ownerUserId","==",uid),
+      orderBy("createdAt","desc")
+    );
+    const snap = await getDocs(qEvents);
+    snap.forEach(d=>{
+      eventsList.push({ id:d.id, ...d.data() });
+    });
+  }
+
+  function renderEventSelect(){
+    if(!eventSelectEl) return;
+    eventSelectEl.innerHTML = "";
+    if(!eventsList.length){
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "No events yet";
+      eventSelectEl.appendChild(opt);
+      eventSelectEl.disabled = true;
+      return;
+    }
+    eventSelectEl.disabled = false;
+    eventsList.forEach(ev=>{
+      const opt = document.createElement("option");
+      opt.value = ev.id;
+      opt.textContent = ev.name || "Untitled event";
+      eventSelectEl.appendChild(opt);
+    });
+    if(currentEventId) eventSelectEl.value = currentEventId;
+    eventSelectEl.onchange = () => {
+      const val = eventSelectEl.value;
+      if(!val) return;
+      loadEventAnalytics(val);
+    };
+  }
+
+  async function loadEventAnalytics(eventId){
+    currentEventId = eventId;
+    clearError();
+    showLoading(true);
+
+    if(unsubVendors){ unsubVendors(); unsubVendors = null; }
+    if(unsubOrders){ unsubOrders(); unsubOrders = null; }
+
+    const evSnap = await getDoc(doc(db,"events",eventId));
+    if(!evSnap.exists()){
       showLoading(false);
-      showError("Missing eventId in URL. Open this page as event-dashboard.html?eventId=YOUR_EVENT_ID");
+      showError("Event not found.");
+      return;
+    }
+    currentEventData = { id:eventId, ...evSnap.data() };
+
+    const name = currentEventData.name || "Event analytics";
+    const location = currentEventData.location || "";
+    const date = currentEventData.date || "";
+    const start = currentEventData.startDate || "";
+    const end   = currentEventData.endDate || "";
+
+    eventAvatarEl.textContent = name.charAt(0).toUpperCase() || "E";
+    eventNameEl.textContent   = name;
+    eventSubEl.textContent    = "POS analytics across all brands for this event";
+
+    const metaPieces = [];
+    if(location) metaPieces.push(location);
+    if(start && end && start!==end){
+      metaPieces.push(`${start} → ${end}`);
+    }else if(date){
+      metaPieces.push(date);
+    }
+    eventMetaEl.textContent = metaPieces.join(" • ");
+
+    dateRange = buildEventDateRange(currentEventData);
+    currentDateFilter = "all";
+    renderDateChips();
+    setupTimelineToggle();
+
+    vendors = [];
+    orders  = [];
+    brandCache = {};
+
+    unsubVendors = onSnapshot(
+      collection(db,"events",eventId,"vendors"),
+      (snap)=>{
+        vendors = [];
+        snap.forEach(d=>vendors.push({ id:d.id, ...d.data() }));
+        recomputeAnalytics();
+      },
+      (err)=>console.error("Vendors snapshot error",err)
+    );
+
+    const qOrders = query(
+      collectionGroup(db,"orders"),
+      where("eventId","==",eventId)
+    );
+    unsubOrders = onSnapshot(
+      qOrders,
+      async (snap)=>{
+        orders = [];
+        const brandIds = new Set();
+        snap.forEach(d=>{
+          const data = d.data();
+          data._id = d.id;
+          orders.push(data);
+          if(data.brandId) brandIds.add(data.brandId);
+        });
+        await Promise.all([...brandIds].map(ensureBrandInfo));
+        showLoading(false);
+        recomputeAnalytics();
+      },
+      (err)=>{
+        console.error("Orders snapshot error",err);
+        showLoading(false);
+        showError("Error loading orders. Check Firestore rules and indexes.");
+      }
+    );
+  }
+
+  onAuthStateChanged(auth, async (user)=>{
+    if(!user){
+      currentUser = null;
+      eventsList = [];
+      currentEventId = null;
+      currentEventData = null;
+      if(unsubVendors) unsubVendors();
+      if(unsubOrders) unsubOrders();
+      unsubVendors = unsubOrders = null;
+      showAuthView();
       return;
     }
 
+    currentUser = user;
+    showAppView();
     showLoading(true);
 
-    try{
-      const evSnap = await getDoc(doc(db,"events",currentEventId));
-      if(!evSnap.exists()){
-        showLoading(false);
-        showError("Event not found. Check the eventId parameter.");
-        return;
-      }
-      currentEventData = { id:currentEventId, ...evSnap.data() };
+    await loadEventsForOwner(user.uid);
 
-      // Header
-      const name = currentEventData.name || "Event analytics";
-      const location = currentEventData.location || "";
-      const date = currentEventData.date || "";
-      const start = currentEventData.startDate || "";
-      const end = currentEventData.endDate || "";
-
-      if(eventAvatarEl){
-        eventAvatarEl.textContent = name.charAt(0).toUpperCase() || "E";
-      }
-      if(eventNameEl){
-        eventNameEl.textContent = name;
-      }
-      let subPieces = [];
-      if(location) subPieces.push(location);
-      if(start && end && start !== end){
-        subPieces.push(`${start} → ${end}`);
-      }else if(date){
-        subPieces.push(date);
-      }
-      eventSubEl.textContent = "POS analytics across all brands for this event";
-      eventMetaEl.textContent = subPieces.join(" • ");
-
-      // Date range
-      dateRange = buildEventDateRange(currentEventData);
-      renderDateChips();
-      setupTimelineToggle();
-
-      // Subscribe vendors
-      if(unsubVendors) unsubVendors();
-      unsubVendors = onSnapshot(
-        collection(db,"events",currentEventId,"vendors"),
-        (snap)=>{
-          vendors = [];
-          snap.forEach(d=>vendors.push({ id:d.id, ...d.data() }));
-          // vendor changes may affect brandName display but not metrics
-          recomputeAnalytics();
-        },
-        (err)=>console.error("Vendors snapshot error",err)
-      );
-
-      // Subscribe orders via collectionGroup on brands/{brandId}/orders
-      if(unsubOrders) unsubOrders();
-      const qOrders = query(
-        collectionGroup(db,"orders"),
-        where("eventId","==",currentEventId)
-      );
-
-      unsubOrders = onSnapshot(
-        qOrders,
-        async (snap)=>{
-          orders = [];
-          const brandIds = new Set();
-
-          snap.forEach(d=>{
-            const data = d.data();
-            data._id = d.id;
-            orders.push(data);
-            if(data.brandId) brandIds.add(data.brandId);
-          });
-
-          await Promise.all([...brandIds].map(ensureBrandInfo));
-
-          showLoading(false);
-          recomputeAnalytics();
-        },
-        (err)=>{
-          console.error("Orders snapshot error",err);
-          showLoading(false);
-          showError("Error loading orders. Check Firestore rules and indexes.");
-        }
-      );
-    }catch(e){
-      console.error("Init error",e);
-      showLoading(false);
-      showError("Unexpected error while loading analytics.");
+    const ownerEventsRef = doc(db,"ownerEvents",user.uid);
+    const ownSnap = await getDoc(ownerEventsRef);
+    if(ownSnap.exists() && ownSnap.data().primaryEventId){
+      currentEventId = ownSnap.data().primaryEventId;
+    }else if(eventsList.length){
+      currentEventId = eventsList[0].id;
     }
-  }
 
-  // -----------------------------
-  // START
-  // -----------------------------
-  initDashboard();
+    renderEventSelect();
+
+    if(currentEventId){
+      await loadEventAnalytics(currentEventId);
+    }else{
+      showLoading(false);
+      showError("No events yet. Create one from the signup form.");
+    }
+  });
+
+  showAuthView();
 </script>
 </body>
 </html>
