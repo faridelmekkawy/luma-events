@@ -926,8 +926,8 @@
     ------------------------------ */
 const authView     = qs("#auth-view");
 const appView      = qs("#app-view");
-const rejectedView = qs("#rejected-state"); // matches HTML
-const appMain      = qs("#app-main");       // inner main app
+const rejectedView = qs("#rejected-state"); // matches your HTML
+const appMain      = qs("#app-main");       // inner main app container
 
 // auth
 const authAlertBox  = qs("#auth-alert-container");
@@ -1038,6 +1038,8 @@ const rejectedBrandNameEl = qs("#rejected-brand-name");
 function showAuthView() {
   if (authView) authView.style.display = "block";
   if (appView) appView.style.display = "none";
+  if (rejectedView) rejectedView.style.display = "none";
+  if (appMain) appMain.style.display = "none";
 }
 
 function showAppView() {
@@ -1049,9 +1051,9 @@ function showAppView() {
 
 function showRejectedView() {
   if (authView) authView.style.display = "none";
-  if (appView) appView.style.display = "flex";   // shell stays
+  if (appView) appView.style.display = "flex";   // keep shell (sidebar/topbar)
   if (rejectedView) rejectedView.style.display = "flex";
-  if (appMain) appMain.style.display = "none";
+  if (appMain) appMain.style.display = "none";   // hide normal pages
 }
 
  function setAuthAlert(msg, type = "error") {
