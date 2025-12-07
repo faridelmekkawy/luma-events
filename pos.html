@@ -1,0 +1,3544 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Luma Events — Vendor POS</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <style>
+    :root{
+      --bg:#f3f4f6;
+      --panel:#ffffff;
+      --panel-soft:#f9fafb;
+      --ink:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --accent:#2563eb;
+      --accent-soft:#dbeafe;
+      --accent-strong:#1d4ed8;
+      --danger:#ef4444;
+      --ok:#16a34a;
+      --radius:16px;
+      --shadow:0 18px 40px rgba(15,23,42,.12);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{
+      height:100%;
+      font-family:"Montserrat",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:var(--bg);
+      color:var(--ink);
+    }
+    body{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+    }
+    .card{
+      background:var(--panel);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+    }
+    .text-muted{color:var(--muted);font-size:12px}
+    .btn{
+      border:none;
+      border-radius:999px;
+      padding:8px 16px;
+      font-size:13px;
+      font-weight:600;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      transition:background .15s,box-shadow .15s,transform .08s;
+      white-space:nowrap;
+    }
+    .btn-primary{
+      background:var(--accent);
+      color:#fff;
+    }
+    .btn-primary:hover{background:var(--accent-strong)}
+    .btn-ghost{
+      background:transparent;
+      color:var(--ink);
+    }
+    .btn-danger{
+      background:var(--danger);
+      color:#fff;
+    }
+    .btn-small{
+      padding:4px 10px;
+      font-size:12px;
+    }
+    .btn:disabled{
+      opacity:.5;
+      cursor:default;
+    }
+
+    /* LOGIN */
+    #pos-auth-wrapper{
+      width:100%;
+      max-width:420px;
+    }
+    .auth-card{
+      padding:24px 24px 20px;
+    }
+    .auth-header{
+      margin-bottom:18px;
+    }
+    .auth-title{
+      font-size:20px;
+      font-weight:600;
+      margin-bottom:4px;
+    }
+    .auth-subtitle{
+      font-size:13px;
+      color:var(--muted);
+    }
+    .auth-field{
+      margin-bottom:12px;
+    }
+    .auth-label{
+      font-size:12px;
+      font-weight:500;
+      margin-bottom:4px;
+    }
+    .auth-input{
+      width:100%;
+      border-radius:999px;
+      border:1px solid var(--border);
+      padding:8px 12px;
+      font-size:13px;
+      outline:none;
+      background:#f9fafb;
+    }
+    .auth-input:focus{
+      border-color:var(--accent);
+      background:#fff;
+    }
+    .auth-actions{
+      display:flex;
+      justify-content:flex-end;
+      margin-top:8px;
+    }
+    .auth-footer{
+      border-top:1px solid var(--border);
+      padding:10px 16px 12px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-size:11px;
+      color:var(--muted);
+    }
+    .auth-alert{
+      margin-bottom:10px;
+      font-size:12px;
+      padding:8px 10px;
+      border-radius:10px;
+    }
+    .auth-alert-error{
+      background:#fef2f2;
+      color:#b91c1c;
+      border:1px solid #fecaca;
+    }
+
+    /* SHELL */
+    #pos-shell{
+      display:none;
+      width:100%;
+      max-width:1200px;
+      height:90vh;
+      min-height:620px;
+      padding:16px;
+      gap:16px;
+    }
+    .shell-inner{
+      display:flex;
+      flex-direction:column;
+      width:100%;
+      gap:12px;
+    }
+    .shell-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .brand-block{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    #brand-logo{
+      width:40px;
+      height:40px;
+      border-radius:14px;
+      background:var(--panel-soft);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:600;
+      font-size:18px;
+      overflow:hidden;
+    }
+    #brand-logo img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      border-radius:inherit;
+    }
+    .brand-text-main{
+      font-size:15px;
+      font-weight:600;
+    }
+    .brand-text-sub{
+      font-size:12px;
+      color:var(--muted);
+    }
+    .user-block{
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .user-avatar{
+      width:32px;
+      height:32px;
+      border-radius:999px;
+      background:#e5e7eb;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:13px;
+      font-weight:600;
+    }
+    .user-info{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+    .user-name{
+      font-size:13px;
+      font-weight:600;
+    }
+    .user-role{
+      font-size:11px;
+      color:var(--muted);
+    }
+    .badge{
+      font-size:11px;
+      padding:3px 8px;
+      border-radius:999px;
+      background:var(--panel-soft);
+      color:var(--muted);
+      border:1px solid var(--border);
+    }
+    #branch-badge{
+      margin-left:8px;
+    }
+    #subtitle{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:2px;
+    }
+
+    .shell-main{
+      flex:1;
+      display:flex;
+      gap:12px;
+      min-height:0;
+    }
+
+    /* LEFT COLUMN */
+    .col-left{
+      flex:1.1;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      min-width:0;
+    }
+    .panel{
+      background:var(--panel);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:14px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      min-height:0;
+    }
+    .panel-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:8px;
+    }
+    .panel-title{
+      font-size:14px;
+      font-weight:600;
+    }
+    .panel-subtitle{
+      font-size:11px;
+      color:var(--muted);
+      margin-top:2px;
+    }
+    .mode-pills{
+      display:inline-flex;
+      padding:3px;
+      border-radius:999px;
+      background:#e5e7eb;
+      gap:2px;
+    }
+    .mode-pill{
+      font-size:11px;
+      padding:4px 10px;
+      border-radius:999px;
+      border:none;
+      background:transparent;
+      cursor:pointer;
+      font-weight:500;
+    }
+    .mode-pill-active{
+      background:#fff;
+      box-shadow:0 0 0 1px rgba(148,163,184,.6);
+    }
+
+    .field-row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .field-pos{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      font-size:12px;
+      flex:1;
+      min-width:0;
+    }
+    .field-label-pos{
+      font-size:11px;
+      font-weight:500;
+      color:var(--muted);
+    }
+    .field-hint-pos{
+      font-size:10px;
+      color:var(--muted);
+    }
+    .field-input-pos,
+    .field-select-pos{
+      border-radius:999px;
+      border:1px solid var(--border);
+      padding:7px 10px;
+      font-size:12px;
+      outline:none;
+      background:#f9fafb;
+      width:100%;
+    }
+    .field-input-pos:focus,
+    .field-select-pos:focus{
+      border-color:var(--accent);
+      background:#fff;
+    }
+
+    .products-search-row{
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    #top-product-search{
+      flex:1;
+    }
+
+    .products-list{
+      flex:1;
+      min-height:0;
+      overflow:auto;
+      padding-right:4px;
+    }
+    .product-item{
+      border-radius:12px;
+      border:1px solid var(--border);
+      padding:8px 10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      margin-bottom:6px;
+      background:#fff;
+      cursor:pointer;
+    }
+    .product-item.disabled{
+      opacity:.5;
+      cursor:default;
+    }
+    .product-main{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      min-width:0;
+    }
+    .product-thumb{
+      width:34px;
+      height:34px;
+      border-radius:10px;
+      background:#eff6ff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:14px;
+      font-weight:600;
+      overflow:hidden;
+    }
+    .product-thumb img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+    }
+    .product-title{
+      font-size:13px;
+      font-weight:600;
+    }
+    .product-meta{
+      font-size:11px;
+      color:var(--muted);
+    }
+    .product-right{
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+
+    .empty{
+      font-size:12px;
+      color:var(--muted);
+      padding:10px 4px;
+      text-align:center;
+    }
+
+    /* RIGHT COLUMN */
+    .col-right{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      min-width:0;
+    }
+    .cart-table-wrap{
+      border-radius:12px;
+      border:1px solid var(--border);
+      overflow:hidden;
+      background:#fff;
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:12px;
+    }
+    thead{
+      background:#f9fafb;
+    }
+    th,td{
+      padding:8px 10px;
+      text-align:left;
+      border-bottom:1px solid #f1f5f9;
+    }
+    th{
+      font-size:11px;
+      color:var(--muted);
+      font-weight:500;
+    }
+    td:last-child,th:last-child{
+      text-align:right;
+    }
+    .qty-control{
+      display:inline-flex;
+      align-items:center;
+      border-radius:999px;
+      border:1px solid var(--border);
+      overflow:hidden;
+      background:#f9fafb;
+    }
+    .qty-btn{
+      border:none;
+      background:transparent;
+      padding:3px 8px;
+      font-size:13px;
+      cursor:pointer;
+    }
+    .qty-val{
+      padding:2px 8px;
+      min-width:20px;
+      text-align:center;
+    }
+
+    .summary-row{
+      display:flex;
+      justify-content:space-between;
+      font-size:12px;
+      margin-bottom:4px;
+    }
+    .summary-label{
+      color:var(--muted);
+    }
+    .summary-value{
+      font-weight:500;
+    }
+    .summary-value-strong{
+      font-weight:600;
+      font-size:13px;
+    }
+    #summary-discount,
+    #summary-bogo{
+      color:var(--danger);
+    }
+
+    .cart-footer-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      margin-top:8px;
+    }
+    .cart-summary-inline{
+      font-size:12px;
+      color:var(--muted);
+    }
+    .cart-summary-inline strong{
+      color:var(--ink);
+    }
+
+    #return-note{
+      font-size:11px;
+      color:var(--muted);
+      background:#fef3c7;
+      border-radius:10px;
+      padding:6px 8px;
+    }
+
+    #global-alert{
+      font-size:12px;
+      min-height:18px;
+    }
+    .alert{
+      padding:6px 10px;
+      border-radius:10px;
+      font-size:12px;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+    }
+    .alert-info{
+      background:#eff6ff;
+      color:#1d4ed8;
+    }
+    .alert-error{
+      background:#fef2f2;
+      color:#b91c1c;
+    }
+    .alert-ok{
+      background:#ecfdf3;
+      color:#166534;
+    }
+
+    /* DISCOUNT / BOGO rows */
+    #discount-row,
+    #bogo-row{
+      display:none;
+    }
+
+    /* OFFLINE */
+    #offline-status{
+      display:none;
+      font-size:11px;
+      padding:6px 10px;
+      border-radius:10px;
+      background:#fef3c7;
+      color:#92400e;
+      border:1px solid #fcd34d;
+      margin-top:4px;
+    }
+    #offline-queue-list{
+      font-size:10px;
+      color:#92400e;
+      margin-top:2px;
+    }
+
+    /* MODALS */
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      background:rgba(15,23,42,.4);
+      z-index:40;
+      padding:16px;
+    }
+    .modal-panel{
+      background:#fff;
+      border-radius:18px;
+      max-width:480px;
+      width:100%;
+      max-height:90vh;
+      overflow:auto;
+      padding:16px 16px 14px;
+      box-shadow:0 24px 60px rgba(15,23,42,.35);
+    }
+    .modal-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+      margin-bottom:12px;
+    }
+    .modal-title{
+      font-size:15px;
+      font-weight:600;
+    }
+    .modal-subtitle{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:2px;
+    }
+    .text-note{
+      font-size:11px;
+      color:var(--muted);
+      margin-top:4px;
+    }
+    .modal-footer{
+      display:flex;
+      justify-content:flex-end;
+      gap:8px;
+      margin-top:14px;
+    }
+    .modal-alert{
+      font-size:12px;
+      margin-bottom:10px;
+      padding:6px 10px;
+      border-radius:10px;
+    }
+    .modal-alert-error{
+      background:#fef2f2;
+      color:#b91c1c;
+      border:1px solid #fecaca;
+    }
+    .hidden{display:none;}
+
+    /* Product modal body */
+    .product-modal-body{
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      margin-bottom:10px;
+    }
+    .product-modal-image{
+      width:72px;
+      height:72px;
+      border-radius:16px;
+      background:#f9fafb;
+      border:1px solid var(--border);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+      font-size:12px;
+      color:var(--muted);
+    }
+    .product-modal-image img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+    }
+    .product-modal-details{
+      flex:1;
+      min-width:0;
+    }
+    .product-modal-name{
+      font-size:14px;
+      font-weight:600;
+      margin-bottom:4px;
+    }
+    #product-modal-price{
+      font-weight:600;
+      font-size:13px;
+      margin-top:4px;
+    }
+    .product-modal-stock{
+      font-size:11px;
+      color:var(--muted);
+      margin-top:2px;
+    }
+
+    /* CHECKOUT modal */
+    #checkout-payment-summary{
+      border-radius:999px;
+      border:1px solid var(--border);
+      padding:7px 10px;
+      font-size:12px;
+    }
+
+    /* Responsive */
+    @media(max-width:900px){
+      #pos-shell{
+        height:auto;
+      }
+      .shell-main{
+        flex-direction:column;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN -->
+  <div id="pos-auth-wrapper">
+    <div class="card auth-card">
+      <div class="auth-header">
+        <div class="auth-title">Luma Events — Vendor POS</div>
+        <div class="auth-subtitle">
+          Log in with your cashier username &amp; PIN. Each staff user is linked to a brand, vendor, and event.
+        </div>
+      </div>
+
+      <div id="auth-alert"></div>
+
+      <form id="pos-login-form">
+        <div class="auth-field">
+          <div class="auth-label">Username</div>
+          <input id="pos-login-username" class="auth-input" autocomplete="username" placeholder="e.g. lokamania01"/>
+        </div>
+        <div class="auth-field">
+          <div class="auth-label">PIN</div>
+          <input id="pos-login-pin" class="auth-input" type="password" autocomplete="current-password" placeholder="4–6 digits"/>
+        </div>
+        <div class="auth-actions">
+          <button id="pos-login-btn" type="submit" class="btn btn-primary btn-small">Log in</button>
+        </div>
+      </form>
+    </div>
+    <div class="auth-footer card">
+      <span>Powered by Luma Events OS</span>
+      <span>POS • Tickets • Vendor dashboards</span>
+    </div>
+  </div>
+
+  <!-- POS SHELL -->
+  <div id="pos-shell" class="card">
+    <div class="shell-inner">
+      <div class="shell-header">
+        <div>
+          <div class="brand-block">
+            <div id="brand-logo">B</div>
+            <div>
+              <div class="brand-text-main" id="brand-chip-text">Event • Vendor</div>
+              <div id="subtitle">Event POS for this vendor. Sales and returns are stored in the system.</div>
+            </div>
+          </div>
+          <div style="margin-top:6px;">
+            <span id="branch-badge" class="badge">Vendor</span>
+          </div>
+        </div>
+        <div class="user-block">
+          <div class="user-info">
+            <div class="user-name" id="user-name">Cashier</div>
+            <div class="user-role" id="user-role">role</div>
+          </div>
+          <div class="user-avatar" id="user-initials">CU</div>
+        </div>
+      </div>
+
+      <div id="global-alert"></div>
+
+      <div id="offline-status"></div>
+      <div id="offline-queue-list"></div>
+
+      <div class="shell-main">
+        <!-- LEFT -->
+        <div class="col-left">
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <div class="panel-title" id="left-card-title">Products</div>
+                <div class="panel-subtitle" id="left-card-subtitle">
+                  Scan barcode, type a code, or tap “Add” to send items to cart.
+                </div>
+              </div>
+              <div class="mode-pills">
+                <button type="button" id="mode-sale" class="mode-pill mode-pill-active">Sale</button>
+                <button type="button" id="mode-return" class="mode-pill">Return</button>
+              </div>
+            </div>
+
+            <div class="field-row">
+              <div class="field-pos" style="flex:1.2">
+                <div class="field-label-pos" id="code-input-label">Scan or type product code</div>
+                <input id="code-input" class="field-input-pos" placeholder="Barcode / product code / order ID"/>
+                <div class="field-hint-pos" id="code-input-hint">
+                  Works with barcode scanners that behave like a keyboard and send Enter after scanning.
+                </div>
+              </div>
+              <div class="field-pos" style="max-width:120px;">
+                <div class="field-label-pos">&nbsp;</div>
+                <button type="button" id="btn-add-code" class="btn btn-primary btn-small" style="width:100%;">Add</button>
+              </div>
+            </div>
+
+            <div class="field-row" style="align-items:center; margin-top:6px;">
+              <div class="field-pos">
+                <div class="field-label-pos">Search products</div>
+                <input id="top-product-search" class="field-input-pos" placeholder="Search products (name/code)"/>
+              </div>
+            </div>
+
+            <div id="return-full-row" class="field-row" style="margin-top:4px; display:none;">
+              <div class="field-pos">
+                <div class="field-label-pos">Full refund</div>
+                <button type="button" id="btn-return-full" class="btn btn-ghost btn-small">
+                  Refund full remaining quantity for all items in this order
+                </button>
+              </div>
+            </div>
+
+            <div id="products-list" class="products-list">
+              <div class="empty">Load products…</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT -->
+        <div class="col-right">
+          <div class="panel" style="flex:1.4;">
+            <div class="panel-header">
+              <div>
+                <div class="panel-title" id="cart-card-title">Cart</div>
+                <div class="panel-subtitle" id="cart-card-subtitle">
+                  Adjust quantities or remove items. Proceed to add customer &amp; payment details.
+                </div>
+              </div>
+              <button type="button" id="btn-clear-cart" class="btn btn-ghost btn-small">Clear</button>
+            </div>
+
+            <div class="cart-table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Code</th>
+                    <th>Qty</th>
+                    <th>Price</th>
+                    <th>Line total</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="cart-tbody">
+                  <tr>
+                    <td colspan="6" class="empty">
+                      No items yet. Scan or select a product.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div style="margin-top:8px;">
+              <div id="return-note" style="display:none;">
+                Return mode: refunds are stored as negative totals and linked to the original order.
+              </div>
+            </div>
+
+            <div style="margin-top:10px;">
+              <div class="summary-row">
+                <div class="summary-label" id="summary-subtotal-label">Subtotal</div>
+                <div class="summary-value" id="summary-subtotal">0.00</div>
+              </div>
+
+              <div id="bogo-row" class="summary-row">
+                <div class="summary-label" id="bogo-label">BOGO</div>
+                <div class="summary-value" id="summary-bogo">-0.00</div>
+              </div>
+
+              <div id="discount-row" class="summary-row">
+                <div class="summary-label" id="discount-label">Discount</div>
+                <div class="summary-value" id="summary-discount">-0.00</div>
+              </div>
+
+              <div class="summary-row">
+                <div class="summary-label" id="summary-tax-label">VAT (0%)</div>
+                <div class="summary-value" id="summary-tax">0.00</div>
+              </div>
+              <div class="summary-row">
+                <div class="summary-label" id="summary-service-label">Service Fee (0%)</div>
+                <div class="summary-value" id="summary-service">0.00</div>
+              </div>
+
+              <div class="summary-row" style="margin-top:4px;">
+                <div class="summary-label" id="summary-total-label">Total</div>
+                <div class="summary-value summary-value-strong" id="summary-total">0.00</div>
+              </div>
+            </div>
+
+            <div style="margin-top:8px; border-top:1px solid var(--border); padding-top:8px;">
+              <div class="field-row">
+                <div class="field-pos">
+                  <div class="field-label-pos">Payment method</div>
+                  <select id="payment-method" class="field-select-pos">
+                    <option value="cash">Cash</option>
+                    <option value="card">Card</option>
+                    <option value="wallet">Wallet</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div class="field-pos">
+                  <div class="field-label-pos">Discount code</div>
+                  <div class="field-row">
+                    <input id="discount-code-input" class="field-input-pos" placeholder="Optional code"/>
+                    <button type="button" id="btn-apply-discount" class="btn btn-ghost btn-small">Apply</button>
+                  </div>
+                  <div class="field-hint-pos">
+                    POS only accepts in-store or store &amp; online codes (not online-only).
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="cart-footer-row">
+              <div class="cart-summary-inline">
+                <span id="cart-summary-count">0 items</span> •
+                <strong id="cart-summary-total">0.00</strong>
+              </div>
+              <div style="display:flex; gap:6px;">
+                <button type="button" id="btn-open-checkout-secondary" class="btn btn-ghost btn-small">
+                  Proceed
+                </button>
+                <button type="button" id="btn-open-checkout" class="btn btn-primary btn-small">
+                  Proceed
+                </button>
+              </div>
+            </div>
+          </div>
+        </div><!-- /col-right -->
+      </div><!-- /shell-main -->
+    </div><!-- /shell-inner -->
+  </div><!-- /pos-shell -->
+
+  <!-- PRODUCT MODAL -->
+  <div id="product-modal" class="modal-backdrop">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" id="product-modal-title">Add item</div>
+          <div class="modal-subtitle" id="product-modal-subtitle">
+            Choose variant and quantity.
+          </div>
+        </div>
+        <div id="product-modal-price">0.00</div>
+      </div>
+
+      <div class="product-modal-body">
+        <div class="product-modal-image" id="product-modal-image">
+          No image
+        </div>
+        <div class="product-modal-details">
+          <div class="product-modal-name" id="product-modal-name">Item</div>
+          <div id="product-modal-code"></div>
+          <div class="product-modal-stock" id="product-modal-stock"></div>
+        </div>
+      </div>
+
+      <div class="field-row" id="product-modal-variants-row" style="margin-top:6px;">
+        <div id="product-modal-variants" class="field-row" style="width:100%;"></div>
+      </div>
+
+      <div class="field-row" style="margin-top:4px;">
+        <div class="field-pos" style="max-width:150px;">
+          <div class="field-label-pos">Quantity</div>
+          <input id="product-modal-qty" class="field-input-pos" type="number" min="1" value="1"/>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" id="btn-product-modal-cancel" class="btn btn-ghost btn-small">Cancel</button>
+        <button type="button" id="btn-product-modal-add" class="btn btn-primary btn-small">Add to cart</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHECKOUT MODAL -->
+  <div id="checkout-modal" class="modal-backdrop">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" id="checkout-title">Checkout — customer &amp; payment</div>
+          <div class="modal-subtitle" id="checkout-subtitle">
+            Customer details are optional, but required if they want to receive a receipt. Suggestions appear as you type.
+          </div>
+          <div class="text-note" id="checkout-original-order-note" style="display:none;"></div>
+        </div>
+        <span id="checkout-total" class="summary-total">0.00</span>
+      </div>
+
+      <div id="checkout-alert" class="modal-alert hidden"></div>
+
+      <div class="field-row">
+        <div class="field-pos">
+          <div class="field-label-pos">Customer name</div>
+          <input id="checkout-customer-name" class="field-input-pos" placeholder="Optional full name"/>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field-pos">
+          <div class="field-label-pos">Phone</div>
+          <input id="checkout-customer-phone" class="field-input-pos" placeholder="Optional, used to find customer"/>
+        </div>
+        <div class="field-pos">
+          <div class="field-label-pos">Email</div>
+          <input id="checkout-customer-email" class="field-input-pos" type="email" placeholder="Required to receive e-receipt"/>
+        </div>
+      </div>
+
+      <div id="checkout-customer-suggestions" class="customer-suggestions hidden"></div>
+
+      <div class="field-row">
+        <div class="field-pos">
+          <div class="field-label-pos">Payment method</div>
+          <div class="field-input-pos" style="background:#f9fafb;" id="checkout-payment-summary">
+            <!-- filled from main select -->
+          </div>
+          <div class="field-hint-pos">
+            Change payment method from the main POS screen if needed.
+          </div>
+        </div>
+      </div>
+
+      <div class="field-row" id="card-txn-row" style="display:none;">
+        <div class="field-pos">
+          <div class="field-label-pos">Card transaction number <span class="text-muted">*</span></div>
+          <input id="checkout-card-txn" class="field-input-pos" placeholder="Last 4 / transaction reference"/>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" id="btn-checkout-cancel" class="btn btn-ghost btn-small">Cancel</button>
+        <button type="button" id="btn-checkout-confirm" class="btn btn-primary btn-small">Confirm &amp; place order</button>
+      </div>
+    </div>
+  </div>
+  <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import {
+    getFirestore,
+    doc,
+    getDoc,
+    setDoc,
+    addDoc,
+    collection,
+    getDocs,
+    query,
+    where,
+    limit,
+    runTransaction,
+    serverTimestamp,
+    updateDoc,
+    collectionGroup
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import {
+    getAuth,
+    signInAnonymously
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey:"AIzaSyA80bAAGPuyscnTVS-zwrxE9Jp3tPiS1gM",
+    authDomain:"events-339ce.firebaseapp.com",
+    databaseURL:"https://events-339ce-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId:"events-339ce",
+    storageBucket:"events-339ce.firebasestorage.app",
+    messagingSenderId:"175601544315",
+    appId:"1:175601544315:web:00c94b4affa972b3a286de"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+
+  // Anonymous auth so Firestore rules with request.auth != null will work
+  signInAnonymously(auth).catch(err => {
+    console.error("Anonymous auth failed:", err);
+  });
+
+  const qs = s => document.querySelector(s);
+
+  // LOGIN DOM
+  const authWrapper = qs("#pos-auth-wrapper");
+  const authAlertEl = qs("#auth-alert");
+  const loginForm = qs("#pos-login-form");
+  const loginUsernameEl = qs("#pos-login-username");
+  const loginPinEl = qs("#pos-login-pin");
+  const loginBtn = qs("#pos-login-btn");
+
+  // POS DOM
+  const shellEl = qs("#pos-shell");
+  const subtitleEl = qs("#subtitle");
+  const brandLogoEl = qs("#brand-logo");
+  const brandChipTextEl = qs("#brand-chip-text");
+  const userInitialsEl = qs("#user-initials");
+  const userNameEl = qs("#user-name");
+  const userRoleEl = qs("#user-role");
+  const branchBadgeEl = qs("#branch-badge");
+  const globalAlertEl = qs("#global-alert");
+
+  const leftCardTitleEl = qs("#left-card-title");
+  const leftCardSubtitleEl = qs("#left-card-subtitle");
+  const codeInputLabelEl = qs("#code-input-label");
+  const codeInputHintEl = qs("#code-input-hint");
+  const cartCardTitleEl = qs("#cart-card-title");
+  const cartCardSubtitleEl = qs("#cart-card-subtitle");
+  const summarySubtotalLabelEl = qs("#summary-subtotal-label");
+  const summaryTotalLabelEl = qs("#summary-total-label");
+  const summaryPaymentLabelEl = qs("#summary-payment-label");
+  const summaryTaxLabelEl = qs("#summary-tax-label");
+  const summaryServiceLabelEl = qs("#summary-service-label");
+  const returnNoteEl = qs("#return-note");
+
+  const codeInputEl = qs("#code-input");
+  const btnAddCode = qs("#btn-add-code");
+
+  const cartTbody = qs("#cart-tbody");
+  const summarySubtotalEl = qs("#summary-subtotal");
+  const summaryTaxEl = qs("#summary-tax");
+  const summaryServiceEl = qs("#summary-service");
+  const summaryTotalEl = qs("#summary-total");
+  const paymentMethodEl = qs("#payment-method");
+  const btnClearCart = qs("#btn-clear-cart");
+
+  const productsListEl = qs("#products-list");
+  const topSearchEl = qs("#top-product-search");
+  const cartSummaryCountEl = qs("#cart-summary-count");
+  const cartSummaryTotalEl = qs("#cart-summary-total");
+  const btnOpenCheckoutTop = qs("#btn-open-checkout");
+  const btnOpenCheckoutSecondary = qs("#btn-open-checkout-secondary");
+
+  const modeSaleBtn = qs("#mode-sale");
+  const modeReturnBtn = qs("#mode-return");
+
+  const returnFullRowEl = qs("#return-full-row");
+  const btnReturnFull = qs("#btn-return-full");
+
+  // Discount DOM
+  const discountCodeInputEl = qs("#discount-code-input");
+  const btnApplyDiscount = qs("#btn-apply-discount");
+  const discountRowEl = qs("#discount-row");
+  const summaryDiscountEl = qs("#summary-discount");
+  const discountLabelEl = qs("#discount-label");
+
+  // BOGO DOM
+  const bogoRowEl = qs("#bogo-row");
+  const summaryBogoEl = qs("#summary-bogo");
+  const bogoLabelEl = qs("#bogo-label");
+
+  // Offline DOM
+  const offlineStatusEl = qs("#offline-status");
+  const offlineQueueListEl = qs("#offline-queue-list");
+
+  // Checkout modal DOM
+  const checkoutModalEl = qs("#checkout-modal");
+  const checkoutAlertEl = qs("#checkout-alert");
+  const checkoutTotalEl = qs("#checkout-total");
+  const checkoutPaymentSummaryEl = qs("#checkout-payment-summary");
+  const checkoutNameEl = qs("#checkout-customer-name");
+  const checkoutPhoneEl = qs("#checkout-customer-phone");
+  const checkoutEmailEl = qs("#checkout-customer-email");
+  const checkoutCardTxnRowEl = qs("#card-txn-row");
+  const checkoutCardTxnEl = qs("#checkout-card-txn");
+  const checkoutSuggestionsEl = qs("#checkout-customer-suggestions");
+  const checkoutTitleEl = qs("#checkout-title");
+  const checkoutSubtitleEl = qs("#checkout-subtitle");
+  const checkoutOriginalOrderNoteEl = qs("#checkout-original-order-note");
+  const btnCheckoutCancel = qs("#btn-checkout-cancel");
+  const btnCheckoutConfirm = qs("#btn-checkout-confirm");
+  const checkoutModal = qs("#checkout-modal");
+
+  // Product modal DOM
+  const productModalEl = qs("#product-modal");
+  const productModalTitleEl = qs("#product-modal-title");
+  const productModalSubtitleEl = qs("#product-modal-subtitle");
+  const productModalPriceEl = qs("#product-modal-price");
+  const productModalImageEl = qs("#product-modal-image");
+  const productModalNameEl = qs("#product-modal-name");
+  const productModalCodeEl = qs("#product-modal-code");
+  const productModalStockEl = qs("#product-modal-stock");
+  const productModalVariantsRowEl = qs("#product-modal-variants-row");
+  const productModalVariantsEl = qs("#product-modal-variants");
+  const productModalQtyEl = qs("#product-modal-qty");
+  const btnProductModalCancel = qs("#btn-product-modal-cancel");
+  const btnProductModalAdd = qs("#btn-product-modal-add");
+
+  // Global state
+  let brandId = null;
+  let brandData = null;
+  let eventId = null;
+  let eventName = null;
+
+  let posUser = null;
+
+  let products = [];
+  let cartItems = [];
+  let currentCustomerId = null;
+  let lastCustomerSearchTerm = "";
+  let currentMode = "sale"; // "sale" | "return"
+  let currentReturnOrderMeta = null; // {orderDocId, orderId, data}
+
+  let taxPercent = 0;
+  let servicePercent = 0;
+
+  let bogoActive = false;
+  let bogoName = "";
+
+  // Discount state
+  let appliedDiscount = null; // { id, code, percent, scope }
+  let currentCustomerHasUsedDiscountBefore = false;
+
+  // Offline orders queue
+  let offlineOrders = [];
+  const OFFLINE_KEY_PREFIX = "luma_pos_offline_orders";
+  const CRED_KEY = "luma_pos_credentials";
+
+  let currentProductForModal = null;
+  let currentFlatVariants = [];
+
+  const WEBHOOK_URL = "https://farid-seven.app.n8n.cloud/webhook/e220fde4-d2bd-46b3-b0d9-b8cfc15ca6f5";
+
+  function getOfflineKeyForBrand() {
+    return `${OFFLINE_KEY_PREFIX}_${brandId || "noBrand"}`;
+  }
+
+  function showAuthAlert(msg){
+    authAlertEl.innerHTML = `<div class="auth-alert auth-alert-error">${msg}</div>`;
+  }
+  function clearAuthAlert(){
+    authAlertEl.innerHTML = "";
+  }
+  function showGlobalAlert(msg,type="info"){
+    let cls = "alert-info";
+    if(type==="error") cls = "alert-error";
+    if(type==="ok") cls = "alert-ok";
+    globalAlertEl.innerHTML = `<div class="alert ${cls}">${msg}</div>`;
+    setTimeout(()=>{ globalAlertEl.innerHTML = ""; }, 4000);
+  }
+
+  function initialsFromNameOrUsername(name,username){
+    if(name){
+      const p = name.trim().split(" ");
+      if(p.length === 1) return p[0].slice(0,2).toUpperCase();
+      return (p[0][0]+p[p.length-1][0]).toUpperCase();
+    }
+    if(username){
+      const s = username.toString();
+      if(s.length<=2) return s.toUpperCase();
+      const parts = s.split(/[._-]/).filter(Boolean);
+      if(parts.length===0) return s.slice(0,2).toUpperCase();
+      return (parts[0][0]+(parts[1]?.[0] || "")).toUpperCase();
+    }
+    return "U";
+  }
+
+  // ---------- BOGO + totals ----------
+
+  function computeBogoDiscountForSaleMode(){
+    if (!bogoActive || currentMode !== "sale") {
+      return { bogoDiscount: 0, pairs: [] };
+    }
+
+    const flat = [];
+
+    // Flatten cart: each unit as a separate entry
+    cartItems.forEach((item, cartIndex) => {
+      for (let i = 0; i < item.qty; i++) {
+        flat.push({
+          cartIndex,
+          price: item.price,
+        });
+      }
+    });
+
+    if (flat.length < 2) {
+      return { bogoDiscount: 0, pairs: [] };
+    }
+
+    // Sort high → low, so higher one is paid, cheaper is free
+    flat.sort((a, b) => b.price - a.price);
+
+    let discount = 0;
+    const pairs = [];
+
+    for (let i = 0; i + 1 < flat.length; i += 2) {
+      const paid = flat[i];
+      const free = flat[i + 1];
+      discount += free.price;
+      pairs.push({ paid, free });
+    }
+
+    return { bogoDiscount: discount, pairs };
+  }
+
+  function computeTotals(){
+    let subtotal = 0;
+    cartItems.forEach(item=>{
+      subtotal += item.price * item.qty;
+    });
+
+    // RETURN MODE — refund must match what customer actually paid
+    if (currentMode === "return" && currentReturnOrderMeta && currentReturnOrderMeta.data) {
+      const od = currentReturnOrderMeta.data;
+
+      // Effective tax / service %
+      let effectiveTaxPercent = taxPercent;
+      let effectiveServicePercent = servicePercent;
+      if (typeof od.taxPercent === "number") {
+        effectiveTaxPercent = od.taxPercent;
+      }
+      if (typeof od.servicePercent === "number") {
+        effectiveServicePercent = od.servicePercent;
+      }
+
+      const originalItems = Array.isArray(od.items) ? od.items : [];
+      const orderFullSubtotal = originalItems.reduce((sum, it) => {
+        const price = typeof it.price === "number" ? it.price : 0;
+        const q = typeof it.qty === "number" ? Math.abs(it.qty) : 1;
+        return sum + price * q;
+      }, 0);
+
+      const paidTotal = Math.abs(typeof od.total === "number" ? od.total : 0);
+
+      const divider = 1 + (effectiveTaxPercent / 100) + (effectiveServicePercent / 100);
+      let orderNetSubtotal = divider > 0 ? (paidTotal / divider) : paidTotal;
+
+      if (orderNetSubtotal > orderFullSubtotal) {
+        orderNetSubtotal = orderFullSubtotal;
+      }
+
+      const overallDiscountAbs = Math.max(0, orderFullSubtotal - orderNetSubtotal);
+
+      const portion = orderFullSubtotal > 0 ? (subtotal / orderFullSubtotal) : 0;
+      const refundDiscount = overallDiscountAbs * portion;
+
+      const effectiveSubtotal = subtotal - refundDiscount;
+      const taxAmount = effectiveSubtotal * (effectiveTaxPercent / 100);
+      const serviceAmount = effectiveSubtotal * (effectiveServicePercent / 100);
+      const total = effectiveSubtotal + taxAmount + serviceAmount;
+
+      return {
+        subtotal,
+        subtotalAfterBogo: subtotal,
+        bogoDiscount: refundDiscount,
+        discountAmount: 0,
+        taxAmount,
+        serviceAmount,
+        total
+      };
+    }
+
+    // SALE MODE — BOGO + discount code
+    const { bogoDiscount } = computeBogoDiscountForSaleMode();
+    const subtotalAfterBogo = subtotal - (bogoDiscount || 0);
+
+    let effectiveSubtotal = subtotalAfterBogo;
+    let discountAmount = 0;
+    if (appliedDiscount && appliedDiscount.percent > 0 && effectiveSubtotal > 0) {
+      discountAmount = (effectiveSubtotal * appliedDiscount.percent) / 100;
+      effectiveSubtotal -= discountAmount;
+    }
+
+    const taxAmount = effectiveSubtotal * (taxPercent / 100);
+    const serviceAmount = effectiveSubtotal * (servicePercent / 100);
+    const total = effectiveSubtotal + taxAmount + serviceAmount;
+
+    return {
+      subtotal,
+      subtotalAfterBogo,
+      bogoDiscount: bogoDiscount || 0,
+      discountAmount,
+      taxAmount,
+      serviceAmount,
+      total
+    };
+  }
+
+  function updateCartSummary(totals){
+    const totalItems = cartItems.reduce((sum,i)=>sum + i.qty,0);
+    cartSummaryCountEl.textContent = totalItems === 1 ? "1 item" : `${totalItems} items`;
+    cartSummaryTotalEl.textContent = totals.total.toFixed(2);
+  }
+
+  function renderCart(){
+    if(cartItems.length === 0){
+      cartTbody.innerHTML = `
+        <tr>
+          <td colspan="6" class="empty">
+            ${
+              currentMode==="sale"
+                ? "No items yet. Scan or select a product."
+                : "No items yet. Load an order in return mode."
+            }
+          </td>
+        </tr>
+      `;
+      summarySubtotalEl.textContent = "0.00";
+      summaryTaxEl.textContent = "0.00";
+      summaryServiceEl.textContent = "0.00";
+      summaryTotalEl.textContent = "0.00";
+
+      // reset discount
+      appliedDiscount = null;
+      discountRowEl.style.display = "none";
+      summaryDiscountEl.textContent = "-0.00";
+      if(discountCodeInputEl) discountCodeInputEl.value = "";
+
+      // reset BOGO
+      if (bogoRowEl) {
+        bogoRowEl.style.display = "none";
+        summaryBogoEl.textContent = "-0.00";
+      }
+
+      updateCartSummary({subtotal:0,taxAmount:0,serviceAmount:0,total:0});
+      return;
+    }
+    let html = "";
+    cartItems.forEach((item,idx)=>{
+      const line = item.price * item.qty;
+      const qtyInfo = (currentMode==="return" && item.originalQty != null)
+        ? ` (${item.qty}/${item.originalQty})`
+        : "";
+      html += `
+        <tr>
+          <td>${item.name}</td>
+          <td>${item.code || ""}</td>
+          <td>
+            <div class="qty-control">
+              <button class="qty-btn" data-idx="${idx}" data-action="dec">-</button>
+              <span class="qty-val">${item.qty}${qtyInfo}</span>
+              <button class="qty-btn" data-idx="${idx}" data-action="inc">+</button>
+            </div>
+          </td>
+          <td>${item.price.toFixed(2)}</td>
+          <td>${line.toFixed(2)}</td>
+          <td><button class="btn btn-small btn-danger" data-idx="${idx}" data-action="remove">✕</button></td>
+        </tr>
+      `;
+    });
+    cartTbody.innerHTML = html;
+
+    const totals = computeTotals();
+
+    // BOGO / Order discount row
+    if (bogoRowEl) {
+      if (totals.bogoDiscount > 0) {
+        bogoRowEl.style.display = "flex";
+        summaryBogoEl.textContent = `-${totals.bogoDiscount.toFixed(2)}`;
+
+        if (currentMode === "sale") {
+          bogoLabelEl.textContent = bogoName ? `BOGO (${bogoName})` : "BOGO";
+        } else {
+          bogoLabelEl.textContent = "Order discount";
+        }
+      } else {
+        bogoRowEl.style.display = "none";
+        summaryBogoEl.textContent = "-0.00";
+      }
+    }
+
+    // Discount row (sale mode only, based on current appliedDiscount)
+    if (
+      currentMode === "sale" &&
+      appliedDiscount &&
+      appliedDiscount.percent > 0 &&
+      totals.subtotalAfterBogo > 0
+    ){
+      discountRowEl.style.display = "flex";
+      summaryDiscountEl.textContent = `-${totals.discountAmount.toFixed(2)}`;
+
+      const labelPrefix = "Discount";
+      const label = appliedDiscount.code
+        ? `${labelPrefix} (${appliedDiscount.code} · ${appliedDiscount.percent}%)`
+        : `${labelPrefix} (${appliedDiscount.percent}%)`;
+
+      discountLabelEl.textContent = label;
+    } else {
+      discountRowEl.style.display = "none";
+      summaryDiscountEl.textContent = "-0.00";
+    }
+
+    summarySubtotalEl.textContent = totals.subtotal.toFixed(2);
+    summaryTaxEl.textContent = totals.taxAmount.toFixed(2);
+    summaryServiceEl.textContent = totals.serviceAmount.toFixed(2);
+    summaryTotalEl.textContent = totals.total.toFixed(2);
+    updateCartSummary(totals);
+
+    cartTbody.querySelectorAll(".qty-btn").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        const idx = parseInt(btn.dataset.idx,10);
+        const action = btn.dataset.action;
+        if(Number.isNaN(idx)) return;
+        if(action==="inc"){
+          if(currentMode==="return"){
+            const maxQty = cartItems[idx].originalQty ?? cartItems[idx].qty;
+            cartItems[idx].qty = Math.min(cartItems[idx].qty + 1, maxQty);
+          }else{
+            cartItems[idx].qty += 1;
+          }
+        }else if(action==="dec"){
+          cartItems[idx].qty = Math.max(1, cartItems[idx].qty - 1);
+        }
+        renderCart();
+      });
+    });
+    cartTbody.querySelectorAll(".btn-danger").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        const idx = parseInt(btn.dataset.idx,10);
+        if(Number.isNaN(idx)) return;
+        cartItems.splice(idx,1);
+        renderCart();
+      });
+    });
+  }
+
+  function addProductToCart(prod, qty=1){
+    if(!prod) return;
+    const idForCart = prod.id;
+    const existingIdx = cartItems.findIndex(i=>i.id===idForCart);
+    if(existingIdx>=0){
+      if(currentMode==="return"){
+        const maxQty = cartItems[existingIdx].originalQty ?? cartItems[existingIdx].qty;
+        cartItems[existingIdx].qty = Math.min(cartItems[existingIdx].qty + qty, maxQty);
+      }else{
+        cartItems[existingIdx].qty += qty;
+      }
+    }else{
+      cartItems.push({
+        id:prod.id,
+        baseId: prod.baseId || prod.id,
+        name:prod.name || "Item",
+        code:prod.code || "",
+        price:typeof prod.price==="number" ? prod.price : 0,
+        qty,
+        originalQty: currentMode==="return" ? (prod.originalQty ?? qty) : null,
+        variantKey: prod.variantKey || null,
+        variantChoices: Array.isArray(prod.variantChoices) ? prod.variantChoices : null,
+        variantMeta: prod.variantMeta || null,
+        imageUrl: prod.imageUrl || null,
+        productUrl: prod.productUrl || prod.url || null
+      });
+    }
+    renderCart();
+  }
+
+  function getBaseStockForProduct(product){
+    if (Array.isArray(product.variants) && product.variants.length){
+      let sum = 0;
+      product.variants.forEach(v => {
+        if (!v) return;
+        const q =
+          typeof v.stockQty === "number" ? v.stockQty :
+          (typeof v.quantity === "number" ? v.quantity :
+          (typeof v.qty === "number" ? v.qty :
+          (typeof v.stock === "number" ? v.stock : 0)));
+        sum += q;
+      });
+      return sum;
+    }
+
+    if (typeof product.stockQty === "number") return product.stockQty;
+    if (typeof product.stock === "number")    return product.stock;
+    if (typeof product.quantity === "number") return product.quantity;
+    if (typeof product.qty === "number")      return product.qty;
+    return null;
+  }
+
+  function computeProductStockLeft(product){
+    const baseStock = getBaseStockForProduct(product);
+    if (typeof baseStock !== "number") return null;
+
+    const baseId = product.id;
+    const usedInCart = cartItems.reduce((sum, item) => {
+      const pid = item.baseId || item.id;
+      return pid === baseId ? sum + item.qty : sum;
+    }, 0);
+
+    const left = baseStock - usedInCart;
+    return left < 0 ? 0 : left;
+  }
+
+  function buildFlatVariantsForProduct(product){
+    const flat = [];
+    const variants = product.variants;
+    if(!Array.isArray(variants)) return flat;
+
+    variants.forEach((v,vIndex)=>{
+      let groupName = v.name || v.groupName || product.variantGroup || "";
+
+      const labelsArr = Array.isArray(v.labels)
+        ? v.labels
+        : (Array.isArray(v.options) ? v.options : null);
+
+      if(labelsArr){
+        labelsArr.forEach((lbl,lIndex)=>{
+          const labelName = typeof lbl === "string"
+            ? lbl
+            : (lbl.label || lbl.name || `Option ${lIndex+1}`);
+
+          const qty =
+            typeof lbl.stockQty === "number" ? lbl.stockQty :
+            (typeof lbl.quantity === "number" ? lbl.quantity :
+            (typeof lbl.qty === "number" ? lbl.qty :
+            (typeof lbl.stock === "number" ? lbl.stock : null)));
+
+          flat.push({
+            groupName,
+            labelName,
+            qty,
+            groupIndex:vIndex,
+            labelIndex:lIndex
+          });
+        });
+      }else{
+        const labelName = v.label || v.name || `Variant ${vIndex+1}`;
+        const qty =
+          typeof v.stockQty === "number" ? v.stockQty :
+          (typeof v.quantity === "number" ? v.quantity :
+          (typeof v.qty === "number" ? v.qty :
+          (typeof v.stock === "number" ? v.stock : null)));
+
+        flat.push({
+          groupName,
+          labelName,
+          qty,
+          groupIndex:vIndex,
+          labelIndex:null
+        });
+      }
+    });
+
+    return flat;
+  }
+
+  // ---------- Brand & products ----------
+
+  async function loadBrand(){
+    const brandRef = doc(db,"brands",brandId);
+    const brandSnap = await getDoc(brandRef);
+    if(!brandSnap.exists()) throw new Error("Brand not found");
+    brandData = brandSnap.data();
+
+    const brandName = brandData.name || "Brand";
+    const vendorName = brandData.vendorName || brandName;
+    eventId = brandData.eventId || null;
+    eventName = brandData.eventName || null;
+
+    if(brandData.logoUrl || brandData.logo){
+      const logoSrc = brandData.logoUrl || brandData.logo;
+      brandLogoEl.innerHTML = `<img src="${logoSrc}" alt="${brandName} logo"/>`;
+    }else{
+      brandLogoEl.textContent = brandName[0]?.toUpperCase() || "B";
+    }
+
+    const chip = eventName
+      ? `${eventName} • ${vendorName}`
+      : vendorName;
+
+    brandChipTextEl.textContent = chip;
+    subtitleEl.textContent = "Event POS for this vendor. Sales and returns are stored in the system.";
+    branchBadgeEl.textContent = vendorName || "Vendor";
+
+    // VAT / Tax from brand
+    const brandVat = typeof brandData.vat === "number" ? brandData.vat : null;
+    const brandTax = typeof brandData.taxPercent === "number"
+      ? brandData.taxPercent
+      : (typeof brandData.tax === "number"
+        ? brandData.tax
+        : (typeof brandData.vatPercent === "number" ? brandData.vatPercent : null));
+
+    taxPercent = brandVat != null
+      ? brandVat
+      : (brandTax != null ? brandTax : 0);
+
+    // Service Fee from brand
+    const brandServiceFee = typeof brandData.serviceFee === "number" ? brandData.serviceFee : null;
+    const brandService = typeof brandData.servicePercent === "number"
+      ? brandData.servicePercent
+      : (typeof brandData.service === "number"
+        ? brandData.service
+        : (typeof brandData.serviceFeePercent === "number" ? brandData.serviceFeePercent : null));
+
+    servicePercent = brandServiceFee != null
+      ? brandServiceFee
+      : (brandService != null ? brandService : 0);
+
+    // BOGO from brand
+    bogoActive = brandData.bogoActive === true;
+    bogoName   = brandData.bogoName || "Buy 1 Get 1 Free";
+
+    summaryTaxLabelEl.textContent = `VAT (${taxPercent || 0}%)`;
+    summaryServiceLabelEl.textContent = `Service Fee (${servicePercent || 0}%)`;
+  }
+
+  async function loadProducts(){
+    productsListEl.innerHTML = `<div class="empty">Loading products…</div>`;
+    const productsCol = collection(db,"brands",brandId,"products");
+    const snap = await getDocs(productsCol);
+    products = [];
+    snap.forEach(d=>{
+      const p = d.data() || {};
+      if(p.isActive === false) return;
+      const rawStock =
+        typeof p.stockQty === "number" ? p.stockQty :
+        (typeof p.stock === "number" ? p.stock :
+        (typeof p.quantity === "number" ? p.quantity :
+        (typeof p.qty === "number" ? p.qty :
+        (typeof p.currentStock === "number" ? p.currentStock : null))));
+
+      products.push({
+        id:d.id,
+        name:p.name || "Item",
+        code:p.code || "",
+        price:typeof p.price==="number" ? p.price : 0,
+        variants:Array.isArray(p.variants)? p.variants : null,
+        stock: rawStock,
+        imageUrl: p.imageUrl || p.photoUrl || p.image || null,
+        productUrl: p.productUrl || p.url || null
+      });
+    });
+    renderProductsList();
+  }
+
+  function renderProductsList(filterText=""){
+    const ft = filterText.trim().toLowerCase();
+    const list = ft
+      ? products.filter(p=>{
+          const s = `${p.name} ${p.code}`.toLowerCase();
+          return s.includes(ft);
+        })
+      : products;
+
+    if(list.length===0){
+      productsListEl.innerHTML = `<div class="empty">No products found for this vendor.</div>`;
+      return;
+    }
+    productsListEl.innerHTML = "";
+    list.forEach(p=>{
+      const div = document.createElement("div");
+      div.className = "product-item" + (currentMode==="return" ? " disabled" : "");
+      const variantsInfo = p.variants && p.variants.length
+        ? ` • Variants: ${p.variants.map(v=>v.name || "").filter(Boolean).join(", ")}`
+        : "";
+
+      const stockDisplay = computeProductStockLeft(p);
+      const stockInfo = typeof stockDisplay === "number"
+        ? ` • Stock: ${stockDisplay} left`
+        : "";
+
+      const thumbInner = p.imageUrl
+        ? `<img src="${p.imageUrl}" alt="${p.name}"/>`
+        : (p.name ? p.name[0].toUpperCase() : "P");
+
+      div.innerHTML = `
+        <div class="product-main">
+          <div class="product-thumb">${thumbInner}</div>
+          <div>
+            <div class="product-title">${p.name}</div>
+            <div class="product-meta">Code: ${p.code || "—"}${variantsInfo}${stockInfo}</div>
+          </div>
+        </div>
+        <div class="product-right">
+          <div><strong>${p.price.toFixed(2)}</strong></div>
+          <button class="btn btn-small btn-primary product-add-btn" data-id="${p.id}" ${currentMode==="return" ? "disabled" : ""}>Add</button>
+        </div>
+      `;
+
+      const btn = div.querySelector(".product-add-btn");
+      btn.addEventListener("click",(e)=>{
+        e.stopPropagation();
+        if(currentMode==="return") return;
+        openProductModal(p);
+      });
+
+      div.addEventListener("click",()=>{
+        if(currentMode==="return") return;
+        openProductModal(p);
+      });
+
+      productsListEl.appendChild(div);
+    });
+  }
+
+  function findProductInMemoryByCode(code){
+    return products.find(p=>p.code === code) || null;
+  }
+
+  async function handleAddByCodeSale(){
+    const code = codeInputEl.value.trim();
+    if(!code){
+      showGlobalAlert("Enter or scan a code first.","error");
+      return;
+    }
+    let prod = findProductInMemoryByCode(code);
+    if(!prod){
+      const productsCol = collection(db,"brands",brandId,"products");
+      const qCode = query(productsCol, where("code","==",code), limit(1));
+      const snap = await getDocs(qCode);
+      if(!snap.empty){
+        const d = snap.docs[0];
+        const p = d.data() || {};
+        const rawStock =
+          typeof p.stock === "number" ? p.stock :
+          (typeof p.quantity === "number" ? p.quantity :
+          (typeof p.qty === "number" ? p.qty :
+          (typeof p.currentStock === "number" ? p.currentStock : null)));
+        prod = {
+          id:d.id,
+          name:p.name || "Item",
+          code:p.code || "",
+          price:typeof p.price==="number" ? p.price : 0,
+          variants:Array.isArray(p.variants)? p.variants : null,
+          stock: rawStock,
+          imageUrl: p.imageUrl || p.photoUrl || p.image || null,
+          productUrl: p.productUrl || p.url || null
+        };
+        products.push(prod);
+      }
+    }
+    if(!prod){
+      showGlobalAlert(`No product found with code "${code}".`,"error");
+      return;
+    }
+    if(prod.variants && prod.variants.length){
+      openProductModal(prod);
+    }else{
+      addProductToCart(prod,1);
+    }
+    codeInputEl.value = "";
+    codeInputEl.focus();
+  }
+
+  // ---------- Returns (load order) ----------
+
+  async function handleLoadOrderForReturn(){
+    const input = codeInputEl.value.trim();
+    if(!input){
+      showGlobalAlert("Enter or scan an order ID or customer phone first.","error");
+      return;
+    }
+    const ordersCol = collection(db,"brands",brandId,"orders");
+
+    // 1) Try by orderId
+    let foundOrderDoc = null;
+    try{
+      const qOrderId = query(ordersCol, where("orderId","==",input), limit(1));
+      const snapId = await getDocs(qOrderId);
+      if(!snapId.empty){
+        foundOrderDoc = snapId.docs[0];
+      }
+    }catch(e){
+      console.warn("OrderId search error",e);
+    }
+
+    // 2) If not found, try by customer phone (use latest)
+    if(!foundOrderDoc){
+      try{
+        const qPhone = query(ordersCol, where("customerPhone","==",input), limit(5));
+        const snapPhone = await getDocs(qPhone);
+        if(!snapPhone.empty){
+          let docs = snapPhone.docs.slice();
+          docs.sort((a,b)=>{
+            const da = (a.data().createdAtLocal || "");
+            const db = (b.data().createdAtLocal || "");
+            return db.localeCompare(da);
+          });
+          foundOrderDoc = docs[0];
+          if(snapPhone.size > 1){
+            showGlobalAlert(
+              `Found multiple orders for this phone. Using the most recent one (${foundOrderDoc.data().orderId || "no ID"}).`,
+              "info"
+            );
+          }
+        }
+      }catch(e){
+        console.warn("Phone search error",e);
+      }
+    }
+
+    if(!foundOrderDoc){
+      showGlobalAlert(`No order found with ID or phone "${input}".`,"error");
+      return;
+    }
+
+    const data = foundOrderDoc.data() || {};
+    const originalOrderId = data.orderId || input;
+
+    // Build map of already returned quantities per product
+    const returnedMap = {};
+    try{
+      const qReturns = query(ordersCol, where("originalOrderId","==", originalOrderId));
+      const returnsSnap = await getDocs(qReturns);
+      returnsSnap.forEach(docR=>{
+        const dR = docR.data() || {};
+        if(!dR.isReturn) return;
+        const itemsR = Array.isArray(dR.items) ? dR.items : [];
+        itemsR.forEach(itR=>{
+          const pid = itR.productId || itR.id || "";
+          if(!pid) return;
+          const q = typeof itR.qty === "number" ? Math.abs(itR.qty) : 0;
+          if(q <= 0) return;
+          returnedMap[pid] = (returnedMap[pid] || 0) + q;
+        });
+      });
+    }catch(e){
+      console.warn("Error reading previous returns",e);
+    }
+
+    // Include offline queued returns for same order
+    offlineOrders
+      .filter(o => o.mode === "return" && o.originalOrderMeta && o.originalOrderMeta.orderId === originalOrderId)
+      .forEach(o=>{
+        (o.cartItems || []).forEach(i=>{
+          const pid = i.baseId || i.id;
+          if(!pid) return;
+          const q = typeof i.qty === "number" ? i.qty : 0;
+          if(q <= 0) return;
+          returnedMap[pid] = (returnedMap[pid] || 0) + q;
+        });
+      });
+
+    currentReturnOrderMeta = {
+      orderDocId:foundOrderDoc.id,
+      orderId:originalOrderId,
+      data
+    };
+
+    // Update VAT / Service labels in the UI for this order
+    if (typeof data.taxPercent === "number") {
+      summaryTaxLabelEl.textContent = `VAT (${data.taxPercent}%)`;
+    }
+    if (typeof data.servicePercent === "number") {
+      summaryServiceLabelEl.textContent = `Service Fee (${data.servicePercent}%)`;
+    }
+
+    const items = Array.isArray(data.items) ? data.items : [];
+    cartItems = [];
+    let anyRemaining = false;
+
+    items.forEach(it=>{
+      const pid = it.productId || it.id || "";
+      if(!pid) return;
+      const originalQty = typeof it.qty === "number" ? Math.abs(it.qty) : 1;
+      const alreadyReturned = returnedMap[pid] || 0;
+      const remaining = originalQty - alreadyReturned;
+      if(remaining <= 0) return; // fully refunded
+      anyRemaining = true;
+      cartItems.push({
+        id:pid,
+        baseId:pid,
+        name:it.name || "Item",
+        code:it.code || "",
+        price:typeof it.price==="number" ? it.price : 0,
+        qty:remaining,
+        originalQty,
+        variantKey: it.variantKey || null,
+        variantChoices: Array.isArray(it.variantChoices) ? it.variantChoices : null,
+        imageUrl: it.productImageUrl || it.imageUrl || null,
+        productUrl: it.productUrl || it.url || null,
+        variantMeta: null
+      });
+    });
+
+    if(!anyRemaining){
+      cartItems = [];
+      renderCart();
+      showGlobalAlert("This order is already fully refunded. No remaining quantity to return.","info");
+      codeInputEl.value = "";
+      codeInputEl.focus();
+      return;
+    }
+
+    // Reuse original discount metadata (for display / webhook)
+    if (typeof data.discountPercent === "number" && data.discountPercent > 0) {
+      appliedDiscount = {
+        id: data.discountId || null,
+        code: (data.discountCode || "").toString().toUpperCase() || null,
+        percent: data.discountPercent,
+        scope: data.discountScope || "store_and_online"
+      };
+    } else {
+      appliedDiscount = null;
+    }
+
+    renderCart();
+    showGlobalAlert(`Loaded order ${originalOrderId} for return.`,"ok");
+    codeInputEl.value = "";
+    codeInputEl.focus();
+  }
+
+  // ---------- Customers ----------
+
+  async function findExistingCustomer(email,phone){
+    const customersCol = collection(db,"brands",brandId,"customers");
+    if(email){
+      const qEmail = query(customersCol, where("email","==",email), limit(1));
+      const snap = await getDocs(qEmail);
+      if(!snap.empty){
+        const d = snap.docs[0];
+        return { id:d.id, data:d.data() };
+      }
+    }
+    if(phone){
+      const qPhone = query(customersCol, where("phone","==",phone), limit(1));
+      const snap = await getDocs(qPhone);
+      if(!snap.empty){
+        const d = snap.docs[0];
+        return { id:d.id, data:d.data() };
+      }
+    }
+    return null;
+  }
+
+  async function searchCustomersForSuggestions(term){
+    const t = term.trim();
+    if(t.length < 1){
+      checkoutSuggestionsEl.classList.add("hidden");
+      checkoutSuggestionsEl.innerHTML = "";
+      lastCustomerSearchTerm = "";
+      return;
+    }
+    lastCustomerSearchTerm = t;
+
+    const customersCol = collection(db,"brands",brandId,"customers");
+    const candidates = [];
+
+    try{
+      const qPhone = query(
+        customersCol,
+        where("phone", ">=", t),
+        where("phone", "<=", t + "\uf8ff"),
+        limit(5)
+      );
+      const snapPhone = await getDocs(qPhone);
+      snapPhone.forEach(d=>{
+        candidates.push({ id:d.id, data:d.data() });
+      });
+    }catch(e){ console.warn("Phone prefix search error",e); }
+
+    try{
+      const qEmail = query(
+        customersCol,
+        where("email", ">=", t),
+        where("email", "<=", t + "\uf8ff"),
+        limit(5)
+      );
+      const snapEmail = await getDocs(qEmail);
+      snapEmail.forEach(d=>{
+        if(!candidates.find(c=>c.id===d.id)){
+          candidates.push({ id:d.id, data:d.data() });
+        }
+      });
+    }catch(e){ console.warn("Email prefix search error",e); }
+
+    try{
+      const qName = query(
+        customersCol,
+        where("name", ">=", t),
+        where("name", "<=", t + "\uf8ff"),
+        limit(5)
+      );
+      const snapName = await getDocs(qName);
+      snapName.forEach(d=>{
+        if(!candidates.find(c=>c.id===d.id)){
+          candidates.push({ id:d.id, data:d.data() });
+        }
+      });
+    }catch(e){ console.warn("Name prefix search error",e); }
+
+    if(lastCustomerSearchTerm !== t) return;
+
+    if(candidates.length === 0){
+      checkoutSuggestionsEl.classList.add("hidden");
+      checkoutSuggestionsEl.innerHTML = "";
+      return;
+    }
+
+    checkoutSuggestionsEl.innerHTML = "";
+    candidates.forEach(c=>{
+      const data = c.data || {};
+      const name = data.name || "(No name)";
+      const phone = data.phone || "";
+      const email = data.email || "";
+      const div = document.createElement("div");
+      div.className = "customer-suggestion-item";
+      div.style.padding = "6px 8px";
+      div.style.borderBottom = "1px solid #e5e7eb";
+      div.style.cursor = "pointer";
+      div.innerHTML = `
+        <div><strong>${name}</strong></div>
+        <div class="text-muted">${phone || "No phone"} • ${email || "No email"}</div>
+      `;
+      div.addEventListener("click",()=>{
+        currentCustomerId = c.id;
+        currentCustomerHasUsedDiscountBefore = !!data.hasUsedDiscountCode;
+        checkoutNameEl.value = name || "";
+        checkoutPhoneEl.value = phone || "";
+        checkoutEmailEl.value = email || "";
+        checkoutSuggestionsEl.classList.add("hidden");
+        checkoutSuggestionsEl.innerHTML = "";
+      });
+      checkoutSuggestionsEl.appendChild(div);
+    });
+    checkoutSuggestionsEl.classList.remove("hidden");
+  }
+
+  async function ensureCustomer(){
+    const name = checkoutNameEl.value.trim();
+    const phone = checkoutPhoneEl.value.trim();
+    const email = checkoutEmailEl.value.trim();
+    const customersCol = collection(db,"brands",brandId,"customers");
+
+    // If everything empty, no customer doc (totally optional)
+    if(!name && !phone && !email){
+      currentCustomerHasUsedDiscountBefore = false;
+      return { id:null, data:null };
+    }
+
+    if(currentCustomerId){
+      const ref = doc(customersCol,currentCustomerId);
+      await setDoc(ref,{
+        name: name || null,
+        phone: phone || null,
+        email: email || null,
+        eventId: eventId || null,
+        eventName: eventName || null,
+        updatedAt:serverTimestamp()
+      },{ merge:true });
+
+      try{
+        const snap = await getDoc(ref);
+        if(snap.exists()){
+          const d = snap.data() || {};
+          currentCustomerHasUsedDiscountBefore = !!d.hasUsedDiscountCode;
+        }else{
+          currentCustomerHasUsedDiscountBefore = false;
+        }
+      }catch(e){
+        console.warn("Failed to read hasUsedDiscountCode", e);
+        currentCustomerHasUsedDiscountBefore = false;
+      }
+
+      return { id:currentCustomerId, data:{ name, phone, email } };
+    }
+
+    const found = await findExistingCustomer(email,phone);
+    if(found){
+      const ref = doc(customersCol,found.id);
+      await setDoc(ref,{
+        name: name || found.data.name || null,
+        phone: phone || found.data.phone || null,
+        email: email || found.data.email || null,
+        eventId: eventId || null,
+        eventName: eventName || null,
+        updatedAt:serverTimestamp()
+      },{ merge:true });
+
+      currentCustomerId = found.id;
+      currentCustomerHasUsedDiscountBefore = !!found.data.hasUsedDiscountCode;
+
+      const data = {
+        name: name || found.data.name || null,
+        phone: phone || found.data.phone || null,
+        email: email || found.data.email || null
+      };
+      return { id:found.id, data };
+    }
+
+    // brand-new customer
+    const newRef = await addDoc(customersCol,{
+      name: name || null,
+      phone: phone || null,
+      email: email || null,
+      eventId: eventId || null,
+      eventName: eventName || null,
+      hasUsedDiscountCode:false,
+      createdAt:serverTimestamp(),
+      updatedAt:serverTimestamp()
+    });
+    currentCustomerId = newRef.id;
+    currentCustomerHasUsedDiscountBefore = false;
+
+    return { id:newRef.id, data:{ name, phone, email } };
+  }
+
+  // ---------- Helpers ----------
+
+  async function generateOrderId(){
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2,"0");
+    const mm = String(now.getMonth()+1).padStart(2,"0");
+    const humanDate = `${dd}${mm}`;
+    const dateKey = `${now.getFullYear()}-${mm}-${dd}`;
+    const countersRef = doc(db,"brands",brandId,"orderCounters",dateKey);
+
+    const orderNumber = await runTransaction(db, async (tx)=>{
+      const snap = await tx.get(countersRef);
+      let current = 0;
+      if(snap.exists()){
+        current = snap.data().value || 0;
+      }
+      const next = current + 1;
+      tx.set(countersRef,{ value:next },{ merge:true });
+      return next;
+    });
+
+    return `${humanDate}-${orderNumber}`;
+  }
+
+  function showCheckoutAlert(msg){
+    checkoutAlertEl.textContent = msg;
+    checkoutAlertEl.classList.remove("hidden");
+    checkoutAlertEl.classList.add("modal-alert","modal-alert-error");
+  }
+  function clearCheckoutAlert(){
+    checkoutAlertEl.textContent = "";
+    checkoutAlertEl.classList.add("hidden");
+  }
+
+  function nameOrNull(v){
+    const t = v.trim();
+    return t ? t : null;
+  }
+  function phoneOrNull(v){
+    const t = v.trim();
+    return t ? t : null;
+  }
+  function emailOrNull(v){
+    const t = v.trim();
+    return t ? t : null;
+  }
+
+  function openCheckoutModal(){
+    if(cartItems.length === 0){
+      showGlobalAlert("Cart is empty.","error");
+      return;
+    }
+    clearCheckoutAlert();
+    const totals = computeTotals();
+    const total = totals.total;
+    checkoutTotalEl.textContent = total.toFixed(2);
+    const pm = paymentMethodEl.value;
+    const pmLabelMap = {
+      cash:"Cash",
+      card:"Card",
+      wallet:"Wallet",
+      other:"Other"
+    };
+    checkoutPaymentSummaryEl.textContent = pmLabelMap[pm] || pm;
+    checkoutCardTxnRowEl.style.display = pm === "card" ? "block" : "none";
+
+    currentCustomerId = null;
+    currentCustomerHasUsedDiscountBefore = false;
+    checkoutNameEl.value = "";
+    checkoutPhoneEl.value = "";
+    checkoutEmailEl.value = "";
+    checkoutCardTxnEl.value = "";
+    checkoutSuggestionsEl.classList.add("hidden");
+    checkoutSuggestionsEl.innerHTML = "";
+
+    if(currentMode==="return" && currentReturnOrderMeta && currentReturnOrderMeta.data){
+      const od = currentReturnOrderMeta.data;
+      const cn = od.customerName || "";
+      const cp = od.customerPhone || "";
+      const ce = od.customerEmail || "";
+      checkoutNameEl.value = cn;
+      checkoutPhoneEl.value = cp;
+      checkoutEmailEl.value = ce;
+      checkoutOriginalOrderNoteEl.style.display = "block";
+      checkoutOriginalOrderNoteEl.textContent = `Return for order ${od.orderId || currentReturnOrderMeta.orderId || ""}. Original total: ${
+        typeof od.total==="number" ? Math.abs(od.total).toFixed(2) : ""
+      }`;
+      checkoutTitleEl.textContent = "Return — customer & refund details";
+      checkoutSubtitleEl.textContent = "Confirm customer and refund info. This will create a return linked to the original order.";
+    }else{
+      checkoutOriginalOrderNoteEl.style.display = "none";
+      checkoutTitleEl.textContent = "Checkout — customer & payment";
+      checkoutSubtitleEl.textContent = "Customer is optional, but email is required if they want to receive a receipt.";
+    }
+
+    checkoutModalEl.style.display = "flex";
+    checkoutNameEl.focus();
+  }
+
+  function closeCheckoutModal(){
+    checkoutModalEl.style.display = "none";
+  }
+
+  function openProductModal(product){
+    currentProductForModal = product;
+    currentFlatVariants = buildFlatVariantsForProduct(product);
+
+    productModalTitleEl.textContent = "Add item";
+    productModalSubtitleEl.textContent = currentFlatVariants.length
+      ? "Choose one variant (e.g. size or color) and quantity."
+      : "Confirm quantity and add to cart.";
+    productModalNameEl.textContent = product.name || "Item";
+    productModalCodeEl.textContent = product.code ? `Code: ${product.code}` : "";
+    productModalPriceEl.textContent = (typeof product.price === "number" ? product.price : 0).toFixed(2);
+
+    if(product.imageUrl){
+      productModalImageEl.innerHTML = `<img src="${product.imageUrl}" alt="${product.name}"/>`;
+    }else{
+      productModalImageEl.textContent = product.name ? (product.name[0] || "I").toUpperCase() : "No image";
+    }
+
+    const left = computeProductStockLeft(product);
+    if(left != null){
+      productModalStockEl.textContent = `Available in this vendor: ${left} unit(s).`;
+    }else{
+      productModalStockEl.textContent = "Stock not set for this item.";
+    }
+
+    productModalVariantsEl.innerHTML = "";
+    if(currentFlatVariants.length){
+      productModalVariantsRowEl.style.display = "flex";
+      const groupDiv = document.createElement("div");
+      groupDiv.className = "field-pos";
+      const labelDiv = document.createElement("div");
+      labelDiv.className = "field-label-pos";
+      labelDiv.textContent = "Variant";
+      const selectEl = document.createElement("select");
+      selectEl.className = "field-select-pos";
+      selectEl.id = "product-variant-select";
+
+      currentFlatVariants.forEach((fv, idx)=>{
+        const optionEl = document.createElement("option");
+        optionEl.value = String(idx);
+
+        const baseLabel = fv.groupName
+          ? `${fv.groupName} — ${fv.labelName}`
+          : fv.labelName;
+
+        let rawQty = typeof fv.qty === "number" ? fv.qty : null;
+        let availableQty = rawQty;
+
+        if(rawQty != null){
+          const usedInCartVariant = cartItems.reduce((sum,item)=>{
+            if((item.baseId || item.id) !== product.id) return sum;
+            if(!item.variantChoices || !item.variantChoices.length) return sum;
+
+            const vc = item.variantChoices[0];
+            const sameLabel = vc.choice === fv.labelName;
+            const sameGroup =
+              !fv.groupName || !vc.group
+                ? true
+                : (vc.group === fv.groupName);
+
+            return (sameLabel && sameGroup) ? sum + item.qty : sum;
+          },0);
+
+          availableQty = Math.max(0, rawQty - usedInCartVariant);
+        }
+
+        const qtySuffix = availableQty != null ? ` (${availableQty} left)` : "";
+        optionEl.textContent = baseLabel + qtySuffix;
+        selectEl.appendChild(optionEl);
+      });
+
+      groupDiv.appendChild(labelDiv);
+      groupDiv.appendChild(selectEl);
+      productModalVariantsEl.appendChild(groupDiv);
+    }else{
+      productModalVariantsRowEl.style.display = "none";
+    }
+    productModalQtyEl.value = "1";
+    productModalEl.style.display = "flex";
+    productModalQtyEl.focus();
+  }
+
+  function closeProductModal(){
+    productModalEl.style.display = "none";
+    currentProductForModal = null;
+    currentFlatVariants = [];
+  }
+
+  // ---------- Offline queue ----------
+
+  function loadOfflineOrders(){
+    try{
+      const key = getOfflineKeyForBrand();
+      const raw = localStorage.getItem(key);
+      if(!raw){
+        offlineOrders = [];
+      }else{
+        const parsed = JSON.parse(raw);
+        offlineOrders = Array.isArray(parsed) ? parsed : [];
+      }
+    }catch(e){
+      console.warn("Failed to load offline orders",e);
+      offlineOrders = [];
+    }
+    renderOfflineOrders();
+  }
+
+  function saveOfflineOrders(){
+    try{
+      const key = getOfflineKeyForBrand();
+      localStorage.setItem(key, JSON.stringify(offlineOrders));
+    }catch(e){
+      console.warn("Failed to save offline orders",e);
+    }
+    renderOfflineOrders();
+  }
+
+  function renderOfflineOrders(){
+    if(!offlineOrders.length){
+      offlineStatusEl.style.display = "none";
+      offlineQueueListEl.textContent = "";
+      return;
+    }
+    const isOffline = !navigator.onLine;
+    const msg = `${isOffline ? "Offline" : "Online"} — queued orders: ${offlineOrders.length}. <button id="btn-sync-offline" class="btn btn-small btn-ghost" style="margin-left:8px;">Sync now</button>`;
+    offlineStatusEl.style.display = "block";
+    offlineStatusEl.innerHTML = msg;
+
+    offlineQueueListEl.textContent = offlineOrders
+      .map(o=>`${o.mode==="return"?"Return":"Sale"} ${o.orderId} • ${o.totalPositive.toFixed(2)}`)
+      .join(" | ");
+
+    const btnSync = document.querySelector("#btn-sync-offline");
+    if(btnSync){
+      btnSync.onclick = ()=>{ syncQueuedOrders(); };
+    }
+  }
+
+  function queueOfflineOrder({
+    mode,
+    totalPositive,
+    subtotalPositive,
+    taxPercentValue,
+    servicePercentValue,
+    taxAmountValue,
+    serviceAmountValue,
+    paymentMethod,
+    cardTxn,
+    name,
+    phone,
+    email,
+    cartItemsSnapshot,
+    originalOrderMeta
+  }){
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2,"0");
+    const mm = String(now.getMonth()+1).padStart(2,"0");
+    const hh = String(now.getHours()).padStart(2,"0");
+    const mi = String(now.getMinutes()).padStart(2,"0");
+    const ss = String(now.getSeconds()).padStart(2,"0");
+    const orderId = `${dd}${mm}-L${hh}${mi}${ss}`;
+
+    const localId = Date.now() + "-" + Math.random().toString(36).slice(2,8);
+    const offlineOrder = {
+      localId,
+      mode,
+      orderId,
+      totalPositive,
+      subtotalPositive,
+      taxPercent: taxPercentValue,
+      servicePercent: servicePercentValue,
+      taxAmount: taxAmountValue,
+      serviceAmount: serviceAmountValue,
+      paymentMethod,
+      cardTxn,
+      name,
+      phone,
+      email,
+      cartItems: cartItemsSnapshot.map(i=>({
+        id:i.id,
+        baseId:i.baseId || i.id,
+        name:i.name,
+        code:i.code || "",
+        price:i.price,
+        qty:i.qty,
+        originalQty:i.originalQty ?? null,
+        variantKey:i.variantKey || null,
+        variantChoices:Array.isArray(i.variantChoices) ? i.variantChoices : null,
+        variantMeta:i.variantMeta || null,
+        productImageUrl:i.imageUrl || null,
+        productUrl:i.productUrl || null
+      })),
+      brandId,
+      brandName: brandData?.name || null,
+      vendorName: brandData?.vendorName || null,
+      brandLogoUrl: brandData?.logoUrl || brandData?.logo || null,
+      eventId: eventId || null,
+      eventName: eventName || null,
+      posUser:{
+        id: posUser?.id || null,
+        username: posUser?.username || null,
+        displayName: posUser?.displayName || null,
+        role: posUser?.role || null
+      },
+      originalOrderMeta: originalOrderMeta || null,
+      createdAtLocal: now.toISOString()
+    };
+    offlineOrders.push(offlineOrder);
+    saveOfflineOrders();
+    showGlobalAlert(
+      `Offline — ${mode==="return"?"return":"order"} queued as ${orderId}. It will sync when internet is back.`,
+      "info"
+    );
+
+    cartItems = [];
+    renderCart();
+    currentReturnOrderMeta = null;
+    closeCheckoutModal();
+    codeInputEl.focus();
+  }
+
+  function resolveVariantMetaFromKey(item, brandIdParam){
+    if(!item.variantKey || item.variantMeta || !item.baseId) return item.variantMeta;
+    if(brandIdParam !== brandId) return item.variantMeta;
+
+    const pid = item.baseId;
+    const prod = products.find(p=>p.id === pid);
+    if(!prod || !Array.isArray(prod.variants)) return item.variantMeta;
+
+    const [groupNameKey, choiceNameKey] = item.variantKey.split(":");
+    if(!groupNameKey || !choiceNameKey) return item.variantMeta;
+
+    const gNameTarget = groupNameKey.trim().toLowerCase();
+    const cNameTarget = choiceNameKey.trim().toLowerCase();
+
+    for(let gi=0; gi<prod.variants.length; gi++){
+      const vg = prod.variants[gi] || {};
+      const vgName = (vg.name || vg.groupName || "").toString().trim().toLowerCase();
+      if(vgName !== gNameTarget) continue;
+
+      const labelsArr = Array.isArray(vg.labels) ? vg.labels
+                        : (Array.isArray(vg.options) ? vg.options : null);
+      if(labelsArr){
+        for(let li=0; li<labelsArr.length; li++){
+          const lbl = labelsArr[li];
+          const lblName = (typeof lbl === "string"
+            ? lbl
+            : (lbl.label || lbl.name || "")).toString().trim().toLowerCase();
+          if(lblName === cNameTarget){
+            return { groupIndex: gi, labelIndex: li };
+          }
+        }
+      }else{
+        const lblName = (vg.label || vg.name || "").toString().trim().toLowerCase();
+        if(lblName === cNameTarget){
+          return { groupIndex: gi, labelIndex: null };
+        }
+      }
+    }
+    return item.variantMeta;
+  }
+
+  async function adjustStockForOrder(cartItemsSource, mode, brandIdParam = brandId){
+    const sign = mode === "return" ? 1 : -1;
+
+    const byProduct = new Map();
+    cartItemsSource.forEach(item=>{
+      const pid = item.baseId || item.id;
+      if(!pid) return;
+      if(!byProduct.has(pid)) byProduct.set(pid, []);
+      byProduct.get(pid).push(item);
+    });
+
+    for(const [pid, items] of byProduct.entries()){
+      const productRef = doc(db,"brands",brandIdParam,"products",pid);
+
+      try{
+        await runTransaction(db, async (tx)=>{
+          const snap = await tx.get(productRef);
+          if(!snap.exists()) return;
+
+          const data = snap.data() || {};
+          let variantsArr = Array.isArray(data.variants) ? [...data.variants] : null;
+
+          let baseStock;
+          if(variantsArr){
+            baseStock = variantsArr.reduce((sum,v)=>{
+              const vs =
+                typeof v.stockQty === "number" ? v.stockQty :
+                (typeof v.quantity === "number" ? v.quantity :
+                (typeof v.qty === "number" ? v.qty :
+                (typeof v.stock === "number" ? v.stock : 0)));
+              return sum + vs;
+            },0);
+          }else{
+            baseStock =
+              typeof data.stockQty === "number" ? data.stockQty :
+              (typeof data.stock === "number" ? data.stock :
+              (typeof data.quantity === "number" ? data.quantity :
+              (typeof data.qty === "number" ? data.qty : 0)));
+          }
+
+          const readQty = (obj) =>
+            typeof obj.stockQty === "number" ? obj.stockQty :
+            typeof obj.quantity === "number" ? obj.quantity :
+            typeof obj.qty === "number" ? obj.qty :
+            typeof obj.stock === "number" ? obj.stock : 0;
+
+          const writeQty = (obj, newVal) => ({
+            ...obj,
+            stockQty: newVal,
+            quantity: newVal,
+            qty: newVal,
+            stock: newVal
+          });
+
+          items.forEach(item => {
+            const delta = sign * item.qty;
+            baseStock = Math.max(0, baseStock + delta);
+
+            if (!variantsArr) return;
+
+            if (item.variantMeta && typeof item.variantMeta.groupIndex === "number") {
+              const gi = item.variantMeta.groupIndex;
+              const li = item.variantMeta.labelIndex;
+
+              if (!variantsArr[gi]) return;
+
+              const v = { ...variantsArr[gi] };
+
+              if (li != null) {
+                let labelsArr = Array.isArray(v.labels) ? [...v.labels]
+                  : (Array.isArray(v.options) ? [...v.options] : null);
+
+                if (!labelsArr || !labelsArr[li]) {
+                  variantsArr[gi] = v;
+                  return;
+                }
+
+                const lbl = labelsArr[li];
+                const currentVarStock = readQty(lbl);
+                const newVarStock = Math.max(0, currentVarStock + delta);
+
+                labelsArr[li] = writeQty(lbl, newVarStock);
+
+                if (Array.isArray(v.labels)) v.labels = labelsArr;
+                else v.options = labelsArr;
+
+                variantsArr[gi] = v;
+              } else {
+                const currentVarStock = readQty(v);
+                const newVarStock = Math.max(0, currentVarStock + delta);
+                variantsArr[gi] = writeQty(v, newVarStock);
+              }
+
+              return;
+            }
+
+            if (item.variantChoices && item.variantChoices.length) {
+              const choice = item.variantChoices[0].choice;
+              const group  = item.variantChoices[0].group || null;
+
+              variantsArr = variantsArr.map(v => {
+                if (!v) return v;
+
+                const labelsArr = Array.isArray(v.labels) ? v.labels
+                  : (Array.isArray(v.options) ? v.options : null);
+
+                if (labelsArr) {
+                  const newLabels = labelsArr.map(lbl => {
+                    const lblName = (typeof lbl === "string"
+                      ? lbl
+                      : (lbl.label || lbl.name || ""));
+
+                    const sameLabel = lblName === choice;
+                    const sameGroup = !group || !v.name
+                      ? true
+                      : (v.name === group);
+
+                    if (!sameLabel || !sameGroup) return lbl;
+
+                    const currentVarStock = readQty(lbl);
+                    const newVarStock = Math.max(0, currentVarStock + delta);
+                    return writeQty(lbl, newVarStock);
+                  });
+
+                  if (Array.isArray(v.labels)) return { ...v, labels: newLabels };
+                  return { ...v, options: newLabels };
+                } else {
+                  const sameLabel = v.label === choice || v.name === choice;
+                  const sameGroup = !group || !v.groupName
+                    ? true
+                    : (v.groupName === group);
+
+                  if (!sameLabel || !sameGroup) return v;
+
+                  const currentVarStock = readQty(v);
+                  const newVarStock = Math.max(0, currentVarStock + delta);
+                  return writeQty(v, newVarStock);
+                }
+              });
+            }
+          });
+
+          const updateData = {
+            stockQty: baseStock,
+            stock: baseStock,
+            quantity: baseStock,
+            qty: baseStock
+          };
+          if(variantsArr) updateData.variants = variantsArr;
+
+          tx.set(productRef, updateData, { merge:true });
+        });
+
+        if(brandIdParam === brandId){
+          const idx = products.findIndex(p=>p.id === pid);
+          if(idx >= 0){
+            const p = products[idx];
+            const currentTop =
+              typeof p.stockQty === "number" ? p.stockQty :
+              (typeof p.stock === "number" ? p.stock :
+              (typeof p.quantity === "number" ? p.quantity :
+              (typeof p.qty === "number" ? p.qty : 0)));
+
+            const totalDelta = items.reduce((sum,i)=> sum + sign * i.qty, 0);
+            const newTop = Math.max(0, currentTop + totalDelta);
+            products[idx] = { ...p, stockQty:newTop, stock:newTop, quantity:newTop, qty:newTop };
+          }
+        }
+      }catch(e){
+        console.warn("Failed to adjust stock for product", pid, e);
+      }
+    }
+
+    renderProductsList(topSearchEl.value);
+  }
+
+  async function syncQueuedOrders(){
+    if(!offlineOrders.length){
+      showGlobalAlert("No queued orders to sync.","info");
+      return;
+    }
+    if(!navigator.onLine){
+      showGlobalAlert("Still offline. Cannot sync queued orders.","error");
+      return;
+    }
+    const syncedIds = [];
+    for(const o of offlineOrders){
+      try{
+        const ordersCol = collection(db,"brands",o.brandId,"orders");
+        const orderRef = doc(ordersCol);
+
+        const itemsForDb = o.cartItems.map(i=>{
+          const qtySign = (o.mode==="return" ? -1 : 1);
+          const qtyVal = i.qty * qtySign;
+          const lineTotalVal = i.price * i.qty * qtySign;
+          return {
+            productId:i.baseId || i.id,
+            name:i.name,
+            code:i.code || null,
+            qty:qtyVal,
+            price:i.price,
+            lineTotal:lineTotalVal,
+            variantKey:i.variantKey || null,
+            variantChoices:i.variantChoices || null,
+            productImageUrl:i.productImageUrl || i.imageUrl || null,
+            productUrl:i.productUrl || null
+          };
+        });
+
+        const sign = o.mode==="return" ? -1 : 1;
+        const orderData = {
+          orderId: o.orderId,
+          createdAt: serverTimestamp(),
+          createdAtLocal: o.createdAtLocal || (new Date()).toISOString(),
+          paymentMethod: o.paymentMethod,
+          subtotal: sign * (o.subtotalPositive || o.totalPositive),
+          taxPercent: o.taxPercent ?? 0,
+          servicePercent: o.servicePercent ?? 0,
+          taxAmount: sign * (o.taxAmount ?? 0),
+          serviceAmount: sign * (o.serviceAmount ?? 0),
+          total: sign * o.totalPositive,
+          items: itemsForDb,
+          customerId: null,
+          customerName: o.name || null,
+          customerPhone: o.phone || null,
+          customerEmail: o.email || null,
+          cardTransaction: o.paymentMethod === "card" ? (o.cardTxn || null) : null,
+          brandId: o.brandId,
+          brandName: o.brandName || null,
+          vendorName: o.vendorName || null,
+          eventId: o.eventId || null,
+          eventName: o.eventName || null,
+          status: o.mode === "return" ? "return" : "normal",
+          type: o.mode === "return" ? "return" : "sale",
+          isReturn: o.mode === "return",
+          originalOrderId: o.originalOrderMeta?.orderId || null,
+          originalOrderDocId: o.originalOrderMeta?.orderDocId || null,
+          originalPaymentMethod: o.originalOrderMeta?.data?.paymentMethod || null,
+          cashierId: o.posUser?.id || null,
+          cashierUsername: o.posUser?.username || null,
+          cashierDisplayName: o.posUser?.displayName || null,
+          cashierRole: o.posUser?.role || null
+        };
+
+        await setDoc(orderRef,orderData);
+
+        try{
+          await adjustStockForOrder(o.cartItems, o.mode, o.brandId);
+        }catch(e){
+          console.warn("Stock adjust (sync) failed",e);
+        }
+
+        const payload = {
+          orderId:o.orderId,
+          orderDocId:orderRef.id,
+          createdAt:orderData.createdAtLocal,
+          brandId:o.brandId,
+          brandName:o.brandName || null,
+          vendorName:o.vendorName || null,
+          brandLogoUrl:o.brandLogoUrl || null,
+          eventId:o.eventId || null,
+          eventName:o.eventName || null,
+          customer:{
+            id:null,
+            name:orderData.customerName,
+            phone:orderData.customerPhone,
+            email:orderData.customerEmail
+          },
+          total:orderData.total,
+          subtotal:orderData.subtotal,
+          taxPercent:orderData.taxPercent,
+          servicePercent:orderData.servicePercent,
+          taxAmount:orderData.taxAmount,
+          serviceAmount:orderData.serviceAmount,
+          items:itemsForDb,
+          paymentMethod:o.paymentMethod,
+          cardTransaction:orderData.cardTransaction,
+          isReturn:o.mode==="return",
+          originalOrderId:orderData.originalOrderId || null,
+          refundAmount: o.mode==="return" ? o.totalPositive : 0
+        };
+
+        fetch(WEBHOOK_URL,{
+          method:"POST",
+          headers:{ "Content-Type":"application/json" },
+          body:JSON.stringify(payload)
+        }).catch(err=>console.error("Webhook error (sync)",err));
+
+        syncedIds.push(o.localId);
+      }catch(err){
+        console.error("Failed to sync offline order",o.orderId,err);
+      }
+    }
+    if(syncedIds.length){
+      offlineOrders = offlineOrders.filter(o=>!syncedIds.includes(o.localId));
+      saveOfflineOrders();
+      showGlobalAlert(`Synced ${syncedIds.length} queued order(s) successfully.`,"ok");
+    }else{
+      showGlobalAlert("Could not sync queued orders. Check console.","error");
+    }
+  }
+
+  async function recomputeOriginalRefundStatus(originalOrderId){
+    if(!originalOrderId) return;
+    try{
+      const ordersCol = collection(db,"brands",brandId,"orders");
+      const qAllReturns = query(ordersCol, where("originalOrderId","==", originalOrderId));
+      const snap = await getDocs(qAllReturns);
+      let refundedTotal = 0;
+      snap.forEach(d=>{
+        const data = d.data() || {};
+        if(!data.isReturn) return;
+        const t = typeof data.total === "number" ? data.total : 0;
+        refundedTotal += Math.abs(t);
+      });
+
+      const originalTotal = Math.abs(currentReturnOrderMeta?.data?.total || 0);
+      let refundStatus = "none";
+      const eps = 0.01;
+      if(refundedTotal > eps && refundedTotal < originalTotal - eps){
+        refundStatus = "partial";
+      }else if(refundedTotal >= originalTotal - eps){
+        refundStatus = "full";
+      }
+
+      const origRef = doc(db,"brands",brandId,"orders", currentReturnOrderMeta.orderDocId);
+      await updateDoc(origRef,{
+        refundStatus,
+        refundedTotal
+      });
+    }catch(e){
+      console.warn("Failed to recompute refund status",e);
+    }
+  }
+
+  // ---------- Discounts ----------
+
+  async function handleApplyDiscount(){
+    if(currentMode !== "sale"){
+      showGlobalAlert("Discount codes can only be applied in Sale mode.","error");
+      return;
+    }
+
+    const rawCode = (discountCodeInputEl?.value || "").trim().toUpperCase();
+
+    if(!rawCode){
+      if(appliedDiscount){
+        appliedDiscount = null;
+        discountRowEl.style.display = "none";
+        summaryDiscountEl.textContent = "-0.00";
+        showGlobalAlert("Discount removed.","info");
+        renderCart();
+      }else{
+        showGlobalAlert("Enter a discount code first.","error");
+      }
+      return;
+    }
+
+    if(cartItems.length === 0){
+      showGlobalAlert("Add items to the cart before applying a discount.","error");
+      return;
+    }
+
+    try{
+      const discountsCol = collection(db,"brands",brandId,"discounts");
+      const qDisc = query(discountsCol, where("code","==", rawCode), limit(1));
+      const snap = await getDocs(qDisc);
+
+      if(snap.empty){
+        showGlobalAlert(`No discount code "${rawCode}" found.`,"error");
+        return;
+      }
+
+      const d = snap.docs[0];
+      const data = d.data() || {};
+      const isActive = data.isActive !== false;
+      const percent = typeof data.percent === "number" ? data.percent : null;
+      const scope = data.scope || "store_and_online";
+
+      if(!isActive){
+        showGlobalAlert("This discount code is inactive.","error");
+        return;
+      }
+      if(!percent || percent <= 0){
+        showGlobalAlert("This discount code has no valid percentage.","error");
+        return;
+      }
+
+      if(scope === "online_only"){
+        showGlobalAlert("This discount code can only be used online, not at the POS.","error");
+        return;
+      }
+
+      appliedDiscount = {
+        id: d.id,
+        code: rawCode,
+        percent,
+        scope
+      };
+
+      showGlobalAlert(`Discount "${rawCode}" applied (${percent}%).`,"ok");
+      renderCart();
+    }catch(e){
+      console.error("Error applying discount code", e);
+      showGlobalAlert("Error applying discount code. Check console.","error");
+    }
+  }
+
+  // ---------- Place order ----------
+
+  async function handlePlaceOrder(){
+    if(cartItems.length === 0){
+      showCheckoutAlert("Cart is empty.");
+      return;
+    }
+    const name = checkoutNameEl.value.trim();
+    const email = checkoutEmailEl.value.trim();
+    const phone = checkoutPhoneEl.value.trim();
+    const pm = paymentMethodEl.value;
+    const cardTxn = checkoutCardTxnEl.value.trim();
+
+    // Customer is optional; we only enforce cardTxn if payment method is card
+    if(pm === "card" && !cardTxn){
+      showCheckoutAlert("Card transaction number is required for card payments.");
+      return;
+    }
+
+    const totals = computeTotals();
+    const totalPositive = totals.total;
+    const subtotalPositive = totals.subtotal;
+    const taxAmount = totals.taxAmount;
+    const serviceAmount = totals.serviceAmount;
+    const discountAmount = totals.discountAmount || 0;
+    const paymentMethod = pm;
+    const bogoDiscount = totals.bogoDiscount || 0;
+    const subtotalAfterBogo = totals.subtotalAfterBogo || subtotalPositive;
+
+    btnCheckoutConfirm.disabled = true;
+    btnCheckoutConfirm.textContent = "Placing…";
+    try{
+      const customerResult = await ensureCustomer();
+      const customerId = customerResult.id;
+      const customer = customerResult.data;
+
+      const orderHasDiscount = !!appliedDiscount;
+      const isReturnMode = currentMode === "return";
+
+      const willIssueNewCoupon =
+        !isReturnMode &&
+        !orderHasDiscount;
+
+      if(customerId && willIssueNewCoupon && navigator.onLine){
+        try{
+          const customersCol = collection(db,"brands",brandId,"customers");
+          const customerRef = doc(customersCol, customerId);
+          await setDoc(customerRef, { hasUsedDiscountCode:true }, { merge:true });
+          currentCustomerHasUsedDiscountBefore = true;
+        }catch(e){
+          console.warn("Failed to flag hasUsedDiscountCode on customer", e);
+        }
+      }
+
+      const orderId = await generateOrderId();
+      const now = new Date();
+
+      const itemsForDb = cartItems.map(i=>{
+        const qtySign = (currentMode==="return" ? -1 : 1);
+        const qtyVal = i.qty * qtySign;
+        const lineTotalVal = i.price * i.qty * qtySign;
+        return {
+          productId:i.baseId || i.id,
+          name:i.name,
+          code:i.code || null,
+          qty:qtyVal,
+          price:i.price,
+          lineTotal:lineTotalVal,
+          variantKey:i.variantKey || null,
+          variantChoices:i.variantChoices || null,
+          productImageUrl:i.imageUrl || null,
+          productUrl:i.productUrl || null
+        };
+      });
+
+      const ordersCol = collection(db,"brands",brandId,"orders");
+      const orderRef = doc(ordersCol);
+
+      const sign = currentMode==="return" ? -1 : 1;
+
+      const baseOrderData = {
+        orderId,
+        createdAt: serverTimestamp(),
+        createdAtLocal: now.toISOString(),
+        paymentMethod,
+        subtotal: sign * subtotalPositive,
+        taxPercent,
+        servicePercent,
+        taxAmount: sign * taxAmount,
+        serviceAmount: sign * serviceAmount,
+        total: sign * totalPositive,
+        discountPercent: appliedDiscount?.percent || 0,
+        discountAmount: sign * (discountAmount || 0),
+        discountCode: appliedDiscount?.code || null,
+        discountScope: appliedDiscount?.scope || null,
+        items: itemsForDb,
+        customerId: customerId || null,
+        customerName: customer?.name || nameOrNull(checkoutNameEl.value),
+        customerPhone: customer?.phone || phoneOrNull(checkoutPhoneEl.value),
+        customerEmail: customer?.email || emailOrNull(checkoutEmailEl.value),
+        cardTransaction: paymentMethod === "card" ? cardTxn : null,
+        brandId,
+        brandName: brandData?.name || null,
+        vendorName: brandData?.vendorName || null,
+        eventId: eventId || null,
+        eventName: eventName || null,
+        bogoActiveAtSale: currentMode === "sale" ? bogoActive : false,
+        bogoDiscount: sign * bogoDiscount,
+        subtotalBeforeBogo: sign * subtotalPositive,
+        subtotalAfterBogo: sign * subtotalAfterBogo,
+        promotionType: (currentMode === "sale" && bogoActive && bogoDiscount > 0) ? "BOGO" : null,
+        cashierId: posUser?.id || null,
+        cashierUsername: posUser?.username || null,
+        cashierDisplayName: posUser?.displayName || null,
+        cashierRole: posUser?.role || null
+      };
+
+      const orderData = currentMode==="return"
+        ? {
+            ...baseOrderData,
+            status:"return",
+            type:"return",
+            isReturn:true,
+            originalOrderId: currentReturnOrderMeta?.orderId || null,
+            originalOrderDocId: currentReturnOrderMeta?.orderDocId || null,
+            originalPaymentMethod: currentReturnOrderMeta?.data?.paymentMethod || null
+          }
+        : {
+            ...baseOrderData,
+            status:"normal",
+            type:"sale",
+            isReturn:false
+          };
+
+      await setDoc(orderRef,orderData);
+
+      try{
+        await adjustStockForOrder(cartItems, currentMode, brandId);
+      }catch(e){
+        console.warn("Stock adjust failed",e);
+      }
+
+      if(currentMode==="return" && currentReturnOrderMeta && navigator.onLine){
+        await recomputeOriginalRefundStatus(currentReturnOrderMeta.orderId);
+      }
+
+      const payload = {
+        orderId,
+        orderDocId:orderRef.id,
+        createdAt:now.toISOString(),
+        brandId,
+        brandName:brandData?.name || null,
+        vendorName:brandData?.vendorName || null,
+        brandLogoUrl:brandData?.logoUrl || brandData?.logo || null,
+        eventId: eventId || null,
+        eventName: eventName || null,
+        posUser:{
+          id: posUser?.id || null,
+          username:posUser?.username || null,
+          displayName:posUser?.displayName || null,
+          role:posUser?.role || null
+        },
+        customer:{
+          id:customerId || null,
+          name:orderData.customerName,
+          phone:orderData.customerPhone,
+          email:orderData.customerEmail
+        },
+        total:orderData.total,
+        subtotal:orderData.subtotal,
+        taxPercent:orderData.taxPercent,
+        servicePercent:orderData.servicePercent,
+        taxAmount:orderData.taxAmount,
+        serviceAmount:orderData.serviceAmount,
+        items:itemsForDb,
+        paymentMethod,
+        cardTransaction: paymentMethod === "card" ? cardTxn : null,
+        isReturn: currentMode==="return",
+        originalOrderId: orderData.originalOrderId || null,
+        discount: appliedDiscount ? {
+          code: appliedDiscount.code,
+          percent: appliedDiscount.percent,
+          scope: appliedDiscount.scope || "store_and_online",
+          amount: discountAmount
+        } : null,
+        shouldIssueNewCoupon: willIssueNewCoupon,
+        refundAmount: currentMode === "return" ? totalPositive : 0
+      };
+
+      console.log("POS → Webhook payload:", payload);
+
+      fetch(WEBHOOK_URL,{
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body:JSON.stringify(payload)
+      }).catch(err=>console.error("Webhook error",err));
+
+      showGlobalAlert(
+        `${currentMode==="return" ? "Return" : "Order"} ${orderId} created successfully.`,
+        "ok"
+      );
+
+      appliedDiscount = null;
+      if(discountCodeInputEl) discountCodeInputEl.value = "";
+      discountRowEl.style.display = "none";
+      summaryDiscountEl.textContent = "-0.00";
+
+      cartItems = [];
+      renderCart();
+      currentCustomerId = null;
+      currentReturnOrderMeta = null;
+      closeCheckoutModal();
+      codeInputEl.focus();
+    }catch(err){
+      console.error(err);
+      const networkCodes = ["unavailable","failed-precondition","network-request-failed"];
+      if(!navigator.onLine || networkCodes.includes(err.code)){
+        const snapshot = cartItems.map(i=>({...i}));
+        queueOfflineOrder({
+          mode:currentMode,
+          totalPositive,
+          subtotalPositive,
+          taxPercentValue:taxPercent,
+          servicePercentValue:servicePercent,
+          taxAmountValue:taxAmount,
+          serviceAmountValue:serviceAmount,
+          paymentMethod,
+          cardTxn,
+          name,
+          phone,
+          email,
+          cartItemsSnapshot:snapshot,
+          originalOrderMeta:currentReturnOrderMeta
+        });
+      }else{
+        showCheckoutAlert("Error placing order. Check console.");
+      }
+    }finally{
+      btnCheckoutConfirm.disabled = false;
+      btnCheckoutConfirm.textContent = "Confirm & place order";
+    }
+  }
+
+  // ---------- Mode UI ----------
+
+  function updateModeUI(){
+    // reset discount on mode change
+    appliedDiscount = null;
+    if(discountCodeInputEl) discountCodeInputEl.value = "";
+    discountRowEl.style.display = "none";
+    summaryDiscountEl.textContent = "-0.00";
+
+    // reset BOGO
+    if (bogoRowEl) {
+      bogoRowEl.style.display = "none";
+      summaryBogoEl.textContent = "-0.00";
+    }
+
+    if(currentMode==="sale"){
+      modeSaleBtn.classList.add("mode-pill-active");
+      modeReturnBtn.classList.remove("mode-pill-active");
+      leftCardTitleEl.textContent = "Products";
+      leftCardSubtitleEl.textContent = "Scan barcode, type a code, or tap “Add” to send items to cart.";
+      codeInputLabelEl.textContent = "Scan or type product code";
+      codeInputHintEl.textContent = "Works with barcode scanners that behave like a keyboard and send Enter after scanning.";
+      cartCardTitleEl.textContent = "Cart";
+      cartCardSubtitleEl.textContent = "Adjust quantities or remove items. Proceed to add customer & payment details.";
+      summarySubtotalLabelEl.textContent = "Subtotal";
+      summaryTotalLabelEl.textContent = "Total";
+      summaryPaymentLabelEl.textContent = "Payment method";
+      returnNoteEl.style.display = "none";
+      subtitleEl.textContent = "Event POS — Sale mode. Every sale is stored in the system.";
+      productsListEl.style.display = "block";
+      topSearchEl.disabled = false;
+      topSearchEl.placeholder = "Search products (name/code)";
+      btnOpenCheckoutTop.textContent = "Proceed";
+      btnOpenCheckoutSecondary.textContent = "Proceed";
+      returnFullRowEl.style.display = "none";
+    }else{
+      modeSaleBtn.classList.remove("mode-pill-active");
+      modeReturnBtn.classList.add("mode-pill-active");
+      leftCardTitleEl.textContent = "Returns";
+      leftCardSubtitleEl.textContent = "Enter or scan the original order ID or customer phone, then choose full or partial refund.";
+      codeInputLabelEl.textContent = "Order ID or customer phone";
+      codeInputHintEl.textContent = "Use the printed order ID (e.g. 1507-3) or the customer's phone.";
+      cartCardTitleEl.textContent = "Return cart";
+      cartCardSubtitleEl.textContent = "Set the quantity to return for each item, then refund.";
+      summarySubtotalLabelEl.textContent = "Refund subtotal";
+      summaryTotalLabelEl.textContent = "Refund total";
+      summaryPaymentLabelEl.textContent = "Refund method";
+      returnNoteEl.style.display = "block";
+      subtitleEl.textContent = "Event POS — Return mode. Refunds are stored as negative totals linked to the original order.";
+      productsListEl.style.display = "none";
+      topSearchEl.disabled = true;
+      topSearchEl.placeholder = "Products hidden in return mode";
+      btnOpenCheckoutTop.textContent = "Refund selected items";
+      btnOpenCheckoutSecondary.textContent = "Refund selected items";
+      returnFullRowEl.style.display = "flex";
+    }
+    renderProductsList(topSearchEl.value);
+    cartItems = [];
+    currentReturnOrderMeta = null;
+    renderCart();
+    codeInputEl.value = "";
+    codeInputEl.focus();
+  }
+
+  // ---------- Login ----------
+
+  function prefillLoginFromStorage(){
+    try{
+      const raw = localStorage.getItem(CRED_KEY);
+      if(!raw) return;
+      const obj = JSON.parse(raw);
+      if(obj && typeof obj === "object"){
+        if(obj.username) loginUsernameEl.value = obj.username;
+        if(obj.pin) loginPinEl.value = obj.pin;
+      }
+    }catch(e){
+      console.warn("Failed to prefill login from storage",e);
+    }
+  }
+
+  async function handleLogin(evt){
+    evt.preventDefault();
+    clearAuthAlert();
+    const username = loginUsernameEl.value.trim();
+    const pin = loginPinEl.value.trim();
+    if(!username || !pin){
+      showAuthAlert("Enter username and PIN.");
+      return;
+    }
+    try{
+      loginBtn.disabled = true;
+      loginBtn.textContent = "Logging in…";
+
+      // staff lives inside brands/{brandId}/staff, with role == "cashier"
+      const staffGroup = collectionGroup(db,"staff");
+      const qUser = query(
+        staffGroup,
+        where("username","==",username),
+        where("pin","==",pin),
+        where("role","==","cashier"),
+        limit(1)
+      );
+      const snap = await getDocs(qUser);
+      if(snap.empty){
+        showAuthAlert("No cashier found with this username/PIN.");
+        loginBtn.disabled = false;
+        loginBtn.textContent = "Log in";
+        return;
+      }
+      const d = snap.docs[0];
+      const u = d.data() || {};
+      const brandRef = d.ref.parent.parent;
+      if(!brandRef){
+        showAuthAlert("Staff user is not attached to a brand.");
+        loginBtn.disabled = false;
+        loginBtn.textContent = "Log in";
+        return;
+      }
+
+      try{
+        localStorage.setItem(CRED_KEY, JSON.stringify({username, pin}));
+      }catch(e){
+        console.warn("Failed to store credentials",e);
+      }
+
+      posUser = {
+        id:d.id,
+        username:u.username,
+        displayName:u.displayName || u.username,
+        role:u.role || "cashier"
+      };
+      brandId = brandRef.id;
+
+      authWrapper.style.display = "none";
+      shellEl.style.display = "flex";
+      document.body.style.alignItems = "flex-start";
+
+      userNameEl.textContent = posUser.displayName;
+      userRoleEl.textContent = posUser.role;
+      userInitialsEl.textContent = initialsFromNameOrUsername(posUser.displayName,posUser.username);
+
+      await loadBrand();
+      await loadProducts();
+      loadOfflineOrders();
+
+      codeInputEl.focus();
+    }catch(err){
+      console.error("POS login error:", err);
+      let msg = "Login error.";
+      if(err.code === "permission-denied"){
+        msg = "Firestore rules are blocking access to brands/*/staff. Allow read for POS clients (anonymous auth is used).";
+      }
+      showAuthAlert(msg + (err.code ? ` (${err.code})` : ""));
+    }finally{
+      loginBtn.disabled = false;
+      loginBtn.textContent = "Log in";
+    }
+  }
+
+  // ---------- Events ----------
+
+  function initEvents(){
+    loginForm.addEventListener("submit",handleLogin);
+
+    btnAddCode.addEventListener("click",()=>{
+      if(currentMode==="sale"){
+        handleAddByCodeSale();
+      }else{
+        handleLoadOrderForReturn();
+      }
+    });
+    codeInputEl.addEventListener("keydown",(e)=>{
+      if(e.key==="Enter"){
+        e.preventDefault();
+        if(currentMode==="sale"){
+          handleAddByCodeSale();
+        }else{
+          handleLoadOrderForReturn();
+        }
+      }
+    });
+
+    btnClearCart.addEventListener("click",()=>{
+      cartItems = [];
+      currentReturnOrderMeta = null;
+      renderCart();
+      codeInputEl.focus();
+    });
+
+    topSearchEl.addEventListener("input",()=>{
+      renderProductsList(topSearchEl.value);
+    });
+
+    const openCheckout = ()=>openCheckoutModal();
+    btnOpenCheckoutTop.addEventListener("click",openCheckout);
+    btnOpenCheckoutSecondary.addEventListener("click",openCheckout);
+
+    btnCheckoutCancel.addEventListener("click",()=>{
+      closeCheckoutModal();
+      codeInputEl.focus();
+    });
+
+    btnCheckoutConfirm.addEventListener("click",handlePlaceOrder);
+
+    checkoutNameEl.addEventListener("input",()=>searchCustomersForSuggestions(checkoutNameEl.value));
+    checkoutPhoneEl.addEventListener("input",()=>searchCustomersForSuggestions(checkoutPhoneEl.value));
+    checkoutEmailEl.addEventListener("input",()=>searchCustomersForSuggestions(checkoutEmailEl.value));
+
+    checkoutModal.addEventListener("click",(e)=>{
+      if(e.target === checkoutModal){
+        closeCheckoutModal();
+        codeInputEl.focus();
+      }
+    });
+
+    modeSaleBtn.addEventListener("click",()=>{
+      if(currentMode!=="sale"){
+        currentMode = "sale";
+        updateModeUI();
+      }
+    });
+    modeReturnBtn.addEventListener("click",()=>{
+      if(currentMode!=="return"){
+        currentMode = "return";
+        updateModeUI();
+      }
+    });
+
+    btnReturnFull.addEventListener("click",()=>{
+      if(currentMode!=="return"){
+        showGlobalAlert("Full refund is only available in return mode.","error");
+        return;
+      }
+      if(!currentReturnOrderMeta){
+        showGlobalAlert("Load an order first before returning full order.","error");
+        return;
+      }
+      if(cartItems.length===0){
+        showGlobalAlert("No items loaded from this order.","error");
+        return;
+      }
+      cartItems.forEach(i=>{
+        if(i.originalQty != null){
+          i.qty = i.originalQty;
+        }
+      });
+      renderCart();
+      openCheckoutModal();
+    });
+
+    // Product modal events
+    btnProductModalCancel.addEventListener("click",()=>{
+      closeProductModal();
+    });
+    productModalEl.addEventListener("click",(e)=>{
+      if(e.target === productModalEl){
+        closeProductModal();
+      }
+    });
+    btnProductModalAdd.addEventListener("click",()=>{
+      if(!currentProductForModal) return;
+      const product = currentProductForModal;
+      let qty = parseInt(productModalQtyEl.value,10);
+      if(!qty || qty < 1) qty = 1;
+
+      const variantSelectEl = productModalVariantsEl.querySelector("#product-variant-select");
+      let selectedVariant = null;
+      if(variantSelectEl && currentFlatVariants && currentFlatVariants.length){
+        const idx = parseInt(variantSelectEl.value,10);
+        if(!Number.isNaN(idx) && currentFlatVariants[idx]){
+          selectedVariant = currentFlatVariants[idx];
+        }
+      }
+
+      const variantsInfo = [];
+      let variantKey = null;
+      let displayName = product.name;
+      let availableQtyForVariant = null;
+
+      if(selectedVariant){
+        const groupName = selectedVariant.groupName || "Variant";
+        const choiceName = selectedVariant.labelName;
+        variantsInfo.push({ group:groupName, choice:choiceName });
+        variantKey = `${groupName}:${choiceName}`;
+        displayName = `${product.name} (${groupName}: ${choiceName})`;
+        if(typeof selectedVariant.qty === "number"){
+          const usedInCartVariant = cartItems.reduce((sum,i)=>{
+            if((i.baseId || i.id) === product.id && i.variantKey === variantKey){
+              return sum + i.qty;
+            }
+            return sum;
+          },0);
+          availableQtyForVariant = selectedVariant.qty - usedInCartVariant;
+        }
+      }
+
+      if(availableQtyForVariant != null && qty > availableQtyForVariant){
+        showGlobalAlert(`Only ${availableQtyForVariant} unit(s) left for this variant for this vendor.`,"error");
+        return;
+      }else{
+        const left = computeProductStockLeft(product);
+        if(left != null && qty > left){
+          showGlobalAlert(`Only ${left} unit(s) left of ${product.name} for this vendor.`,"error");
+          return;
+        }
+      }
+
+      addProductToCart({
+        ...product,
+        baseId: product.id,
+        id: variantKey ? `${product.id}::${variantKey}` : product.id,
+        name: displayName,
+        variantKey,
+        variantChoices: variantsInfo,
+        variantMeta: selectedVariant ? {
+          groupIndex: selectedVariant.groupIndex,
+          labelIndex: selectedVariant.labelIndex
+        } : null
+      }, qty);
+
+      closeProductModal();
+    });
+
+    // Discount events
+    btnApplyDiscount.addEventListener("click", ()=>{ handleApplyDiscount(); });
+    discountCodeInputEl.addEventListener("keydown",(e)=>{
+      if(e.key === "Enter"){
+        e.preventDefault();
+        handleApplyDiscount();
+      }
+    });
+
+    window.addEventListener("online",()=>{
+      renderOfflineOrders();
+      showGlobalAlert("Back online. You can sync queued orders from the offline banner.","info");
+    });
+    window.addEventListener("offline",()=>{
+      renderOfflineOrders();
+      showGlobalAlert("You are offline. New orders will be queued locally.","error");
+    });
+  }
+
+  function init(){
+    prefillLoginFromStorage();
+    initEvents();
+    updateModeUI();
+  }
+
+  init();
+  </script>
+</body>
+</html>
