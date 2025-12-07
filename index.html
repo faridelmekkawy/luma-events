@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Luma Events — Event Analytics Dashboard</title>
+  <title>Luma Events — Owner Analytics OS</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 
-  <!-- Chart.js -->
+  <!-- Chart.js (for all charts) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
@@ -123,1823 +123,699 @@
 
     /* APP LAYOUT */
     .app-shell{
-      max-width:1200px;
-      margin:24px auto 32px;
-      padding:0 16px;
+      height:100vh;
+      width:100%;
+      display:flex;
     }
+
+    .sidebar{
+      width:220px;background:var(--panel);
+      border-right:1px solid var(--border);
+      display:flex;flex-direction:column;
+      padding:20px 12px;
+    }
+    .sidebar-brand{
+      display:flex;align-items:center;gap:10px;margin-bottom:18px;
+    }
+    .sidebar-logo{
+      width:36px;height:36px;border-radius:999px;
+      background:linear-gradient(135deg,#2563eb,#a855f7);
+      display:flex;align-items:center;justify-content:center;
+      color:#fff;font-weight:700;
+      overflow:hidden;
+      background-size:cover;
+      background-position:center;
+    }
+    .sidebar-brand-name{font-size:15px;font-weight:700;}
+    .sidebar-nav{
+      display:flex;flex-direction:column;gap:6px;margin-top:10px;flex:1;
+    }
+    .nav-item{
+      padding:9px 12px;border-radius:10px;
+      cursor:pointer;font-size:13px;
+      border:none;background:transparent;text-align:left;color:var(--ink);
+    }
+    .nav-item:hover{background:var(--panel-soft);}
+    .nav-item.active{background:var(--accent-soft);color:var(--accent-strong);font-weight:600;}
+    .nav-item.logout{
+      margin-top:auto;
+      background:#fee2e2;
+      color:#b91c1c;
+      border:1px solid #fecaca;
+    }
+    .nav-item.logout:hover{background:#fecaca;}
 
     .topbar{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:16px;
-      margin-bottom:18px;
-    }
-    .topbar-main{
-      display:flex;
+      height:78px;background:var(--panel);
+      border-bottom:1px solid var(--border);
+      padding:12px 18px;
+      display:flex;justify-content:space-between;align-items:center;
       gap:12px;
-      align-items:flex-start;
     }
-    .event-avatar{
-      width:42px;
-      height:42px;
-      border-radius:999px;
-      background:linear-gradient(135deg,#2563eb,#a855f7);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      color:#fff;
-      font-weight:700;
-      font-size:20px;
-      box-shadow:var(--shadow);
-    }
-    .topbar-title{
-      font-size:18px;
-      font-weight:700;
-    }
-    .topbar-sub{
-      font-size:11px;
-      color:var(--muted);
-      margin-top:2px;
-    }
-    .topbar-meta{
-      font-size:11px;
-      color:var(--muted);
-      margin-top:4px;
-    }
-
-    .topbar-right{
+    .topbar-left{
       display:flex;
       flex-direction:column;
-      align-items:flex-end;
-      gap:6px;
+      gap:2px;
+    }
+    .topbar-title{font-size:16px;font-weight:700;}
+    .topbar-sub{font-size:11px;color:var(--muted);}
+    .topbar-right{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      align-items:center;
+      justify-content:flex-end;
+      font-size:12px;
     }
     .topbar-select{
-      padding:4px 8px;
-      border-radius:999px;
-      border:1px solid var(--border);
-      background:var(--panel-soft);
-      font-size:11px;
+      padding:6px 9px;border-radius:8px;
+      border:1px solid var(--border);background:var(--panel-soft);
+      font-size:12px;
     }
 
     .date-filter{
-      display:flex;
-      flex-direction:column;
-      align-items:flex-end;
+      display:inline-flex;
       gap:6px;
-      font-size:11px;
+      background:var(--panel-soft);
+      border-radius:999px;
+      padding:3px;
+      border:1px solid var(--border);
     }
-    .date-filter-label{
+    .date-chip{
+      padding:4px 8px;
+      border-radius:999px;
+      font-size:11px;
+      border:none;
+      background:transparent;
+      cursor:pointer;
       color:var(--muted);
     }
-    .chip-row{
+    .date-chip.active{
+      background:var(--accent-soft);
+      color:var(--accent-strong);
+      font-weight:600;
+    }
+
+    .content-area{
+      flex:1;
+      padding:18px;
+      overflow-y:auto;
+      background:var(--bg);
+    }
+    .page{display:none;}
+    .page.active{display:block;}
+
+    .page-header{
+      display:flex;justify-content:space-between;
+      align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;
+    }
+    .page-title{font-size:18px;font-weight:700;}
+    .page-sub{font-size:12px;color:var(--muted);}
+    .page-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+
+    .cards-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:12px;margin-bottom:18px;
+    }
+    .card{
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:16px 18px;
+      box-shadow:var(--shadow);
+    }
+    .card-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:6px;
+      margin-bottom:4px;
+    }
+    .card-title{font-size:13px;color:var(--muted);}
+    .card-number{font-size:20px;font-weight:700;}
+    .card-note{font-size:11px;color:var(--muted);margin-top:6px;}
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      padding:2px 8px;
+      border-radius:999px;
+      font-size:10px;
+      background:var(--accent-soft);
+      color:var(--accent-strong);
+      font-weight:600;
+      white-space:nowrap;
+    }
+    .badge-danger{
+      background:#fee2e2;
+      color:#b91c1c;
+    }
+
+    .split-grid-2{
+      display:grid;
+      grid-template-columns:minmax(0,2fr) minmax(0,1.3fr);
+      gap:12px;
+      margin-bottom:18px;
+    }
+    .section-title-row{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:8px;
+      margin-bottom:6px;
+    }
+    .section-title{
+      font-size:14px;
+      font-weight:600;
+    }
+    .section-sub{
+      font-size:11px;
+      color:var(--muted);
+    }
+
+    .chart-container{
+      position:relative;
+      height:220px;
+      width:100%;
+    }
+
+    .table-wrapper{
+      background:#fff;border-radius:12px;border:1px solid var(--border);
+      overflow-x:auto;
+    }
+    table{width:100%;border-collapse:collapse;font-size:12px;}
+    thead{background:var(--panel-soft);}
+    th,td{padding:9px 10px;border-bottom:1px solid var(--border);text-align:left;}
+    th{
+      font-size:11px;text-transform:uppercase;color:var(--muted);
+      letter-spacing:.04em;
+    }
+    tbody tr:hover{background:#f9fafb;}
+    .table-empty{text-align:center;padding:20px;font-size:12px;color:var(--muted);}
+
+    .pill-filters{
       display:flex;
       flex-wrap:wrap;
       gap:6px;
     }
-    .chip{
+    .pill{
       border-radius:999px;
       border:1px solid var(--border);
       padding:4px 10px;
-      background:var(--panel-soft);
       font-size:11px;
-      color:var(--muted);
+      background:var(--panel-soft);
       cursor:pointer;
-      white-space:nowrap;
+      color:var(--muted);
     }
-    .chip.small{
-      padding:3px 8px;
-      font-size:10px;
-    }
-    .chip.active{
+    .pill.active{
       background:var(--accent-soft);
       border-color:var(--accent-soft);
       color:var(--accent-strong);
       font-weight:600;
     }
 
-    .cards-grid{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-      gap:12px;
-      margin-bottom:18px;
-    }
-    .card{
-      background:var(--panel);
-      border-radius:14px;
-      border:1px solid var(--border);
-      padding:14px 16px;
-      box-shadow:var(--shadow);
-    }
-    .card-title{
-      font-size:11px;
-      color:var(--muted);
-      margin-bottom:4px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:6px;
-    }
-    .card-badge{
-      font-size:9px;
-      padding:3px 7px;
+    .search-input{
+      padding:6px 9px;
       border-radius:999px;
-      background:var(--accent-soft);
-      color:var(--accent-strong);
-      white-space:nowrap;
-    }
-    .card-number{
-      font-size:20px;
-      font-weight:700;
-    }
-    .card-note{
-      font-size:10px;
-      color:var(--muted);
-      margin-top:6px;
-    }
-
-    .section-grid{
-      display:grid;
-      grid-template-columns:minmax(0,2.2fr) minmax(0,1.2fr);
-      gap:12px;
-      margin-bottom:18px;
-    }
-    .section-grid-3{
-      display:grid;
-      grid-template-columns:minmax(0,1.4fr) minmax(0,2fr);
-      gap:12px;
-      margin-bottom:18px;
-    }
-    .section-title{
-      font-size:13px;
-      font-weight:600;
-      margin-bottom:6px;
-    }
-    .section-sub{
-      font-size:11px;
-      color:var(--muted);
-      margin-bottom:10px;
-    }
-
-    .chart-wrapper{
-      position:relative;
-      height:260px;
-    }
-    .chart-wrapper.small{
-      height:120px;
-    }
-    .chart-empty{
-      position:absolute;
-      inset:0;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:11px;
-      color:var(--muted);
-      background:var(--panel-soft);
-      border-radius:10px;
-    }
-    canvas{
-      width:100% !important;
-      height:100% !important;
-    }
-
-    .vendor-cards{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-      gap:10px;
-    }
-    .vendor-card-header{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      margin-bottom:6px;
-    }
-    .vendor-logo{
-      width:26px;
-      height:26px;
-      border-radius:999px;
-      background:linear-gradient(135deg,#2563eb,#a855f7);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      color:#fff;
-      font-size:13px;
-      overflow:hidden;
-      background-size:cover;
-      background-position:center;
-    }
-    .vendor-name{
-      font-size:12px;
-      font-weight:600;
-    }
-    .vendor-rank{
-      font-size:10px;
-      color:var(--muted);
-    }
-    .vendor-revenue{
-      font-size:14px;
-      font-weight:700;
-      margin-top:2px;
-    }
-    .vendor-share{
-      font-size:10px;
-      color:var(--muted);
-      margin-top:2px;
-    }
-
-    .table-wrapper{
-      width:100%;
-      overflow-x:auto;
-      border-radius:12px;
       border:1px solid var(--border);
-      background:var(--panel);
-    }
-    table{
-      width:100%;
-      border-collapse:collapse;
-      font-size:11px;
-    }
-    thead{
-      background:var(--panel-soft);
-    }
-    th,td{
-      padding:8px 10px;
-      border-bottom:1px solid var(--border);
-      text-align:left;
-    }
-    th{
-      font-size:10px;
-      text-transform:uppercase;
-      color:var(--muted);
-      letter-spacing:.04em;
-    }
-    tbody tr:hover{
       background:#f9fafb;
-    }
-    .table-empty{
-      padding:14px;
-      text-align:center;
-      font-size:11px;
-      color:var(--muted);
+      font-size:12px;
+      min-width:180px;
     }
 
-    .tag-danger{
-      color:var(--danger);
-      font-weight:600;
-    }
-
-    .payment-stats{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      margin-top:10px;
-      font-size:10px;
-    }
-    .payment-pill{
-      padding:6px 8px;
-      border-radius:10px;
-      background:var(--panel-soft);
-      border:1px solid var(--border);
-    }
-    .payment-pill strong{
-      display:block;
-      font-size:11px;
-    }
-
-    .feed-list{
+    .live-feed{
       display:flex;
       flex-direction:column;
-      gap:8px;
+      gap:6px;
       max-height:260px;
       overflow-y:auto;
+      padding-top:4px;
     }
     .feed-item{
       display:flex;
       justify-content:space-between;
-      align-items:flex-start;
+      align-items:center;
       gap:8px;
+      padding:6px 0;
+      border-bottom:1px dashed rgba(148,163,184,.4);
       font-size:11px;
-      padding:8px 10px;
-      border-radius:10px;
-      background:var(--panel-soft);
-      border:1px solid var(--border);
     }
-    .feed-meta{
+    .feed-main{
       display:flex;
       flex-direction:column;
       gap:2px;
+    }
+    .feed-top-row{
+      display:flex;
+      gap:6px;
+      align-items:center;
     }
     .feed-brand{
       font-weight:600;
       font-size:11px;
     }
     .feed-time{
-      color:var(--muted);
       font-size:10px;
+      color:var(--muted);
     }
-    .feed-badges{
-      display:flex;
-      flex-wrap:wrap;
-      gap:4px;
-      margin-top:3px;
-    }
-    .badge{
-      font-size:9px;
-      padding:2px 6px;
-      border-radius:999px;
-      background:var(--accent-soft);
-      color:var(--accent-strong);
-    }
-    .badge.refund{
-      background:#fee2e2;
-      color:#b91c1c;
-    }
-    .badge.high{
-      background:#ecfdf5;
-      color:#166534;
+    .feed-right{
+      text-align:right;
     }
     .feed-amount{
-      text-align:right;
-      min-width:70px;
-    }
-    .feed-amount-main{
-      font-weight:700;
+      font-weight:600;
       font-size:12px;
     }
-    .feed-payment-icon{
-      font-size:13px;
-      margin-bottom:2px;
-    }
-
-    .loading-card{
+    .feed-tags{
       display:flex;
-      align-items:center;
-      gap:8px;
-      font-size:12px;
+      gap:4px;
+      justify-content:flex-end;
+      margin-top:2px;
+    }
+
+    .label{
+      display:inline-flex;
+      border-radius:6px;
+      padding:3px 6px;
+      font-size:10px;
+      background:var(--panel-soft);
       color:var(--muted);
-      margin-bottom:16px;
-    }
-    .loading-dot{
-      width:7px;
-      height:7px;
-      border-radius:999px;
-      background:var(--accent);
-      animation:pulse 1s infinite alternate;
-    }
-    @keyframes pulse{
-      from{transform:scale(1);opacity:.7;}
-      to{transform:scale(1.4);opacity:1;}
     }
 
-    .error-card{
-      background:#fef2f2;
-      border-color:#fecaca;
-      color:#b91c1c;
-      font-size:12px;
-    }
-
-    @media(max-width:768px){
-      .topbar{
-        flex-direction:column;
-        align-items:flex-start;
-      }
-      .topbar-right{
-        align-items:flex-start;
-      }
-      .section-grid,
-      .section-grid-3{
+    @media(max-width:1024px){
+      .split-grid-2{
         grid-template-columns:minmax(0,1fr);
       }
-      .chart-wrapper{
-        height:230px;
-      }
+    }
+    @media(max-width:768px){
+      .app-shell{flex-direction:column;}
+      .sidebar{width:100%;flex-direction:row;overflow-x:auto;height:auto;}
+      .sidebar-nav{flex-direction:row;}
+      .topbar{flex-direction:column;align-items:flex-start;gap:6px;height:auto;}
+      .topbar-right{justify-content:flex-start;}
     }
   </style>
 </head>
 <body>
 
-<!-- AUTH VIEW -->
-<div id="auth-view" class="auth-wrapper">
-  <div class="auth-header">
-    <div class="auth-logo">E</div>
-    <div>
-      <div class="auth-title">Luma Events — Owner Analytics</div>
-      <div id="auth-subtitle" class="auth-subtitle">
-        Sign in to see POS analytics or create your first event.
+  <!-- AUTH VIEW -->
+  <div id="auth-view" class="auth-wrapper">
+    <div class="auth-header">
+      <div class="auth-logo">E</div>
+      <div>
+        <div class="auth-title">Luma Events — Owner OS</div>
+        <div id="auth-subtitle" class="auth-subtitle">
+          Sign in to manage your events and analytics.
+        </div>
       </div>
+    </div>
+
+    <div id="auth-alert-container"></div>
+
+    <div class="auth-tabs">
+      <button type="button" id="tab-login" class="auth-tab active">Sign in</button>
+      <button type="button" id="tab-signup" class="auth-tab">Create account &amp; event</button>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <form id="login-form">
+      <div class="field">
+        <div class="field-label">Email</div>
+        <input id="login-email" class="field-input" type="email" placeholder="you@example.com"/>
+      </div>
+      <div class="field">
+        <div class="field-label">Password</div>
+        <input id="login-password" class="field-input" type="password" placeholder="Your password"/>
+      </div>
+      <button type="submit" id="login-btn" class="btn btn-primary" style="width:100%;">Sign in</button>
+    </form>
+
+    <!-- SIGNUP FORM -->
+    <form id="signup-form" style="display:none;">
+      <div class="field">
+        <div class="field-label">Your name</div>
+        <input id="signup-name" class="field-input" placeholder="Full name"/>
+      </div>
+      <div class="field">
+        <div class="field-label">Email</div>
+        <input id="signup-email" class="field-input" type="email" placeholder="you@example.com"/>
+      </div>
+      <div class="field">
+        <div class="field-label">Password</div>
+        <input id="signup-password" class="field-input" type="password" placeholder="Minimum 6 characters"/>
+      </div>
+
+      <div class="field">
+        <div class="field-label">Event name</div>
+        <input id="signup-event-name" class="field-input" placeholder="Lokamania 5, Soueast Owners, ..."/>
+      </div>
+      <div class="field">
+        <div class="field-label">Event location</div>
+        <input id="signup-event-location" class="field-input" placeholder="Cairo Festival City, Dubai, ..."/>
+      </div>
+      <div class="field">
+        <div class="field-label">Event start date</div>
+        <input id="signup-event-start" class="field-input" type="date"/>
+      </div>
+      <div class="field">
+        <div class="field-label">Event end date</div>
+        <input id="signup-event-end" class="field-input" type="date"/>
+      </div>
+
+      <button type="submit" id="signup-btn" class="btn btn-primary" style="width:100%;">Create account &amp; event</button>
+      <div class="field-hint" style="margin-top:6px;">
+        This will create your owner account, first event document, and link everything automatically in Firestore.
+      </div>
+    </form>
+
+    <div class="auth-footer">
+      Once signed in, you’ll see your full analytics dashboard, vendor control, customers and more.
     </div>
   </div>
 
-  <div id="auth-alert-container"></div>
-
-  <div class="auth-tabs">
-    <button type="button" id="tab-login" class="auth-tab active">Sign in</button>
-    <button type="button" id="tab-signup" class="auth-tab">Create account &amp; event</button>
-  </div>
-
-  <!-- LOGIN FORM -->
-  <form id="login-form">
-    <div class="field">
-      <div class="field-label">Email</div>
-      <input id="login-email" class="field-input" type="email" placeholder="you@example.com"/>
-    </div>
-    <div class="field">
-      <div class="field-label">Password</div>
-      <input id="login-password" class="field-input" type="password" placeholder="Your password"/>
-    </div>
-    <button type="submit" id="login-btn" class="btn btn-primary" style="width:100%;">Sign in</button>
-  </form>
-
-  <!-- SIGNUP FORM -->
-  <form id="signup-form" style="display:none;">
-    <div class="field">
-      <div class="field-label">Your name</div>
-      <input id="signup-name" class="field-input" placeholder="Full name"/>
-    </div>
-    <div class="field">
-      <div class="field-label">Email</div>
-      <input id="signup-email" class="field-input" type="email" placeholder="you@example.com"/>
-    </div>
-    <div class="field">
-      <div class="field-label">Password</div>
-      <input id="signup-password" class="field-input" type="password" placeholder="Minimum 6 characters"/>
-    </div>
-
-    <div class="field">
-      <div class="field-label">Event name</div>
-      <input id="signup-event-name" class="field-input" placeholder="Lokamania 5, Soueast Owners, ..."/>
-    </div>
-    <div class="field">
-      <div class="field-label">Location</div>
-      <input id="signup-event-location" class="field-input" placeholder="Cairo Festival City, Dubai, ..."/>
-    </div>
-    <div class="field">
-      <div class="field-label">Start date</div>
-      <input id="signup-event-start-date" class="field-input" type="date"/>
-    </div>
-    <div class="field">
-      <div class="field-label">End date</div>
-      <input id="signup-event-end-date" class="field-input" type="date"/>
-    </div>
-
-    <button type="submit" id="signup-btn" class="btn btn-primary" style="width:100%;">Create account &amp; event</button>
-    <div class="field-hint" style="margin-top:6px;">
-      This creates your owner account, first event document, and links everything in Firestore.
-    </div>
-  </form>
-
-  <div class="auth-footer">
-    After signing in, you’ll see a single analytics page per event with all POS metrics.
-  </div>
-</div>
-
-<!-- APP VIEW -->
-<div id="app-view" style="display:none;">
-  <div class="app-shell">
-    <!-- HEADER -->
-    <header class="topbar">
-      <div class="topbar-main">
-        <div id="event-avatar" class="event-avatar">E</div>
-        <div>
-          <div id="event-name" class="topbar-title">Event analytics</div>
-          <div id="event-sub" class="topbar-sub">POS analytics across all brands for this event</div>
-          <div id="event-meta" class="topbar-meta"></div>
-        </div>
+  <!-- APP VIEW -->
+  <div id="app-view" class="app-shell" style="display:none;">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div id="sidebar-event-logo" class="sidebar-logo">E</div>
+        <div id="sidebar-event-name" class="sidebar-brand-name">Event</div>
       </div>
-      <div class="topbar-right">
-        <select id="event-select" class="topbar-select">
-          <!-- events filled by JS -->
-        </select>
-        <div class="date-filter">
-          <span class="date-filter-label">Date view</span>
-          <div id="date-chip-container" class="chip-row">
-            <!-- chips injected by JS -->
-          </div>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-page="page-overview">Overview</button>
+        <button class="nav-item" data-page="page-vendors">Vendors</button>
+        <button class="nav-item" data-page="page-products">Products &amp; Returns</button>
+        <button class="nav-item" data-page="page-customers">Customers</button>
+        <button class="nav-item" data-page="page-sales">Sales &amp; POS</button>
+        <button class="nav-item" data-page="page-settings">Event Settings</button>
+      </nav>
+      <button id="btn-logout" class="nav-item logout">Logout</button>
+    </aside>
+
+    <!-- MAIN -->
+    <div style="flex:1;display:flex;flex-direction:column;">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div id="topbar-title" class="topbar-title">Event Overview</div>
+          <div id="topbar-sub" class="topbar-sub">Monitor vendors, customers, products and live sales</div>
         </div>
-      </div>
-    </header>
-
-    <!-- SECTION TABS -->
-    <div class="chip-row" id="section-tabs" style="margin-bottom:12px;">
-      <button type="button" class="chip small active" data-target="#kpi-section">Overview</button>
-      <button type="button" class="chip small" data-target="#timeline-section">Timeline</button>
-      <button type="button" class="chip small" data-target="#vendors-section">Vendors</button>
-      <button type="button" class="chip small" data-target="#products-section">Products</button>
-      <button type="button" class="chip small" data-target="#payments-section">Payments &amp; Live</button>
-    </div>
-
-    <!-- LOADING / ERROR -->
-    <div id="loading-card" class="card loading-card">
-      <div class="loading-dot"></div>
-      <div>Loading event analytics…</div>
-    </div>
-    <div id="error-card" class="card error-card" style="display:none;"></div>
-
-    <!-- ROW 1 – HERO KPIs -->
-    <section id="kpi-section" style="display:none;">
-      <div class="cards-grid">
-        <div class="card">
-          <div class="card-title">
-            <span>Total POS Revenue</span>
-            <span id="kpi-peak-badge" class="card-badge" style="display:none;"></span>
-          </div>
-          <div id="kpi-total-revenue" class="card-number">0.00</div>
-          <div class="card-note">Sum of all POS sales for the current view (excl. refunds).</div>
-        </div>
-        <div class="card">
-          <div class="card-title">Total Orders</div>
-          <div id="kpi-total-orders" class="card-number">0</div>
-          <div class="card-note">Number of POS orders in this event / day.</div>
-        </div>
-        <div class="card">
-          <div class="card-title">Total Items Sold</div>
-          <div id="kpi-total-items" class="card-number">0</div>
-          <div class="card-note">Sum of all item quantities in non-refund orders.</div>
-        </div>
-        <div class="card">
-          <div class="card-title">Average Order Value</div>
-          <div id="kpi-aov" class="card-number">0.00</div>
-          <div class="card-note">Revenue ÷ orders for current filter.</div>
-        </div>
-        <div class="card">
-          <div class="card-title">Total Returns</div>
-          <div id="kpi-returns" class="card-number">0.00</div>
-          <div class="card-note">Total value of refund orders (absolute).</div>
-        </div>
-        <div class="card">
-          <div class="card-title">Net Revenue</div>
-          <div id="kpi-net-revenue" class="card-number">0.00</div>
-          <div class="card-note">Total POS revenue minus refunds.</div>
-        </div>
-        <div class="card">
-          <div class="card-title">Active Brands</div>
-          <div id="kpi-active-brands" class="card-number">0</div>
-          <div class="card-note">Brands with ≥ 1 non-refund order.</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ROW 2 – TIMELINE + PEAK HOUR -->
-    <section id="timeline-section" style="display:none;">
-      <div class="section-grid">
-        <div class="card">
-          <div class="section-title">Revenue timeline</div>
-          <div class="section-sub" id="timeline-subtitle">Revenue aggregation for current view.</div>
-          <div id="timeline-mode-toggle" class="chip-row" style="margin-bottom:8px;">
-            <button type="button" class="chip small active" data-mode="day">By day</button>
-            <button type="button" class="chip small" data-mode="hour">By hour</button>
-          </div>
-          <div class="chart-wrapper">
-            <canvas id="revenueTimelineChart"></canvas>
-            <div id="timeline-empty" class="chart-empty" style="display:none;">No POS data yet.</div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="section-title">Peak hour</div>
-          <div class="section-sub" id="peak-subtitle">Highest 1-hour window in the current view.</div>
-          <div style="margin-top:4px;">
-            <div style="font-size:11px;color:var(--muted);">Peak window</div>
-            <div id="peak-range" style="font-size:14px;font-weight:600;margin-bottom:6px;">—</div>
-
-            <div style="display:flex;gap:12px;margin-bottom:10px;">
-              <div>
-                <div style="font-size:11px;color:var(--muted);">Revenue</div>
-                <div id="peak-revenue" style="font-size:14px;font-weight:700;">0.00</div>
-              </div>
-              <div>
-                <div style="font-size:11px;color:var(--muted);">Orders</div>
-                <div id="peak-orders" style="font-size:14px;font-weight:700;">0</div>
-              </div>
-            </div>
-
-            <div class="chart-wrapper small">
-              <canvas id="peakHourSparkline"></canvas>
-              <div id="peak-empty" class="chart-empty" style="display:none;">No hourly data yet.</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ROW 3 – VENDORS -->
-    <section id="vendors-section" style="display:none;">
-      <div class="section-grid-3">
-        <div class="card">
-          <div class="section-title">Top vendors</div>
-          <div class="section-sub">Top 3 brands by revenue for current filter.</div>
-          <div id="top-vendor-cards" class="vendor-cards"></div>
-        </div>
-
-        <div class="card">
-          <div class="section-title">Vendors by revenue</div>
-          <div class="section-sub">Top vendors (max 8) by total revenue.</div>
-          <div class="chart-wrapper" style="margin-bottom:10px;">
-            <canvas id="vendorsBarChart"></canvas>
-            <div id="vendors-chart-empty" class="chart-empty" style="display:none;">No vendor sales yet.</div>
-          </div>
-
-          <div id="vendor-table-wrapper" class="table-wrapper"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ROW 4 – PRODUCTS & RETURNS -->
-    <section id="products-section" style="display:none;">
-      <div class="section-grid">
-        <div class="card">
-          <div class="section-title">Top products by revenue</div>
-          <div class="section-sub">Top 5–8 products from POS items (non-refunds).</div>
-          <div class="chart-wrapper">
-            <canvas id="topProductsChart"></canvas>
-            <div id="products-chart-empty" class="chart-empty" style="display:none;">No product-level data (items) found.</div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="section-title">Problem products (returns)</div>
-          <div class="section-sub">Products with highest return % (based on items.qty).</div>
-          <div id="problem-products-table-wrapper" class="table-wrapper"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ROW 5 – PAYMENTS + LIVE ACTIVITY -->
-    <section id="payments-section" style="display:none;">
-      <div class="section-grid">
-        <div class="card">
-          <div class="section-title">Payment methods</div>
-          <div class="section-sub">Share of Cash / Card / Wallet / Other.</div>
-          <div class="chart-wrapper small">
-            <canvas id="paymentDonutChart"></canvas>
-            <div id="payment-chart-empty" class="chart-empty" style="display:none;">No payment data yet.</div>
-          </div>
-          <div id="payment-stats" class="payment-stats"></div>
-        </div>
-
-        <div class="card">
-          <div class="section-title">Live activity</div>
-          <div class="section-sub">Last 10 orders in the current view.</div>
-          <div id="live-feed-empty" class="table-empty" style="display:none;">No orders yet.</div>
-          <div id="live-feed-list" class="feed-list"></div>
-        </div>
-      </div>
-    </section>
-  </div>
-</div>
-
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-  import {
-    getFirestore,
-    doc,
-    getDoc,
-    setDoc,
-    addDoc,
-    getDocs,
-    collection,
-    collectionGroup,
-    query,
-    where,
-    orderBy,
-    onSnapshot,
-    serverTimestamp
-  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-
-  import {
-    getAuth,
-    onAuthStateChanged,
-    createUserWithEmailAndPassword,
-    signInWithEmailAndPassword,
-    updateProfile,
-    signOut
-  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyA80bAAGPuyscnTVS-zwrxE9Jp3tPiS1gM",
-    authDomain: "events-339ce.firebaseapp.com",
-    projectId: "events-339ce",
-    storageBucket: "events-339ce.firebasestorage.app",
-    messagingSenderId: "175601544315",
-    appId: "1:175601544315:web:00c94b4affa972b3a286de"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const auth = getAuth(app);
-
-  const qs = (s) => document.querySelector(s);
-
-  /* AUTH DOM */
-  const authView = qs("#auth-view");
-  const appView  = qs("#app-view");
-  const authSubtitle = qs("#auth-subtitle");
-  const authAlertContainer = qs("#auth-alert-container");
-  const tabLogin  = qs("#tab-login");
-  const tabSignup = qs("#tab-signup");
-  const loginForm = qs("#login-form");
-  const signupForm = qs("#signup-form");
-
-  const loginEmailEl = qs("#login-email");
-  const loginPasswordEl = qs("#login-password");
-
-  const signupNameEl = qs("#signup-name");
-  const signupEmailEl = qs("#signup-email");
-  const signupPasswordEl = qs("#signup-password");
-  const signupEventNameEl = qs("#signup-event-name");
-  const signupEventLocationEl = qs("#signup-event-location");
-  const signupEventStartEl = qs("#signup-event-start-date");
-  const signupEventEndEl = qs("#signup-event-end-date");
-
-  /* APP DOM */
-  const loadingCard = qs("#loading-card");
-  const errorCard = qs("#error-card");
-  const eventAvatarEl = qs("#event-avatar");
-  const eventNameEl = qs("#event-name");
-  const eventSubEl = qs("#event-sub");
-  const eventMetaEl = qs("#event-meta");
-  const eventSelectEl = qs("#event-select");
-  const dateChipContainer = qs("#date-chip-container");
-
-  const kpiSection = qs("#kpi-section");
-  const timelineSection = qs("#timeline-section");
-  const vendorsSection = qs("#vendors-section");
-  const productsSection = qs("#products-section");
-  const paymentsSection = qs("#payments-section");
-
-  const kpiTotalRevenueEl = qs("#kpi-total-revenue");
-  const kpiTotalOrdersEl = qs("#kpi-total-orders");
-  const kpiTotalItemsEl = qs("#kpi-total-items");
-  const kpiAovEl = qs("#kpi-aov");
-  const kpiReturnsEl = qs("#kpi-returns");
-  const kpiNetRevenueEl = qs("#kpi-net-revenue");
-  const kpiActiveBrandsEl = qs("#kpi-active-brands");
-  const kpiPeakBadgeEl = qs("#kpi-peak-badge");
-
-  const timelineSubtitleEl = qs("#timeline-subtitle");
-  const timelineEmptyEl = qs("#timeline-empty");
-  const timelineToggleEl = qs("#timeline-mode-toggle");
-
-  const peakSubtitleEl = qs("#peak-subtitle");
-  const peakRangeEl = qs("#peak-range");
-  const peakRevenueEl = qs("#peak-revenue");
-  const peakOrdersEl = qs("#peak-orders");
-  const peakEmptyEl = qs("#peak-empty");
-
-  const topVendorCardsEl = qs("#top-vendor-cards");
-  const vendorsChartEmptyEl = qs("#vendors-chart-empty");
-  const vendorTableWrapperEl = qs("#vendor-table-wrapper");
-
-  const productsChartEmptyEl = qs("#products-chart-empty");
-  const problemProductsTableWrapperEl = qs("#problem-products-table-wrapper");
-
-  const paymentChartEmptyEl = qs("#payment-chart-empty");
-  const paymentStatsEl = qs("#payment-stats");
-  const liveFeedListEl = qs("#live-feed-list");
-  const liveFeedEmptyEl = qs("#live-feed-empty");
-
-  /* SECTION TABS */
-  const sectionTabs = document.querySelectorAll("#section-tabs .chip");
-
-  function showAuthView() {
-    if (authView) authView.style.display = "block";
-    if (appView)  appView.style.display = "none";
-  }
-  function showAppView() {
-    if (authView) authView.style.display = "none";
-    if (appView)  appView.style.display = "block";
-  }
-
-  function showAuthAlert(message, type="error"){
-    const cls = type === "error" ? "auth-alert-error" : "auth-alert-info";
-    authAlertContainer.innerHTML = `<div class="auth-alert ${cls}">${message}</div>`;
-  }
-  function clearAuthAlert(){
-    authAlertContainer.innerHTML = "";
-  }
-
-  // auth tab switching
-  tabLogin?.addEventListener("click", () => {
-    tabLogin.classList.add("active");
-    tabSignup.classList.remove("active");
-    loginForm.style.display = "block";
-    signupForm.style.display = "none";
-    authSubtitle.textContent = "Sign in to see your event analytics.";
-  });
-  tabSignup?.addEventListener("click", () => {
-    tabSignup.classList.add("active");
-    tabLogin.classList.remove("active");
-    loginForm.style.display = "none";
-    signupForm.style.display = "block";
-    authSubtitle.textContent = "Create your first event and analytics dashboard.";
-  });
-
-  // LOGIN
-  loginForm?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    clearAuthAlert();
-    const email = loginEmailEl?.value.trim();
-    const pw = loginPasswordEl?.value;
-    if (!email || !pw) {
-      showAuthAlert("Enter email and password.");
-      return;
-    }
-    try{
-      await signInWithEmailAndPassword(auth, email, pw);
-    }catch(err){
-      console.error("Login error:", err);
-      let msg = "Login failed.";
-      if (err.code === "auth/user-not-found") msg = "User not found.";
-      if (err.code === "auth/wrong-password") msg = "Wrong password.";
-      showAuthAlert(msg);
-    }
-  });
-
-  // SIGNUP + CREATE EVENT
-  signupForm?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    clearAuthAlert();
-
-    const fullName = signupNameEl?.value.trim();
-    const email    = signupEmailEl?.value.trim();
-    const pw       = signupPasswordEl?.value;
-    const eventName     = signupEventNameEl?.value.trim();
-    const eventLocation = signupEventLocationEl?.value.trim();
-    const startDate     = signupEventStartEl?.value.trim();
-    const endDate       = signupEventEndEl?.value.trim() || startDate;
-
-    if (!fullName || !email || !pw || !eventName) {
-      showAuthAlert("Fill all required fields (name, email, password, event name).");
-      return;
-    }
-    if (pw.length < 6) {
-      showAuthAlert("Password must be at least 6 characters.");
-      return;
-    }
-
-    try{
-      const cred = await createUserWithEmailAndPassword(auth, email, pw);
-      const user = cred.user;
-      await updateProfile(user, { displayName: fullName });
-
-      await setDoc(doc(db,"eventOwners",user.uid),{
-        uid:user.uid,
-        name:fullName,
-        email,
-        createdAt:serverTimestamp()
-      });
-
-      const eventRef = await addDoc(collection(db,"events"),{
-        name:eventName,
-        location:eventLocation || null,
-        startDate:startDate || null,
-        endDate:endDate || startDate || null,
-        ownerUserId:user.uid,
-        status:"active",
-        createdAt:serverTimestamp()
-      });
-      const eventId = eventRef.id;
-
-      await setDoc(
-        doc(db,"ownerEvents",user.uid),
-        { primaryEventId:eventId, eventIds:[eventId] },
-        { merge:true }
-      );
-    }catch(err){
-      console.error("Signup error:",err);
-      let msg = "Signup failed.";
-      if (err.code === "auth/email-already-in-use") msg = "Email already in use.";
-      showAuthAlert(msg);
-    }
-  });
-
-  // BASIC HELPERS
-  function showLoading(show){
-    if(!loadingCard) return;
-    loadingCard.style.display = show ? "flex" : "none";
-  }
-  function showError(message){
-    if(!errorCard) return;
-    errorCard.textContent = message;
-    errorCard.style.display = "block";
-  }
-  function clearError(){
-    if(!errorCard) return;
-    errorCard.textContent = "";
-    errorCard.style.display = "none";
-  }
-  function formatCurrency(num){
-    const v = Number(num) || 0;
-    return v.toFixed(2);
-  }
-  function getOrderDate(order){
-    const v = order.createdAtLocal || order.createdAt;
-    if(!v) return null;
-    try{
-      if(typeof v === "string"){
-        const d = new Date(v);
-        return isNaN(d.getTime()) ? null : d;
-      }
-      if(v && typeof v.toDate === "function"){
-        return v.toDate();
-      }
-    }catch(e){ return null; }
-    return null;
-  }
-  function dateToYMD(d){
-    const y = d.getFullYear();
-    const m = String(d.getMonth()+1).padStart(2,"0");
-    const day = String(d.getDate()).padStart(2,"0");
-    return `${y}-${m}-${day}`;
-  }
-
-  function classifyPaymentMethod(methodRaw){
-    if(!methodRaw) return "Other";
-    const s = String(methodRaw).toLowerCase();
-    if(s.includes("cash")) return "Cash";
-    if(s.includes("card") || s.includes("visa") || s.includes("master")) return "Card";
-    if(s.includes("wallet") || s.includes("vodafone") || s.includes("fawry")) return "Wallet";
-    return "Other";
-  }
-  function paymentIconFor(method){
-    switch(method){
-      case "Cash": return "💵";
-      case "Card": return "💳";
-      case "Wallet": return "📱";
-      default: return "🧾";
-    }
-  }
-
-  // STATE
-  let currentUser = null;
-  let eventsList = [];
-  let currentEventId = null;
-  let currentEventData = null;
-
-  let vendors = [];
-  let orders = [];
-  let brandCache = {};
-
-  let dateRange = { startStr:null, endStr:null, days:[] };
-  let currentDateFilter = "all"; // "all" or "YYYY-MM-DD"
-  let currentTimelineMode = "day"; // "day" | "hour"
-
-  let revenueTimelineChart = null;
-  let vendorsBarChart = null;
-  let topProductsChart = null;
-  let paymentDonutChart = null;
-  let peakHourSparklineChart = null;
-
-  let unsubVendors = null;
-  let unsubOrders = null;
-
-  // SECTION TABS scroll
-  sectionTabs.forEach(btn => {
-    btn.addEventListener("click", () => {
-      sectionTabs.forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-
-      const targetSelector = btn.dataset.target;
-      const target = targetSelector ? document.querySelector(targetSelector) : null;
-      if (!target) return;
-      const rect = target.getBoundingClientRect();
-      const offsetTop = rect.top + window.pageYOffset - 80;
-      window.scrollTo({ top:offsetTop, behavior:"smooth" });
-    });
-  });
-
-  function buildEventDateRange(ev){
-    const startStr = ev.startDate || ev.date || null;
-    const endStr = ev.endDate || ev.date || startStr;
-    if(!startStr){
-      return { startStr:null, endStr:null, days:[] };
-    }
-    const days = [];
-    const start = new Date(startStr);
-    const end = new Date(endStr || startStr);
-    if(isNaN(start.getTime()) || isNaN(end.getTime())){
-      return { startStr, endStr, days:[] };
-    }
-    const cur = new Date(start);
-    while(cur <= end){
-      days.push(dateToYMD(cur));
-      cur.setDate(cur.getDate()+1);
-    }
-    return { startStr, endStr, days };
-  }
-
-  async function ensureBrandInfo(brandId){
-    if(!brandId) return;
-    if(brandCache[brandId]) return;
-    try{
-      const snap = await getDoc(doc(db,"brands",brandId));
-      if(snap.exists()){
-        const data = snap.data();
-        brandCache[brandId] = {
-          name:data.name || data.brandName || "",
-          logoUrl:data.logoUrl || null
-        };
-      }else{
-        brandCache[brandId] = {};
-      }
-    }catch(e){
-      console.warn("Error loading brand",brandId,e);
-      brandCache[brandId] = {};
-    }
-  }
-
-  function getBrandDisplay(brandId, fallbackName){
-    const fromCache = brandCache[brandId] || {};
-    const vendorMatch = vendors.find(v => v.posBrandId === brandId || v.brandId === brandId);
-    return {
-      name: fromCache.name || vendorMatch?.brandName || fallbackName || "Brand",
-      logoUrl: fromCache.logoUrl || vendorMatch?.brandLogoUrl || null
-    };
-  }
-
-  function applyDateFilter(allOrders){
-    if(!allOrders || !allOrders.length) return [];
-    const sorted = [...allOrders].sort((a,b)=>{
-      const da = getOrderDate(a);
-      const db = getOrderDate(b);
-      if(!da || !db) return 0;
-      return da - db;
-    });
-    if(currentDateFilter === "all") return sorted;
-    return sorted.filter(o=>{
-      const d = getOrderDate(o);
-      if(!d) return false;
-      return dateToYMD(d) === currentDateFilter;
-    });
-  }
-
-  function renderDateChips(){
-    if(!dateChipContainer) return;
-    dateChipContainer.innerHTML = "";
-
-    const generalChip = document.createElement("button");
-    generalChip.type = "button";
-    generalChip.className = "chip" + (currentDateFilter === "all" ? " active" : "");
-    generalChip.textContent = "General";
-    generalChip.dataset.date = "all";
-    dateChipContainer.appendChild(generalChip);
-
-    dateRange.days.forEach(dStr=>{
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "chip" + (currentDateFilter === dStr ? " active" : "");
-      btn.textContent = dStr;
-      btn.dataset.date = dStr;
-      dateChipContainer.appendChild(btn);
-    });
-
-    dateChipContainer.querySelectorAll(".chip").forEach(btn=>{
-      btn.addEventListener("click",()=>{
-        const val = btn.dataset.date;
-        if(!val) return;
-        currentDateFilter = (val === "all") ? "all" : val;
-        renderDateChips();
-        recomputeAnalytics();
-      });
-    });
-  }
-
-  function setupTimelineToggle(){
-    if(!timelineToggleEl) return;
-    timelineToggleEl.querySelectorAll(".chip").forEach(btn=>{
-      btn.addEventListener("click",()=>{
-        const mode = btn.dataset.mode;
-        if(!mode) return;
-        currentTimelineMode = mode;
-        timelineToggleEl.querySelectorAll(".chip").forEach(b=>b.classList.remove("active"));
-        btn.classList.add("active");
-        recomputeAnalytics();
-      });
-    });
-  }
-
-  function renderKpis(filtered){
-    let grossSales = 0;
-    let totalOrders = 0;
-    let totalItems = 0;
-    let returnAmount = 0;
-    const activeBrandIds = new Set();
-
-    filtered.forEach(o=>{
-      const amt = Number(o.total) || 0;
-      const isReturn = !!o.isReturn;
-      if(isReturn){
-        returnAmount += Math.abs(amt);
-      }else{
-        grossSales += amt;
-        totalOrders++;
-        if(o.brandId) activeBrandIds.add(o.brandId);
-        if(Array.isArray(o.items)){
-          o.items.forEach(it=>{
-            totalItems += Number(it.qty) || 0;
-          });
-        }
-      }
-    });
-
-    const aov = totalOrders ? grossSales / totalOrders : 0;
-    const net = grossSales - returnAmount;
-
-    kpiTotalRevenueEl.textContent = formatCurrency(grossSales);
-    kpiTotalOrdersEl.textContent = String(totalOrders);
-    kpiTotalItemsEl.textContent  = String(totalItems);
-    kpiAovEl.textContent         = formatCurrency(aov);
-    kpiReturnsEl.textContent     = formatCurrency(returnAmount);
-    kpiNetRevenueEl.textContent  = formatCurrency(net);
-    kpiActiveBrandsEl.textContent= String(activeBrandIds.size);
-
-    kpiSection.style.display = "block";
-  }
-
-  function renderRevenueTimeline(filtered){
-    const ctx = document.getElementById("revenueTimelineChart");
-    if(!ctx || typeof Chart === "undefined") return;
-
-    const buckets = {};
-    const byHour = currentTimelineMode === "hour";
-
-    filtered.forEach(o=>{
-      if(o.isReturn) return;
-      const d = getOrderDate(o);
-      if(!d) return;
-      if(byHour){
-        const key = `${dateToYMD(d)} ${String(d.getHours()).padStart(2,"0")}:00`;
-        buckets[key] = (buckets[key] || 0) + (Number(o.total) || 0);
-      }else{
-        const key = dateToYMD(d);
-        buckets[key] = (buckets[key] || 0) + (Number(o.total) || 0);
-      }
-    });
-
-    const labels = Object.keys(buckets).sort();
-    const data = labels.map(k => buckets[k]);
-
-    if(!labels.length){
-      timelineEmptyEl.style.display = "flex";
-    }else{
-      timelineEmptyEl.style.display = "none";
-    }
-
-    if(currentDateFilter === "all"){
-      timelineSubtitleEl.textContent = byHour
-        ? "Revenue by hour across the whole event."
-        : "Revenue by day across the whole event.";
-    }else{
-      timelineSubtitleEl.textContent = "Revenue in the selected date.";
-    }
-
-    const chartData = {
-      labels,
-      datasets:[{ label:"Revenue", data, fill:true, tension:0.25 }]
-    };
-    const options = {
-      responsive:true,
-      maintainAspectRatio:false,
-      plugins:{ legend:{ display:false } },
-      scales:{
-        x:{ ticks:{ font:{ size:10 } } },
-        y:{ ticks:{ font:{ size:10 } } }
-      }
-    };
-
-    if(!revenueTimelineChart){
-      revenueTimelineChart = new Chart(ctx,{ type:"line", data:chartData, options });
-    }else{
-      revenueTimelineChart.data = chartData;
-      revenueTimelineChart.options = options;
-      revenueTimelineChart.update();
-    }
-
-    timelineSection.style.display = "block";
-  }
-
-  function renderPeakHour(filtered){
-    const ctx = document.getElementById("peakHourSparkline");
-    if(!ctx || typeof Chart === "undefined") return;
-
-    const buckets = {};
-    filtered.forEach(o=>{
-      const d = getOrderDate(o);
-      if(!d) return;
-      const key = `${dateToYMD(d)} ${String(d.getHours()).padStart(2,"0")}:00`;
-      const amt = Number(o.total) || 0;
-      const isReturn = !!o.isReturn;
-      const signAmt = isReturn ? -Math.abs(amt) : amt;
-      if(!buckets[key]) buckets[key] = { revenue:0, orders:0 };
-      buckets[key].revenue += signAmt;
-      buckets[key].orders += 1;
-    });
-
-    const entries = Object.entries(buckets).sort((a,b)=>a[0].localeCompare(b[0]));
-    if(!entries.length){
-      peakRangeEl.textContent = "—";
-      peakRevenueEl.textContent = "0.00";
-      peakOrdersEl.textContent = "0";
-      peakEmptyEl.style.display = "flex";
-      if(kpiPeakBadgeEl) kpiPeakBadgeEl.style.display = "none";
-      peakSubtitleEl.textContent = "No hourly data yet.";
-      if(peakHourSparklineChart){
-        peakHourSparklineChart.destroy();
-        peakHourSparklineChart = null;
-      }
-      return;
-    }
-
-    let bestKey = null;
-    let bestRevenue = -Infinity;
-    let bestOrders = 0;
-    entries.forEach(([key,val])=>{
-      if(val.revenue > bestRevenue){
-        bestRevenue = val.revenue;
-        bestOrders  = val.orders;
-        bestKey     = key;
-      }
-    });
-
-    const [dateStr, hourStr] = bestKey.split(" ");
-    const hourNum  = parseInt(hourStr,10) || 0;
-    const nextHour = String((hourNum+1)%24).padStart(2,"0")+":00";
-    const simpleRange = `${hourStr}–${nextHour}`;
-    let displayRange = simpleRange;
-    if(currentDateFilter === "all"){
-      displayRange = `${dateStr} • ${simpleRange}`;
-      peakSubtitleEl.textContent = "Highest 1-hour window across the event.";
-    }else{
-      peakSubtitleEl.textContent = "Highest 1-hour window in the selected day.";
-    }
-
-    peakRangeEl.textContent   = displayRange;
-    peakRevenueEl.textContent = formatCurrency(bestRevenue);
-    peakOrdersEl.textContent  = String(bestOrders);
-
-    if(kpiPeakBadgeEl){
-      kpiPeakBadgeEl.textContent = simpleRange;
-      kpiPeakBadgeEl.style.display = "inline-block";
-    }
-
-    const labels = entries.map(([key]) => key.split(" ")[1]);
-    const data   = entries.map(([,val]) => val.revenue);
-
-    const sparkData = { labels, datasets:[{ data, fill:false, tension:0.25 }] };
-    const sparkOpts = {
-      responsive:true,
-      maintainAspectRatio:false,
-      plugins:{ legend:{ display:false } },
-      scales:{ x:{ display:false }, y:{ display:false } },
-      elements:{ point:{ radius:0 } }
-    };
-
-    if(!peakHourSparklineChart){
-      peakHourSparklineChart = new Chart(ctx,{ type:"line", data:sparkData, options:sparkOpts });
-    }else{
-      peakHourSparklineChart.data = sparkData;
-      peakHourSparklineChart.options = sparkOpts;
-      peakHourSparklineChart.update();
-    }
-
-    peakEmptyEl.style.display = labels.length ? "none" : "flex";
-    timelineSection.style.display = "block";
-  }
-
-  function computeVendorMetrics(filtered){
-    const map = {};
-    filtered.forEach(o=>{
-      const brandId = o.brandId || "_unknown";
-      if(!map[brandId]){
-        map[brandId] = {
-          brandId,
-          brandName:o.brandName || o.vendorBrandName || "Brand",
-          revenue:0,
-          orders:0,
-          refunds:0,
-          net:0
-        };
-      }
-      const amt = Number(o.total) || 0;
-      const isReturn = !!o.isReturn;
-      if(isReturn){
-        map[brandId].refunds += Math.abs(amt);
-        map[brandId].net     -= Math.abs(amt);
-      }else{
-        map[brandId].revenue += amt;
-        map[brandId].orders  += 1;
-        map[brandId].net     += amt;
-      }
-    });
-    return Object.values(map).sort((a,b)=>b.revenue - a.revenue);
-  }
-
-  function renderTopVendorCards(vendorMetrics,totalRevenue){
-    topVendorCardsEl.innerHTML = "";
-    const top3 = vendorMetrics.slice(0,3);
-    if(!top3.length){
-      topVendorCardsEl.innerHTML = `<div class="table-empty">No vendor sales yet.</div>`;
-      vendorsSection.style.display = "block";
-      return;
-    }
-    top3.forEach((v,idx)=>{
-      const display = getBrandDisplay(v.brandId, v.brandName);
-      const share   = totalRevenue>0 ? (v.revenue/totalRevenue)*100 : 0;
-
-      const card = document.createElement("div");
-      card.className = "card";
-      card.innerHTML = `
-        <div class="vendor-card-header">
-          <div class="vendor-logo">${(display.name||"B").charAt(0).toUpperCase()}</div>
+        <div class="topbar-right">
           <div>
-            <div class="vendor-name">${display.name || v.brandName}</div>
-            <div class="vendor-rank">Top vendor #${idx+1}</div>
+            <span style="font-size:11px;color:var(--muted);margin-right:4px;">Event:</span>
+            <select id="event-select" class="topbar-select">
+              <!-- filled by JS -->
+            </select>
+          </div>
+          <div>
+            <span style="font-size:11px;color:var(--muted);margin-right:4px;">View:</span>
+            <div id="date-filter" class="date-filter">
+              <!-- chips injected by JS: General + per-day -->
+            </div>
           </div>
         </div>
-        <div class="vendor-revenue">EGP ${formatCurrency(v.revenue)}</div>
-        <div class="vendor-share">${share.toFixed(1)}% of event revenue</div>
-      `;
-      const logoEl = card.querySelector(".vendor-logo");
-      if(display.logoUrl && logoEl){
-        logoEl.style.backgroundImage = `url("${display.logoUrl}")`;
-        logoEl.textContent = "";
-      }
-      topVendorCardsEl.appendChild(card);
-    });
-    vendorsSection.style.display = "block";
-  }
+      </header>
 
-  function renderVendorsChart(vendorMetrics){
-    const ctx = document.getElementById("vendorsBarChart");
-    if(!ctx || typeof Chart === "undefined") return;
-    const top = vendorMetrics.slice(0,8);
-    const labels = top.map(v => getBrandDisplay(v.brandId,v.brandName).name);
-    const data   = top.map(v => v.revenue);
+      <main class="content-area">
+        <!-- ================= OVERVIEW PAGE ================ -->
+        <section id="page-overview" class="page active">
+          <!-- Row 1: Hero KPIs -->
+          <div class="cards-grid">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">Total POS Revenue</div>
+                <span id="badge-peak-hour" class="badge" style="display:none;"></span>
+              </div>
+              <div id="kpi-total-revenue" class="card-number">0.00</div>
+              <div class="card-note">All POS sales for this event (current filter).</div>
+            </div>
+            <div class="card">
+              <div class="card-title">Total Orders</div>
+              <div id="kpi-total-orders" class="card-number">0</div>
+              <div class="card-note">Number of orders across all brands.</div>
+            </div>
+            <div class="card">
+              <div class="card-title">Total Items Sold</div>
+              <div id="kpi-items-sold" class="card-number">0</div>
+              <div class="card-note">Sum of all item quantities.</div>
+            </div>
+            <div class="card">
+              <div class="card-title">Average Order Value</div>
+              <div id="kpi-aov" class="card-number">0.00</div>
+              <div class="card-note">Total revenue / number of orders.</div>
+            </div>
+            <div class="card">
+              <div class="card-title">Total Returns</div>
+              <div id="kpi-returns" class="card-number">0.00</div>
+              <div class="card-note">Refunds and returned orders.</div>
+            </div>
+            <div class="card">
+              <div class="card-title">Net Revenue</div>
+              <div id="kpi-net-revenue" class="card-number">0.00</div>
+              <div class="card-note">Revenue minus returns.</div>
+            </div>
+            <div class="card">
+              <div class="card-title">Active Brands</div>
+              <div id="kpi-active-brands" class="card-number">0</div>
+              <div class="card-note">Brands with at least one order.</div>
+            </div>
+          </div>
 
-    if(!labels.length){
-      vendorsChartEmptyEl.style.display = "flex";
-    }else{
-      vendorsChartEmptyEl.style.display = "none";
-    }
-    const chartData = { labels, datasets:[{ data, label:"Revenue", borderWidth:1 }] };
-    const options = {
-      indexAxis:"y",
-      responsive:true,
-      maintainAspectRatio:false,
-      plugins:{ legend:{ display:false } },
-      scales:{
-        x:{ ticks:{ font:{ size:10 } } },
-        y:{ ticks:{ font:{ size:10 } } }
-      }
-    };
-    if(!vendorsBarChart){
-      vendorsBarChart = new Chart(ctx,{ type:"bar", data:chartData, options });
-    }else{
-      vendorsBarChart.data = chartData;
-      vendorsBarChart.options = options;
-      vendorsBarChart.update();
-    }
-    vendorsSection.style.display = "block";
-  }
+          <!-- Row 2: Timeline + Peak Hour -->
+          <div class="split-grid-2">
+            <div class="card">
+              <div class="section-title-row">
+                <div>
+                  <div class="section-title">Revenue Timeline</div>
+                  <div class="section-sub" id="timeline-subtitle">Revenue across event days.</div>
+                </div>
+                <div class="pill-filters">
+                  <button class="pill active" data-timeline-mode="auto" id="btn-timeline-auto">Auto</button>
+                  <button class="pill" data-timeline-mode="day" id="btn-timeline-day">By day</button>
+                  <button class="pill" data-timeline-mode="hour" id="btn-timeline-hour">By hour</button>
+                </div>
+              </div>
+              <div class="chart-container">
+                <canvas id="chart-revenue-timeline"></canvas>
+              </div>
+            </div>
 
-  function renderVendorTable(vendorMetrics,totalNet){
-    if(!vendorTableWrapperEl) return;
-    if(!vendorMetrics.length){
-      vendorTableWrapperEl.innerHTML = `<div class="table-empty">No vendor sales yet.</div>`;
-      return;
-    }
-    const rows = vendorMetrics.slice(0,10);
-    let html = `
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Brand</th>
-            <th>Revenue</th>
-            <th>Orders</th>
-            <th>Net Rev %</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
-    rows.forEach((v,idx)=>{
-      const netShare = totalNet>0 ? (v.net/totalNet)*100 : 0;
-      html += `
-        <tr>
-          <td>${idx+1}</td>
-          <td>${getBrandDisplay(v.brandId,v.brandName).name}</td>
-          <td>EGP ${formatCurrency(v.revenue)}</td>
-          <td>${v.orders}</td>
-          <td>${isFinite(netShare)?netShare.toFixed(1):"0.0"}%</td>
-        </tr>
-      `;
-    });
-    html += `</tbody></table>`;
-    vendorTableWrapperEl.innerHTML = html;
-  }
+            <div class="card">
+              <div class="section-title-row">
+                <div>
+                  <div class="section-title">Peak Hour</div>
+                  <div class="section-sub">Most intense hour for this view.</div>
+                </div>
+              </div>
+              <div style="margin-top:6px;">
+                <div class="card-note">Hour window</div>
+                <div id="peak-hour-window" class="card-number" style="font-size:18px;margin-bottom:4px;">—</div>
+                <div class="card-note">Revenue in that hour</div>
+                <div id="peak-hour-revenue" style="font-weight:600;font-size:14px;margin-bottom:6px;">0.00</div>
+                <div class="card-note">Orders in that hour</div>
+                <div id="peak-hour-orders" style="font-weight:600;font-size:14px;">0</div>
+              </div>
+              <div style="margin-top:10px;">
+                <div class="section-sub" style="margin-bottom:4px;">Orders by hour (mini)</div>
+                <div class="chart-container" style="height:120px;">
+                  <canvas id="chart-peak-sparkline"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
 
-  function computeProductMetrics(filtered){
-    const map = {};
-    filtered.forEach(o=>{
-      if(!Array.isArray(o.items)) return;
-      const brandId = o.brandId || "_unknown";
-      const brandName = o.brandName || o.vendorBrandName || "Brand";
-      const isReturn = !!o.isReturn;
-      o.items.forEach(it=>{
-        const name      = it.name || it.productName || "Product";
-        const qty       = Number(it.qty) || 0;
-        const lineTotal = Number(it.lineTotal) || (Number(it.price)||0)*qty;
-        const key = `${brandId}|||${name}`;
-        if(!map[key]){
-          map[key] = { brandId, brandName, productName:name, soldQty:0, soldRevenue:0, returnQty:0 };
-        }
-        if(isReturn){
-          map[key].returnQty += Math.abs(qty);
-        }else{
-          map[key].soldQty    += qty;
-          map[key].soldRevenue+= lineTotal;
-        }
-      });
-    });
-    return Object.values(map);
-  }
+          <!-- Row 3: Top Vendors snippet -->
+          <div class="split-grid-2">
+            <div class="card">
+              <div class="section-title-row">
+                <div>
+                  <div class="section-title">Top Vendors</div>
+                  <div class="section-sub">Top 3 brands by revenue (current filter).</div>
+                </div>
+              </div>
+              <div id="overview-top-vendors" class="cards-grid" style="margin-top:4px;"></div>
+            </div>
 
-  function renderTopProductsChart(productMetrics){
-    const ctx = document.getElementById("topProductsChart");
-    if(!ctx || typeof Chart === "undefined") return;
-    const candidates = productMetrics.filter(p=>p.soldRevenue>0);
-    candidates.sort((a,b)=>b.soldRevenue - a.soldRevenue);
-    const top = candidates.slice(0,8);
-    const labels = top.map(p=>p.productName);
-    const data   = top.map(p=>p.soldRevenue);
+            <div class="card">
+              <div class="section-title-row">
+                <div>
+                  <div class="section-title">Payment Mix</div>
+                  <div class="section-sub">Cash, card, wallet and others.</div>
+                </div>
+              </div>
+              <div class="chart-container">
+                <canvas id="chart-payment-mix"></canvas>
+              </div>
+              <div id="payment-mini-stats" style="margin-top:8px;font-size:11px;color:var(--muted);display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:4px;"></div>
+            </div>
+          </div>
 
-    if(!labels.length){
-      productsChartEmptyEl.style.display = "flex";
-    }else{
-      productsChartEmptyEl.style.display = "none";
-    }
+          <!-- Row 4: Live feed snippet -->
+          <div class="card">
+            <div class="section-title-row">
+              <div>
+                <div class="section-title">Live Activity</div>
+                <div class="section-sub">Last 10 orders for this view.</div>
+              </div>
+            </div>
+            <div id="overview-live-feed" class="live-feed">
+              <!-- filled by JS -->
+            </div>
+          </div>
+        </section>
 
-    const chartData = { labels, datasets:[{ label:"Revenue", data, borderWidth:1 }] };
-    const options   = {
-      responsive:true,
-      maintainAspectRatio:false,
-      plugins:{ legend:{ display:false } },
-      scales:{
-        x:{ ticks:{ font:{ size:10 } } },
-        y:{ ticks:{ font:{ size:10 } } }
-      }
-    };
+        <!-- ================= VENDORS CONTROL PAGE ================ -->
+        <section id="page-vendors" class="page">
+          <div class="page-header">
+            <div>
+              <div class="page-title">Vendors</div>
+              <div class="page-sub">Approve, reject, suspend and manage vendor POS access.</div>
+            </div>
+            <div class="page-actions">
+              <button id="btn-open-manual-vendor" class="btn btn-primary">Add vendor manually</button>
+              <button id="btn-copy-vendor-link" class="btn btn-ghost">Copy vendor signup link</button>
+            </div>
+          </div>
 
-    if(!topProductsChart){
-      topProductsChart = new Chart(ctx,{ type:"bar", data:chartData, options });
-    }else{
-      topProductsChart.data = chartData;
-      topProductsChart.options = options;
-      topProductsChart.update();
-    }
-    productsSection.style.display = "block";
-  }
+          <div class="cards-grid" id="vendors-kpis">
+            <!-- we can add small kpis here later if needed -->
+          </div>
 
-  function renderProblemProductsTable(productMetrics){
-    if(!problemProductsTableWrapperEl) return;
-    const rows = productMetrics
-      .filter(p=>p.soldQty>0 && p.returnQty>0)
-      .map(p=>({ ...p, returnPct:(p.returnQty/p.soldQty)*100 }))
-      .sort((a,b)=>b.returnPct - a.returnPct)
-      .slice(0,10);
+          <div class="page-header" style="margin-top:4px;">
+            <div class="pill-filters" id="vendor-status-filters">
+              <button class="pill active" data-status="all">All</button>
+              <button class="pill" data-status="pending">Pending</button>
+              <button class="pill" data-status="approved">Approved</button>
+              <button class="pill" data-status="rejected">Rejected</button>
+              <button class="pill" data-status="suspended">Suspended</button>
+            </div>
+            <div class="page-actions">
+              <input id="vendor-search" class="search-input" placeholder="Search by brand or owner"/>
+              <button id="btn-export-vendors" class="btn btn-ghost">Export vendors CSV</button>
+            </div>
+          </div>
 
-    if(!rows.length){
-      problemProductsTableWrapperEl.innerHTML = `<div class="table-empty">No problematic products detected yet.</div>`;
-      return;
-    }
+          <div id="vendors-table-wrapper" class="table-wrapper">
+            <!-- vendors table injected here -->
+          </div>
+        </section>
 
-    let html = `
-      <table>
-        <thead>
-          <tr>
-            <th>Product</th>
-            <th>Brand</th>
-            <th>Returns</th>
-            <th>Return %</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
-    rows.forEach(p=>{
-      html += `
-        <tr>
-          <td>${p.productName}</td>
-          <td>${getBrandDisplay(p.brandId,p.brandName).name}</td>
-          <td class="tag-danger">${p.returnQty}</td>
-          <td class="tag-danger">${p.returnPct.toFixed(1)}%</td>
-        </tr>
-      `;
-    });
-    html += `</tbody></table>`;
-    problemProductsTableWrapperEl.innerHTML = html;
-  }
+        <!-- ================= PRODUCTS & RETURNS PAGE ================ -->
+        <section id="page-products" class="page">
+          <div class="page-header">
+            <div>
+              <div class="page-title">Products &amp; Returns</div>
+              <div class="page-sub">Top-selling products and problem items with high returns.</div>
+            </div>
+          </div>
 
-  function renderPaymentMix(filtered){
-    const ctx = document.getElementById("paymentDonutChart");
-    if(!ctx || typeof Chart === "undefined") return;
+          <div class="split-grid-2">
+            <div class="card">
+              <div class="section-title-row">
+                <div>
+                  <div class="section-title">Top Products by Revenue</div>
+                  <div class="section-sub">Top 5–8 products by total revenue.</div>
+                </div>
+              </div>
+              <div class="chart-container">
+                <canvas id="chart-top-products"></canvas>
+              </div>
+            </div>
 
-    const stats = {
-      Cash:{ amount:0, orders:0 },
-      Card:{ amount:0, orders:0 },
-      Wallet:{ amount:0, orders:0 },
-      Other:{ amount:0, orders:0 }
-    };
+            <div class="card">
+              <div class="section-title-row">
+                <div>
+                  <div class="section-title">Problem Products</div>
+                  <div class="section-sub">Products with the highest return rates.</div>
+                </div>
+              </div>
+              <div id="problem-products-table-wrapper" class="table-wrapper" style="margin-top:6px;">
+                <!-- table injected: Product | Brand | Returns | Return % -->
+              </div>
+            </div>
+          </div>
+        </section>
 
-    filtered.forEach(o=>{
-      if(o.isReturn) return;
-      const amt = Number(o.total) || 0;
-      const method = classifyPaymentMethod(o.paymentMethod);
-      stats[method].amount += amt;
-      stats[method].orders += 1;
-    });
+        <!-- ================= CUSTOMERS PAGE ================ -->
+        <section id="page-customers" class="page">
+          <div class="page-header">
+            <div>
+              <div class="page-title">Customers</div>
+              <div class="page-sub">Top customers by sales and full customer list for this event.</div>
+            </div>
+            <div class="page-actions">
+              <input id="customer-search" class="search-input" placeholder="Search by name, phone or email"/>
+              <button id="btn-export-customers" class="btn btn-ghost">Export customers CSV</button>
+            </div>
+          </div>
 
-    const labels = ["Cash","Card","Wallet","Other"];
-    const data   = labels.map(l=>stats[l].amount);
+          <!-- Top customers cards -->
+          <div id="customers-kpis" class="cards-grid">
+            <!-- top 3 customers cards -->
+          </div>
 
-    if(!data.some(v=>v>0)){
-      paymentChartEmptyEl.style.display = "flex";
-    }else{
-      paymentChartEmptyEl.style.display = "none";
-    }
+          <!-- All customers table -->
+          <div id="customers-table-wrapper" class="table-wrapper">
+            <!-- customers table injected -->
+          </div>
+        </section>
 
-    const chartData = { labels, datasets:[{ data }] };
-    const options   = {
-      responsive:true,
-      maintainAspectRatio:false,
-      plugins:{ legend:{ position:"bottom", labels:{ font:{ size:10 } } } }
-    };
+        <!-- ================= SALES / ORDERS PAGE ================ -->
+        <section id="page-sales" class="page">
+          <div class="page-header">
+            <div>
+              <div class="page-title">Sales &amp; POS</div>
+              <div class="page-sub">Raw order list across all brands for this event (respecting date filter).</div>
+            </div>
+            <div class="page-actions">
+              <button id="btn-export-orders" class="btn btn-ghost">Export orders CSV</button>
+            </div>
+          </div>
 
-    if(!paymentDonutChart){
-      paymentDonutChart = new Chart(ctx,{ type:"doughnut", data:chartData, options });
-    }else{
-      paymentDonutChart.data = chartData;
-      paymentDonutChart.options = options;
-      paymentDonutChart.update();
-    }
+          <div id="orders-table-wrapper" class="table-wrapper">
+            <!-- orders table injected -->
+          </div>
+        </section>
 
-    paymentStatsEl.innerHTML = "";
-    labels.forEach(l=>{
-      const s = stats[l];
-      const pill = document.createElement("div");
-      pill.className = "payment-pill";
-      pill.innerHTML = `<strong>${l}</strong>EGP ${formatCurrency(s.amount)} • ${s.orders} orders`;
-      paymentStatsEl.appendChild(pill);
-    });
+        <!-- ================= EVENT SETTINGS PAGE ================ -->
+        <section id="page-settings" class="page">
+          <div class="page-header">
+            <div>
+              <div class="page-title">Event Settings</div>
+              <div class="page-sub">Edit event name, dates &amp; basic settings.</div>
+            </div>
+          </div>
+          <div class="cards-grid">
+            <div class="card">
+              <div class="field">
+                <div class="field-label">Event name</div>
+                <input id="set-event-name" class="field-input"/>
+              </div>
+              <div class="field">
+                <div class="field-label">Location</div>
+                <input id="set-event-location" class="field-input"/>
+              </div>
+              <div class="field">
+                <div class="field-label">Start date</div>
+                <input id="set-event-start" class="field-input" type="date"/>
+              </div>
+              <div class="field">
+                <div class="field-label">End date</div>
+                <input id="set-event-end" class="field-input" type="date"/>
+              </div>
+              <button id="btn-save-event" class="btn btn-primary" style="margin-top:6px;">Save settings</button>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
 
-    paymentsSection.style.display = "block";
-  }
+  <!-- MODALS -->
+  <div id="modal-container" style="position:fixed;inset:0;display:none;justify-content:center;align-items:center;background:rgba(0,0,0,.35);z-index:9999;"></div>
 
-  function renderLiveFeed(filtered){
-    if(!liveFeedListEl || !liveFeedEmptyEl) return;
-    const sorted = [...filtered].sort((a,b)=>{
-      const da = getOrderDate(a);
-      const db = getOrderDate(b);
-      if(!da || !db) return 0;
-      return db - da;
-    });
-    const last10 = sorted.slice(0,10);
-
-    if(!last10.length){
-      liveFeedEmptyEl.style.display = "block";
-      liveFeedListEl.innerHTML = "";
-      paymentsSection.style.display = "block";
-      return;
-    }
-
-    liveFeedEmptyEl.style.display = "none";
-    liveFeedListEl.innerHTML = "";
-
-    let sum = 0, count = 0;
-    filtered.forEach(o=>{
-      if(o.isReturn) return;
-      sum += Number(o.total) || 0;
-      count++;
-    });
-    const avg = count ? sum/count : 0;
-    const highThreshold = avg*2 || 0;
-
-    last10.forEach(o=>{
-      const d = getOrderDate(o);
-      const display = getBrandDisplay(o.brandId, o.brandName || o.vendorBrandName);
-      const amt = Number(o.total) || 0;
-      const isReturn = !!o.isReturn;
-      const method = classifyPaymentMethod(o.paymentMethod);
-      const icon   = paymentIconFor(method);
-      const timeStr = d
-        ? d.toLocaleTimeString("en-EG",{hour:"2-digit",minute:"2-digit"})
-        : "";
-
-      const badges = [];
-      if(isReturn) badges.push(`<span class="badge refund">Refund</span>`);
-      if(!isReturn && amt>=highThreshold && highThreshold>0){
-        badges.push(`<span class="badge high">High value</span>`);
-      }
-
-      const item = document.createElement("div");
-      item.className = "feed-item";
-      item.innerHTML = `
-        <div class="feed-meta">
-          <div class="feed-brand">${display.name}</div>
-          <div class="feed-time">${timeStr} • ${method}</div>
-          ${badges.length ? `<div class="feed-badges">${badges.join("")}</div>` : ""}
-        </div>
-        <div class="feed-amount">
-          <div class="feed-payment-icon">${icon}</div>
-          <div class="feed-amount-main">EGP ${formatCurrency(amt)}</div>
-        </div>
-      `;
-      liveFeedListEl.appendChild(item);
-    });
-
-    paymentsSection.style.display = "block";
-  }
-
-  function recomputeAnalytics(){
-    const filtered = applyDateFilter(orders);
-    renderKpis(filtered);
-
-    const vendorMetrics = computeVendorMetrics(filtered);
-    const totalRevenue  = vendorMetrics.reduce((sum,v)=>sum+v.revenue,0);
-    const totalNet      = vendorMetrics.reduce((sum,v)=>sum+v.net,0);
-
-    renderRevenueTimeline(filtered);
-    renderPeakHour(filtered);
-
-    renderTopVendorCards(vendorMetrics,totalRevenue);
-    renderVendorsChart(vendorMetrics);
-    renderVendorTable(vendorMetrics,totalNet);
-
-    const productMetrics = computeProductMetrics(filtered);
-    renderTopProductsChart(productMetrics);
-    renderProblemProductsTable(productMetrics);
-
-    renderPaymentMix(filtered);
-    renderLiveFeed(filtered);
-  }
-
-  async function loadEventsForOwner(uid){
-    eventsList = [];
-    const qEvents = query(
-      collection(db,"events"),
-      where("ownerUserId","==",uid),
-      orderBy("createdAt","desc")
-    );
-    const snap = await getDocs(qEvents);
-    snap.forEach(d=>{
-      eventsList.push({ id:d.id, ...d.data() });
-    });
-  }
-
-  function renderEventSelect(){
-    if(!eventSelectEl) return;
-    eventSelectEl.innerHTML = "";
-    if(!eventsList.length){
-      const opt = document.createElement("option");
-      opt.value = "";
-      opt.textContent = "No events yet";
-      eventSelectEl.appendChild(opt);
-      eventSelectEl.disabled = true;
-      return;
-    }
-    eventSelectEl.disabled = false;
-    eventsList.forEach(ev=>{
-      const opt = document.createElement("option");
-      opt.value = ev.id;
-      opt.textContent = ev.name || "Untitled event";
-      eventSelectEl.appendChild(opt);
-    });
-    if(currentEventId) eventSelectEl.value = currentEventId;
-    eventSelectEl.onchange = () => {
-      const val = eventSelectEl.value;
-      if(!val) return;
-      loadEventAnalytics(val);
-    };
-  }
-
-  async function loadEventAnalytics(eventId){
-    currentEventId = eventId;
-    clearError();
-    showLoading(true);
-
-    if(unsubVendors){ unsubVendors(); unsubVendors = null; }
-    if(unsubOrders){ unsubOrders(); unsubOrders = null; }
-
-    const evSnap = await getDoc(doc(db,"events",eventId));
-    if(!evSnap.exists()){
-      showLoading(false);
-      showError("Event not found.");
-      return;
-    }
-    currentEventData = { id:eventId, ...evSnap.data() };
-
-    const name = currentEventData.name || "Event analytics";
-    const location = currentEventData.location || "";
-    const date = currentEventData.date || "";
-    const start = currentEventData.startDate || "";
-    const end   = currentEventData.endDate || "";
-
-    eventAvatarEl.textContent = name.charAt(0).toUpperCase() || "E";
-    eventNameEl.textContent   = name;
-    eventSubEl.textContent    = "POS analytics across all brands for this event";
-
-    const metaPieces = [];
-    if(location) metaPieces.push(location);
-    if(start && end && start!==end){
-      metaPieces.push(`${start} → ${end}`);
-    }else if(date){
-      metaPieces.push(date);
-    }
-    eventMetaEl.textContent = metaPieces.join(" • ");
-
-    dateRange = buildEventDateRange(currentEventData);
-    currentDateFilter = "all";
-    renderDateChips();
-    setupTimelineToggle();
-
-    vendors = [];
-    orders  = [];
-    brandCache = {};
-
-    unsubVendors = onSnapshot(
-      collection(db,"events",eventId,"vendors"),
-      (snap)=>{
-        vendors = [];
-        snap.forEach(d=>vendors.push({ id:d.id, ...d.data() }));
-        recomputeAnalytics();
-      },
-      (err)=>console.error("Vendors snapshot error",err)
-    );
-
-    const qOrders = query(
-      collectionGroup(db,"orders"),
-      where("eventId","==",eventId)
-    );
-    unsubOrders = onSnapshot(
-      qOrders,
-      async (snap)=>{
-        orders = [];
-        const brandIds = new Set();
-        snap.forEach(d=>{
-          const data = d.data();
-          data._id = d.id;
-          orders.push(data);
-          if(data.brandId) brandIds.add(data.brandId);
-        });
-        await Promise.all([...brandIds].map(ensureBrandInfo));
-        showLoading(false);
-        recomputeAnalytics();
-      },
-      (err)=>{
-        console.error("Orders snapshot error",err);
-        showLoading(false);
-        showError("Error loading orders. Check Firestore rules and indexes.");
-      }
-    );
-  }
-
-  onAuthStateChanged(auth, async (user)=>{
-    if(!user){
-      currentUser = null;
-      eventsList = [];
-      currentEventId = null;
-      currentEventData = null;
-      if(unsubVendors) unsubVendors();
-      if(unsubOrders) unsubOrders();
-      unsubVendors = unsubOrders = null;
-      showAuthView();
-      return;
-    }
-
-    currentUser = user;
-    showAppView();
-    showLoading(true);
-
-    await loadEventsForOwner(user.uid);
-
-    const ownerEventsRef = doc(db,"ownerEvents",user.uid);
-    const ownSnap = await getDoc(ownerEventsRef);
-    if(ownSnap.exists() && ownSnap.data().primaryEventId){
-      currentEventId = ownSnap.data().primaryEventId;
-    }else if(eventsList.length){
-      currentEventId = eventsList[0].id;
-    }
-
-    renderEventSelect();
-
-    if(currentEventId){
-      await loadEventAnalytics(currentEventId);
-    }else{
-      showLoading(false);
-      showError("No events yet. Create one from the signup form.");
-    }
-  });
-
-  showAuthView();
-</script>
+  <!-- PART 2: JS (Firebase + logic + charts) will go here -->
+  <script type="module">
+    // placeholder so file is valid.
+    // Next message will contain full JS logic.
+  </script>
 </body>
 </html>
