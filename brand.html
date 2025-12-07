@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Luma Events OS — Brand Dashboard</title>
+  <title>Luma Events — Brand Dashboard</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 
@@ -22,7 +22,9 @@
       --shadow:0 18px 40px rgba(15,23,42,.12);
       --danger:#ef4444;
       --ok:#16a34a;
-      --warn:#f59e0b;
+      --pending:#facc15;
+      --suspended:#dc2626;
+      --active:#16a34a;
     }
     *{box-sizing:border-box;margin:0;padding:0}
     html,body{
@@ -32,28 +34,24 @@
       color:var(--ink);
     }
 
-    .app-shell{
-      display:flex;
-      height:100vh;
+    /* AUTH WRAPPER */
+    .auth-wrapper{
       width:100%;
-    }
-
-    /* SIDEBAR */
-    .sidebar{
-      width:230px;
+      max-width:460px;
       background:var(--panel);
-      border-right:1px solid var(--border);
-      display:flex;
-      flex-direction:column;
-      padding:18px 12px;
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      border:1px solid rgba(148,163,184,.3);
+      padding:18px;
+      margin:40px auto;
     }
-    .sidebar-brand{
+    .auth-header{
       display:flex;
       align-items:center;
-      gap:10px;
-      margin-bottom:18px;
+      gap:12px;
+      margin-bottom:10px;
     }
-    .sidebar-logo{
+    .auth-logo{
       width:38px;height:38px;border-radius:999px;
       background:linear-gradient(135deg,#2563eb,#a855f7);
       display:flex;align-items:center;justify-content:center;
@@ -62,12 +60,96 @@
       background-size:cover;
       background-position:center;
     }
-    .sidebar-brand-name{font-size:15px;font-weight:700;}
-    .sidebar-event{
+    .auth-title{font-size:17px;font-weight:700;}
+    .auth-subtitle{font-size:11px;color:var(--muted);margin-top:2px;}
+    .event-chip{
       font-size:10px;
       color:var(--muted);
       margin-top:2px;
     }
+
+    .auth-tabs{
+      display:flex;gap:6px;margin:10px 0 12px;
+    }
+    .auth-tab{
+      flex:1;
+      padding:6px 8px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:var(--panel-soft);
+      color:var(--muted);
+      font-size:12px;
+      cursor:pointer;
+      text-align:center;
+    }
+    .auth-tab.active{
+      background:var(--accent-soft);
+      border-color:var(--accent-soft);
+      color:var(--accent-strong);
+      font-weight:600;
+    }
+    .auth-alert{
+      padding:8px 10px;
+      border-radius:10px;
+      font-size:11px;
+      margin-bottom:10px;
+    }
+    .auth-alert-error{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;}
+    .auth-alert-info{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;}
+
+    .field{margin-bottom:10px;}
+    .field-label{font-size:11px;margin-bottom:4px;color:#4b5563;}
+    .field-input,.field-select,textarea.field-input{
+      width:100%;padding:8px;border-radius:9px;
+      border:1px solid var(--border);background:#f9fafb;font-size:12px;
+    }
+    .field-input:focus,.field-select:focus,textarea.field-input:focus{
+      outline:none;border-color:var(--accent);box-shadow:0 0 0 1px var(--accent-soft);
+    }
+    .field-hint{font-size:10px;color:var(--muted);margin-top:3px;}
+
+    .btn{
+      border:none;border-radius:999px;
+      padding:8px 12px;font-size:12px;font-weight:600;
+      cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+      gap:6px;
+    }
+    .btn-primary{background:var(--accent);color:#fff;}
+    .btn-primary:hover{background:var(--accent-strong);}
+    .btn-ghost{
+      background:transparent;color:var(--accent-strong);
+      border:1px solid var(--accent-soft);
+    }
+    .btn-ghost:hover{background:var(--accent-soft);}
+    .btn-danger{background:var(--danger);color:#fff;}
+    .btn-danger:hover{background:#b91c1c;}
+
+    .auth-footer{text-align:center;margin-top:8px;font-size:10px;color:var(--muted);}
+
+    /* APP LAYOUT */
+    .app-shell{
+      display:none;
+      height:100vh;width:100%;
+    }
+    .sidebar{
+      width:220px;background:var(--panel);
+      border-right:1px solid var(--border);
+      display:flex;flex-direction:column;
+      padding:20px 12px;
+    }
+    .sidebar-brand{
+      display:flex;align-items:center;gap:10px;margin-bottom:18px;
+    }
+    .sidebar-logo{
+      width:36px;height:36px;border-radius:999px;
+      background:linear-gradient(135deg,#2563eb,#a855f7);
+      display:flex;align-items:center;justify-content:center;
+      color:#fff;font-weight:700;
+      overflow:hidden;
+      background-size:cover;
+      background-position:center;
+    }
+    .sidebar-brand-name{font-size:15px;font-weight:700;}
     .sidebar-nav{
       display:flex;flex-direction:column;gap:6px;margin-top:10px;flex:1;
     }
@@ -77,11 +159,7 @@
       border:none;background:transparent;text-align:left;color:var(--ink);
     }
     .nav-item:hover{background:var(--panel-soft);}
-    .nav-item.active{
-      background:var(--accent-soft);
-      color:var(--accent-strong);
-      font-weight:600;
-    }
+    .nav-item.active{background:var(--accent-soft);color:var(--accent-strong);font-weight:600;}
     .nav-item.logout{
       margin-top:auto;
       background:#fee2e2;
@@ -90,7 +168,6 @@
     }
     .nav-item.logout:hover{background:#fecaca;}
 
-    /* TOPBAR */
     .topbar{
       height:70px;background:var(--panel);
       border-bottom:1px solid var(--border);
@@ -99,24 +176,11 @@
     }
     .topbar-title{font-size:16px;font-weight:700;}
     .topbar-sub{font-size:11px;color:var(--muted);}
-    .topbar-right{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--muted);}
 
-    .badge{
-      display:inline-flex;
-      align-items:center;
-      gap:4px;
-      font-size:10px;
-      border-radius:999px;
-      padding:3px 8px;
-      border:1px solid rgba(148,163,184,.5);
-      background:var(--panel-soft);
-    }
+    .content-area{flex:1;padding:20px;overflow-y:auto;background:var(--bg);}
 
-    /* CONTENT */
-    .content-area{flex:1;padding:16px 20px;overflow-y:auto;background:var(--bg);}
     .page{display:none;}
     .page.active{display:block;}
-
     .page-header{
       display:flex;justify-content:space-between;
       align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;
@@ -124,22 +188,6 @@
     .page-title{font-size:18px;font-weight:700;}
     .page-sub{font-size:12px;color:var(--muted);}
     .page-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
-
-    .cards-grid{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-      gap:12px;margin-bottom:18px;
-    }
-    .card{
-      background:var(--panel);
-      border:1px solid var(--border);
-      border-radius:14px;
-      padding:16px;
-      box-shadow:var(--shadow);
-    }
-    .card-title{font-size:13px;color:var(--muted);margin-bottom:4px;}
-    .card-number{font-size:20px;font-weight:700;}
-    .card-note{font-size:11px;color:var(--muted);margin-top:6px;}
 
     .toolbar{
       display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;align-items:center;
@@ -149,6 +197,27 @@
     .toolbar select{
       padding:6px 9px;border-radius:9px;
       border:1px solid var(--border);background:#fff;font-size:12px;
+    }
+
+    .cards-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:12px;margin-bottom:22px;
+    }
+    .card{
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:18px;
+      box-shadow:var(--shadow);
+    }
+    .card-title{font-size:13px;color:var(--muted);margin-bottom:4px;}
+    .card-number{font-size:20px;font-weight:700;}
+    .card-note{font-size:11px;color:var(--muted);margin-top:6px;}
+
+    .card-disabled{
+      opacity:.6;
+      pointer-events:none;
     }
 
     .table-wrapper{
@@ -165,115 +234,131 @@
     tbody tr:hover{background:#f9fafb;}
     .table-empty{text-align:center;padding:20px;font-size:12px;color:var(--muted);}
 
-    .status-banner{
-      border-radius:12px;
-      padding:10px 12px;
-      font-size:12px;
-      margin-bottom:12px;
-      display:none;
-    }
-    .status-banner.pending{
-      background:#fffbeb;
-      border:1px solid #fef3c7;
-      color:#92400e;
-    }
-    .status-banner.suspended{
-      background:#fef2f2;
-      border:1px solid #fee2e2;
-      color:#b91c1c;
-    }
-    .status-banner.rejected{
-      background:#fee2e2;
-      border:1px solid #fecaca;
-      color:#7f1d1d;
-    }
-    .status-title{font-weight:600;margin-bottom:2px;font-size:13px;}
-    .status-body{font-size:12px;}
-
-    .blocked-overlay{
-      display:none;
-      align-items:center;
-      justify-content:center;
-      min-height:calc(100vh - 70px);
-    }
-
-    .btn{
-      border:none;border-radius:999px;
-      padding:7px 12px;font-size:12px;font-weight:600;
-      cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
-      gap:6px;
-    }
-    .btn-primary{background:var(--accent);color:#fff;}
-    .btn-primary:hover{background:var(--accent-strong);}
-    .btn-ghost{
-      background:transparent;color:var(--accent-strong);
-      border:1px solid var(--accent-soft);
-    }
-    .btn-ghost:hover{background:var(--accent-soft);}
-    .btn-danger{background:var(--danger);color:#fff;}
-    .btn-danger:hover{background:#b91c1c;}
-    .btn-sm{padding:5px 9px;font-size:11px;}
-
     .settings-grid{
       display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(270px,1fr));
+      grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
       gap:16px;margin-top:14px;
     }
     .settings-card{
       background:var(--panel);
       border-radius:14px;
       border:1px solid var(--border);
-      padding:14px 16px;
+      padding:16px;
     }
-    .settings-title{font-size:14px;font-weight:600;margin-bottom:8px;}
+    .settings-title{font-size:14px;font-weight:600;margin-bottom:12px;}
 
-    .field{margin-bottom:10px;}
-    .field-label{font-size:11px;margin-bottom:4px;color:#4b5563;}
-    .field-input,.field-select,textarea.field-input{
-      width:100%;padding:8px;border-radius:9px;
-      border:1px solid var(--border);background:#f9fafb;font-size:12px;
+    .low-stock{
+      color:#b91c1c;
+      font-weight:600;
     }
-    .field-input:focus,.field-select:focus,textarea.field-input:focus{
-      outline:none;border-color:var(--accent);box-shadow:0 0 0 1px var(--accent-soft);
-    }
-    .field-hint{font-size:10px;color:var(--muted);margin-top:3px;}
-
-    .product-img-thumb{
-      width:32px;height:32px;border-radius:8px;
-      background:#e5e7eb;
-      background-size:cover;
-      background-position:center;
-      display:inline-block;
-    }
-    .chip{
+    .low-stock-badge{
       display:inline-flex;
       align-items:center;
       gap:4px;
       padding:2px 8px;
-      font-size:10px;
       border-radius:999px;
-      background:#e5e7eb;
-      color:#374151;
-    }
-    .chip-green{
-      background:#dcfce7;
-      color:#166534;
-    }
-    .chip-red{
       background:#fee2e2;
       color:#b91c1c;
+      font-size:11px;
+      font-weight:600;
+      margin-left:4px;
+    }
+    #lowStockPanel{
+      margin-top:12px;
+      padding:10px 12px;
+      border-radius:12px;
+      background:#fef2f2;
+      border:1px solid #fee2e2;
+      display:none;
+      font-size:12px;
+    }
+    #lowStockPanelTitle{
+      font-weight:600;
+      color:#b91c1c;
+      margin-bottom:4px;
+    }
+    #lowStockList{
+      color:#7f1d1d;
+      font-size:12px;
     }
 
-    .variant-pill{
-      display:inline-flex;
-      align-items:center;
-      padding:2px 7px;
-      border-radius:999px;
-      font-size:10px;
-      background:#eef2ff;
-      color:#4338ca;
-      margin:1px 3px 1px 0;
+    /* STATUS BANNER */
+    #status-banner{
+      display:none;
+      padding:8px 14px;
+      font-size:12px;
+      border-bottom:1px solid var(--border);
     }
+    .status-pending{
+      background:#fef3c7;
+      color:#92400e;
+      border-color:#fde68a;
+    }
+    .status-active{
+      background:#ecfdf3;
+      color:#166534;
+      border-color:#bbf7d0;
+    }
+    .status-suspended{
+      background:#fee2e2;
+      color:#991b1b;
+      border-color:#fecaca;
+    }
+
+    /* REJECTED FULL STATE */
+    #rejected-state{
+      display:none;
+      flex:1;
+      align-items:center;
+      justify-content:center;
+      flex-direction:column;
+      padding:24px;
+      background:var(--bg);
+    }
+    .rejected-box{
+      max-width:460px;
+      background:var(--panel);
+      border-radius:16px;
+      padding:20px;
+      border:1px solid #fecaca;
+      box-shadow:var(--shadow);
+      text-align:center;
+    }
+    .rejected-title{
+      font-size:18px;
+      font-weight:700;
+      color:#b91c1c;
+      margin-bottom:8px;
+    }
+    .rejected-text{
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:10px;
+    }
+    .rejected-reason{
+      margin-top:8px;
+      padding:8px 10px;
+      font-size:12px;
+      border-radius:10px;
+      background:#fef2f2;
+      color:#7f1d1d;
+      text-align:left;
+      white-space:pre-wrap;
+    }
+
+    /* PRODUCT IMAGE THUMB */
+    .product-thumb{
+      width:40px;
+      height:40px;
+      border-radius:10px;
+      object-fit:cover;
+      background:#e5e7eb;
+    }
+
+    .variant-row{
+      display:flex;gap:8px;margin-bottom:6px;
+    }
+    .variant-row input{flex:1;}
 
     /* MODAL */
     #modal-container{
@@ -288,25 +373,9 @@
       padding:18px;
       box-shadow:var(--shadow);
       animation:fadeIn .2s ease;
-      max-height:90vh;
-      overflow-y:auto;
     }
-    .modal-title{font-size:16px;font-weight:700;margin-bottom:12px;}
-    .modal-section-title{font-size:13px;font-weight:600;margin:10px 0 6px;}
-    .modal-actions{margin-top:14px;display:flex;justify-content:flex-end;gap:8px;}
-
-    .variants-container{
-      border-radius:10px;
-      border:1px dashed var(--border);
-      padding:8px;
-      background:#f9fafb;
-      margin-bottom:8px;
-    }
-    .variant-row{
-      display:flex;gap:6px;margin-bottom:6px;
-    }
-    .variant-row input{flex:1;}
-    .variant-row small{font-size:10px;color:var(--muted);}
+    .modal-title{font-size:16px;font-weight:700;margin-bottom:14px;}
+    .modal-actions{margin-top:16px;display:flex;justify-content:flex-end;gap:8px;}
 
     @keyframes fadeIn{
       from{transform:scale(.96);opacity:0;}
@@ -322,342 +391,508 @@
   </style>
 </head>
 <body>
-  <div class="app-shell">
+
+  <!-- AUTH VIEW -->
+  <div id="auth-view" class="auth-wrapper">
+    <div class="auth-header">
+      <div class="auth-logo">B</div>
+      <div>
+        <div class="auth-title">Luma Events — Brand Portal</div>
+        <div id="auth-subtitle" class="auth-subtitle">
+          Sign in or create your brand to manage your event booth.
+        </div>
+        <div id="auth-event-chip" class="event-chip"></div>
+      </div>
+    </div>
+
+    <div id="auth-alert-container"></div>
+
+    <div class="auth-tabs">
+      <button type="button" id="tab-login" class="auth-tab active">Sign in</button>
+      <button type="button" id="tab-create" class="auth-tab">Create brand</button>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <form id="login-form">
+      <div class="field">
+        <div class="field-label">Email</div>
+        <input id="login-email" class="field-input" type="email" placeholder="you@example.com"/>
+      </div>
+      <div class="field">
+        <div class="field-label">Password</div>
+        <input id="login-password" class="field-input" type="password" placeholder="Your password"/>
+      </div>
+      <button type="submit" id="login-btn" class="btn btn-primary" style="width:100%;">Sign in</button>
+    </form>
+
+    <!-- CREATE BRAND -->
+    <form id="create-form" style="display:none;">
+      <div class="field">
+        <div class="field-label">Brand name</div>
+        <input id="brand-name" class="field-input" placeholder="Example: Luma Coffee"/>
+      </div>
+      <div class="field">
+        <div class="field-label">Country (optional)</div>
+        <input id="brand-country" class="field-input" placeholder="Egypt, UAE, Germany…"/>
+      </div>
+      <div class="field">
+        <div class="field-label">Your full name</div>
+        <input id="owner-name" class="field-input" placeholder="Owner / manager name"/>
+      </div>
+      <div class="field">
+        <div class="field-label">Email</div>
+        <input id="owner-email" class="field-input" type="email" placeholder="owner@example.com"/>
+      </div>
+      <div class="field">
+        <div class="field-label">Password</div>
+        <input id="owner-password" class="field-input" type="password" placeholder="Minimum 6 characters"/>
+      </div>
+      <button type="submit" id="create-btn" class="btn btn-primary" style="width:100%;">Create brand for this event</button>
+      <div class="field-hint">
+        This will create your brand, link it to this event, and create your owner access.
+      </div>
+    </form>
+
+    <div class="auth-footer">
+      After login, you will access your brand dashboard and POS settings.
+    </div>
+  </div>
+
+  <!-- APP VIEW -->
+  <div id="app-view" class="app-shell">
     <!-- SIDEBAR -->
     <aside class="sidebar">
       <div class="sidebar-brand">
         <div id="sidebar-brand-logo" class="sidebar-logo">B</div>
         <div>
           <div id="sidebar-brand-name" class="sidebar-brand-name">Brand</div>
-          <div id="sidebar-event-label" class="sidebar-event"></div>
+          <div id="sidebar-event-label" style="font-size:10px;color:var(--muted);"></div>
         </div>
       </div>
       <nav class="sidebar-nav">
         <button class="nav-item active" data-page="page-dashboard">Overview</button>
         <button class="nav-item" data-page="page-products">Products</button>
-        <button class="nav-item" data-page="page-staff">Staff &amp; POS Users</button>
-        <button class="nav-item" data-page="page-orders">Orders</button>
+        <button class="nav-item" data-page="page-staff">Staff & POS Users</button>
         <button class="nav-item" data-page="page-customers">Customers</button>
+        <button class="nav-item" data-page="page-orders">Orders</button>
+        <button class="nav-item" data-page="page-help">Help & Guide</button>
         <button class="nav-item" data-page="page-settings">Settings</button>
-        <button class="nav-item" data-page="page-help">Help &amp; How-To</button>
       </nav>
       <button id="btn-logout" class="nav-item logout">Logout</button>
     </aside>
 
-    <!-- MAIN -->
+    <!-- MAIN COLUMN (STATUS + PAGES OR REJECTED STATE) -->
     <div style="flex:1;display:flex;flex-direction:column;">
-      <header class="topbar">
-        <div>
-          <div id="topbar-title" class="topbar-title">Brand Dashboard</div>
-          <div id="topbar-subtitle" class="topbar-sub">Loading event…</div>
-        </div>
-        <div class="topbar-right">
-          <span id="status-pill" class="badge">Status: …</span>
-        </div>
-      </header>
-
-      <main class="content-area">
-        <!-- STATUS BANNER & BLOCKED VIEW -->
-        <div id="status-banner" class="status-banner">
-          <div class="status-title"></div>
-          <div class="status-body"></div>
-        </div>
-
-        <div id="blocked-view" class="blocked-overlay">
-          <div class="card" style="max-width:460px;text-align:center;">
-            <div style="font-size:18px;font-weight:700;margin-bottom:6px;">Access blocked</div>
-            <p id="blocked-message" style="font-size:13px;color:var(--muted);margin-bottom:14px;">
-              Your application was rejected for this event. Please contact the organizer.
-            </p>
-            <button id="blocked-logout" class="btn btn-ghost">Sign out</button>
+      <!-- REJECTED FULL-STATE -->
+      <div id="rejected-state">
+        <div class="rejected-box">
+          <div class="rejected-title">Access denied for this event</div>
+          <div class="rejected-text">
+            Your registration for this event has been rejected by the event owner.
+          </div>
+          <div id="rejected-reason-box" class="rejected-reason" style="display:none;"></div>
+          <div style="margin-top:12px;font-size:11px;color:var(--muted);">
+            If you believe this is a mistake, please contact the event organizer.
+          </div>
+          <div style="margin-top:14px;">
+            <button id="btn-rejected-logout" class="btn btn-ghost">Sign out</button>
           </div>
         </div>
+      </div>
 
-        <!-- DASHBOARD -->
-        <section id="page-dashboard" class="page active">
-          <div class="cards-grid analytics-section">
-            <div class="card">
-              <div class="card-title">Sales Today</div>
-              <div id="dash-sales-today" class="card-number">0</div>
-              <div class="card-note">Net of returns (all orders for this brand).</div>
-            </div>
-            <div class="card">
-              <div class="card-title">Sales Orders Today</div>
-              <div id="dash-orders-today" class="card-number">0</div>
-              <div class="card-note">Number of sales orders.</div>
-            </div>
-            <div class="card">
-              <div class="card-title">Return Orders Today</div>
-              <div id="dash-orders-returns-today" class="card-number">0</div>
-              <div class="card-note">Number of return orders.</div>
-            </div>
-            <div class="card">
-              <div class="card-title">Total Products</div>
-              <div id="dash-products-count" class="card-number">0</div>
-              <div class="card-note">Active products for this brand.</div>
+      <!-- NORMAL APP MAIN -->
+      <div id="app-main" style="flex:1;display:flex;flex-direction:column;">
+        <header class="topbar">
+          <div>
+            <div id="topbar-brand-title" class="topbar-title">Brand Dashboard</div>
+            <div class="topbar-sub" id="topbar-subtitle">
+              Control center for your brand inside this event.
             </div>
           </div>
+        </header>
 
-          <div class="cards-grid">
-            <!-- EVENT CARD -->
-            <div class="card">
+        <div id="status-banner"></div>
+
+        <main class="content-area">
+          <!-- DASHBOARD -->
+          <section id="page-dashboard" class="page active">
+            <div class="page-header" style="margin-bottom:10px;">
+              <div>
+                <div class="page-title" style="font-size:16px;">Overview</div>
+                <div class="page-sub" id="dashboard-event-subtitle">
+                  High-level view of today’s performance.
+                </div>
+              </div>
+            </div>
+
+            <div class="cards-grid">
+              <div class="card">
+                <div class="card-title">Sales Today</div>
+                <div id="dash-sales-today" class="card-number">0</div>
+                <div class="card-note">Net of returns.</div>
+              </div>
+              <div class="card">
+                <div class="card-title">Sales Orders Today</div>
+                <div id="dash-orders-today" class="card-number">0</div>
+                <div class="card-note">Number of sale orders (no returns).</div>
+              </div>
+              <div class="card">
+                <div class="card-title">Return Orders Today</div>
+                <div id="dash-orders-returns-today" class="card-number">0</div>
+                <div class="card-note">Number of return orders today.</div>
+              </div>
+              <div class="card">
+                <div class="card-title">Unique Customers (All Time)</div>
+                <div id="dash-unique-customers" class="card-number">0</div>
+                <div class="card-note">Distinct customers with at least one order.</div>
+              </div>
+            </div>
+
+            <!-- Event info card -->
+            <div class="card" id="event-info-card" style="margin-top:4px;display:none;">
               <div class="card-title">Current Event</div>
               <div id="event-card-name" class="card-number" style="font-size:14px;line-height:20px;"></div>
               <div id="event-card-meta" class="card-note"></div>
             </div>
 
             <!-- POS CARD -->
-            <div id="pos-card" class="card">
+            <div class="card" id="pos-card" style="margin-top:10px;">
               <div class="card-title">POS Access</div>
-              <div style="font-size:13px;margin-bottom:6px;">Use this link for your cashiers:</div>
-              <div style="font-size:11px;background:#f9fafb;border-radius:10px;border:1px dashed var(--border);padding:8px;word-break:break-all;">
+              <div class="card-note">
+                Share this POS link with your cashiers. They will log in with their username & PIN.
+              </div>
+              <div style="margin-top:8px;font-size:12px;word-break:break-all;">
                 <span id="pos-link-text">https://luma-events.vercel.app/pos.html</span>
               </div>
-              <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
-                <button id="btn-copy-pos" class="btn btn-ghost btn-sm">Copy POS link</button>
-                <span id="pos-status-note" style="font-size:11px;color:var(--muted);">Cashiers log in with username &amp; PIN.</span>
+              <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <button id="btn-copy-pos-link" class="btn btn-ghost">Copy POS link</button>
+                <span id="pos-card-status" class="field-hint"></span>
               </div>
             </div>
-          </div>
 
-          <div class="page-header" style="margin-top:6px;">
-            <div>
-              <div class="page-title" style="font-size:15px;">Recent Orders</div>
-              <div class="page-sub">Last 10 orders for this brand.</div>
-            </div>
-          </div>
-          <div id="table-recent-orders" class="table-wrapper analytics-section"></div>
-        </section>
-
-        <!-- PRODUCTS -->
-        <section id="page-products" class="page">
-          <div class="page-header">
-            <div>
-              <div class="page-title">Products</div>
-              <div class="page-sub">Manage products, variants and images.</div>
-            </div>
-            <div class="page-actions">
-              <button id="btn-add-product" class="btn btn-primary">Add Product</button>
-            </div>
-          </div>
-
-          <div class="toolbar">
-            <input id="search-products" placeholder="Search products by name or SKU"/>
-            <select id="sort-products">
-              <option value="name-asc">Name A → Z</option>
-              <option value="name-desc">Name Z → A</option>
-              <option value="price-desc">Price high → low</option>
-              <option value="price-asc">Price low → high</option>
-            </select>
-          </div>
-
-          <div id="products-table" class="table-wrapper"></div>
-        </section>
-
-        <!-- STAFF -->
-        <section id="page-staff" class="page">
-          <div class="page-header">
-            <div>
-              <div class="page-title">Staff &amp; POS Users</div>
-              <div class="page-sub">Create usernames &amp; PINs for your cashiers.</div>
-            </div>
-            <div class="page-actions">
-              <button id="btn-add-staff" class="btn btn-primary">Add Staff User</button>
-            </div>
-          </div>
-
-          <div class="toolbar">
-            <input id="search-staff" placeholder="Search staff by username or name"/>
-            <select id="sort-staff">
-              <option value="username-asc">Username A → Z</option>
-              <option value="username-desc">Username Z → A</option>
-              <option value="role">By role</option>
-              <option value="active-first">Active first</option>
-            </select>
-          </div>
-
-          <div id="staff-table" class="table-wrapper"></div>
-        </section>
-
-        <!-- ORDERS -->
-        <section id="page-orders" class="page">
-          <div class="page-header">
-            <div>
-              <div class="page-title">Orders</div>
-              <div class="page-sub">Track purchases and returns during the event.</div>
-            </div>
-          </div>
-
-          <div class="toolbar">
-            <input id="search-orders" placeholder="Search orders by ID or customer name"/>
-            <select id="sort-orders">
-              <option value="date-desc">Newest first</option>
-              <option value="date-asc">Oldest first</option>
-              <option value="total-desc">Total high → low</option>
-              <option value="total-asc">Total low → high</option>
-            </select>
-          </div>
-
-          <div id="orders-table" class="table-wrapper analytics-section"></div>
-        </section>
-
-        <!-- CUSTOMERS -->
-        <section id="page-customers" class="page">
-          <div class="page-header">
-            <div>
-              <div class="page-title">Customers</div>
-              <div class="page-sub">Customer database &amp; purchase history for this brand.</div>
-            </div>
-          </div>
-
-          <div id="customers-analytics" class="cards-grid analytics-section" style="margin-top:4px;"></div>
-
-          <div class="toolbar">
-            <input id="search-customers" placeholder="Search by name, phone or email"/>
-            <select id="sort-customers">
-              <option value="name-asc">Name A → Z</option>
-              <option value="name-desc">Name Z → A</option>
-              <option value="total-desc">Total spent high → low</option>
-              <option value="orders-desc">Most orders</option>
-            </select>
-          </div>
-
-          <div id="customers-table" class="table-wrapper analytics-section"></div>
-        </section>
-
-        <!-- SETTINGS -->
-        <section id="page-settings" class="page">
-          <div class="page-header">
-            <div>
-              <div class="page-title">Settings</div>
-              <div class="page-sub">Brand details &amp; financial configuration for this event.</div>
-            </div>
-          </div>
-
-          <div class="settings-grid">
-            <div class="settings-card">
-              <div class="settings-title">Brand Information</div>
-              <div class="field">
-                <div class="field-label">Brand Name</div>
-                <input id="set-brand-name" class="field-input"/>
+            <div class="page-header" style="margin-top:18px;">
+              <div>
+                <div class="page-title" style="font-size:15px;">Recent Orders</div>
+                <div class="page-sub">Last 10 orders.</div>
               </div>
-              <div class="field">
-                <div class="field-label">Country</div>
-                <input id="set-brand-country" class="field-input"/>
-              </div>
-              <div class="field">
-                <div class="field-label">Brand Logo</div>
-                <input id="set-brand-logo" class="field-input" type="file" accept="image/*"/>
-                <div class="field-hint">
-                  Stored as <code>brands/&lt;brandId&gt;/branding/logo</code>.
+            </div>
+            <div id="table-recent-orders" class="table-wrapper"></div>
+          </section>
+          <!-- PRODUCTS -->
+          <section id="page-products" class="page">
+            <div class="page-header">
+              <div>
+                <div class="page-title" style="font-size:16px;">Products</div>
+                <div class="page-sub">
+                  Manage your products for this event. Images, prices, stock, and simple variants.
                 </div>
               </div>
-              <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;">
-                <button id="btn-save-brand-settings" class="btn btn-primary">Save</button>
+              <div class="page-actions">
+                <button id="btn-add-product" class="btn btn-primary">Add product</button>
               </div>
             </div>
 
-            <div class="settings-card">
-              <div class="settings-title">Financial Settings</div>
-              <div class="field">
-                <div class="field-label">VAT %</div>
-                <input id="set-vat" class="field-input" type="number"/>
+            <div class="toolbar">
+              <input id="products-search" type="text" placeholder="Search products by name or SKU"/>
+              <select id="products-sort">
+                <option value="name-asc">Sort by name (A–Z)</option>
+                <option value="name-desc">Sort by name (Z–A)</option>
+                <option value="price-asc">Price (low → high)</option>
+                <option value="price-desc">Price (high → low)</option>
+                <option value="stock-asc">Stock (low → high)</option>
+                <option value="stock-desc">Stock (high → low)</option>
+              </select>
+            </div>
+
+            <div class="table-wrapper" id="products-table-wrapper">
+              <!-- Filled by JS -->
+            </div>
+
+            <div id="lowStockPanel">
+              <div id="lowStockPanelTitle">Low stock alerts</div>
+              <div id="lowStockList"></div>
+            </div>
+          </section>
+
+          <!-- STAFF & POS USERS -->
+          <section id="page-staff" class="page">
+            <div class="page-header">
+              <div>
+                <div class="page-title" style="font-size:16px;">Staff & POS Users</div>
+                <div class="page-sub">
+                  Create and manage cashier users who can log in to the POS for this event.
+                </div>
               </div>
-              <div class="field">
-                <div class="field-label">Service Fee %</div>
-                <input id="set-service-fee" class="field-input" type="number"/>
+              <div class="page-actions">
+                <button id="btn-add-staff" class="btn btn-primary">Add POS user</button>
               </div>
-              <button id="btn-save-financial-settings" class="btn btn-primary">Save</button>
             </div>
-          </div>
-        </section>
 
-        <!-- HELP / HOW-TO -->
-        <section id="page-help" class="page">
-          <div class="page-header">
-            <div>
-              <div class="page-title">How this dashboard works</div>
-              <div class="page-sub">Quick guide for brand owners using Luma Events OS.</div>
+            <div class="card">
+              <div class="card-title">How POS users work</div>
+              <div class="card-note" style="margin-top:4px;">
+                Each POS user gets a username and PIN. They log in to the POS page and can only see orders for your brand.
+              </div>
             </div>
-          </div>
 
-          <div class="card" style="margin-bottom:12px;">
-            <div class="card-title">1. Status &amp; access</div>
-            <div style="font-size:12px;color:var(--muted);line-height:1.5;">
-              <ul style="margin-left:16px;margin-top:4px;">
-                <li><b>Pending</b>: You can set up products and staff. POS &amp; analytics are disabled until the organizer approves you.</li>
-                <li><b>Approved + Active</b>: Full access — POS, orders, customers &amp; analytics are enabled.</li>
-                <li><b>Suspended</b>: You can view and edit products &amp; staff, but POS and analytics are disabled.</li>
-                <li><b>Rejected</b>: Dashboard is blocked. Contact the event organizer if you think this is a mistake.</li>
-              </ul>
+            <div class="toolbar" style="margin-top:12px;">
+              <input id="staff-search" type="text" placeholder="Search staff by name or username"/>
             </div>
-          </div>
 
-          <div class="card" style="margin-bottom:12px;">
-            <div class="card-title">2. Products</div>
-            <div style="font-size:12px;color:var(--muted);line-height:1.5;">
-              <ul style="margin-left:16px;margin-top:4px;">
-                <li>Products live under <code>brands/&lt;brandId&gt;/products</code>.</li>
-                <li>Each product can have a name, price, optional code, auto-generated SKU, image and variants (e.g. Size: S/M/L).</li>
-                <li>When you leave SKU empty, the system generates one like <code>BRAND-YYYYMMDD-RAND</code>.</li>
-                <li>Images are stored in Storage under <code>brands/&lt;brandId&gt;/products/&lt;productId&gt;/main.jpg</code>.</li>
-              </ul>
+            <div class="table-wrapper" id="staff-table-wrapper">
+              <!-- Filled by JS -->
             </div>
-          </div>
+          </section>
 
-          <div class="card" style="margin-bottom:12px;">
-            <div class="card-title">3. Staff &amp; POS</div>
-            <div style="font-size:12px;color:var(--muted);line-height:1.5;">
-              <ul style="margin-left:16px;margin-top:4px;">
-                <li>Staff users live under <code>brands/&lt;brandId&gt;/staff</code>.</li>
-                <li>For cashiers, set a <b>username</b> and <b>PIN</b>. They use the POS link in the Overview to log in.</li>
-                <li>Toggle <b>Active</b> on/off to suspend a staff user from POS without deleting them.</li>
-              </ul>
+          <!-- CUSTOMERS -->
+          <section id="page-customers" class="page">
+            <div class="page-header">
+              <div>
+                <div class="page-title" style="font-size:16px;">Customers</div>
+                <div class="page-sub">
+                  Customers are calculated from your orders. Totals & spend are based on all historical orders.
+                </div>
+              </div>
             </div>
-          </div>
 
-          <div class="card" style="margin-bottom:12px;">
-            <div class="card-title">4. Orders &amp; Customers</div>
-            <div style="font-size:12px;color:var(--muted);line-height:1.5;">
-              <ul style="margin-left:16px;margin-top:4px;">
-                <li>All orders are stored in <code>brands/&lt;brandId&gt;/orders</code> — never under the event.</li>
-                <li>The Overview and Orders pages only read from this path.</li>
-                <li>Customers live under <code>brands/&lt;brandId&gt;/customers</code>; the dashboard calculates their total spend and order count from orders.</li>
-                <li>Use the “Open order” button in the Orders tab to see full order details.</li>
-              </ul>
+            <div class="cards-grid">
+              <div class="card">
+                <div class="card-title">Total Customers</div>
+                <div id="customers-total" class="card-number">0</div>
+                <div class="card-note">Distinct customers detected from your orders.</div>
+              </div>
+              <div class="card">
+                <div class="card-title">Average Spend / Customer</div>
+                <div id="customers-avg-spend" class="card-number">0</div>
+                <div class="card-note">Total revenue divided by unique customers.</div>
+              </div>
             </div>
-          </div>
 
-          <div class="card">
-            <div class="card-title">5. Settings</div>
-            <div style="font-size:12px;color:var(--muted);line-height:1.5;">
-              <ul style="margin-left:16px;margin-top:4px;">
-                <li>Brand name, country and logo are stored in <code>brands/&lt;brandId&gt;</code>.</li>
-                <li>VAT and service fee percentages are also stored on the brand and used by the POS.</li>
-              </ul>
+            <div class="toolbar">
+              <input id="customers-search" type="text" placeholder="Search by name, email, or phone"/>
+              <select id="customers-sort">
+                <option value="spend-desc">Sort by total spent (high → low)</option>
+                <option value="spend-asc">Sort by total spent (low → high)</option>
+                <option value="orders-desc">Sort by orders count (high → low)</option>
+                <option value="orders-asc">Sort by orders count (low → high)</option>
+                <option value="name-asc">Sort by name (A–Z)</option>
+              </select>
             </div>
-          </div>
-        </section>
-      </main>
+
+            <div class="table-wrapper" id="customers-table-wrapper">
+              <!-- Filled by JS -->
+            </div>
+          </section>
+
+          <!-- ORDERS -->
+          <section id="page-orders" class="page">
+            <div class="page-header">
+              <div>
+                <div class="page-title" style="font-size:16px;">Orders</div>
+                <div class="page-sub">
+                  Full list of orders for this brand. You can open any order to see its details.
+                </div>
+              </div>
+            </div>
+
+            <div class="cards-grid">
+              <div class="card">
+                <div class="card-title">Total Sales (All Time)</div>
+                <div id="orders-total-sales" class="card-number">0</div>
+                <div class="card-note">Net of returns.</div>
+              </div>
+              <div class="card">
+                <div class="card-title">Orders Count</div>
+                <div id="orders-total-count" class="card-number">0</div>
+                <div class="card-note">Including sales & returns.</div>
+              </div>
+            </div>
+
+            <div class="toolbar">
+              <input id="orders-search" type="text" placeholder="Search by order ID or customer"/>
+              <select id="orders-filter-type">
+                <option value="all">All types</option>
+                <option value="sale">Sales only</option>
+                <option value="return">Returns only</option>
+              </select>
+              <select id="orders-filter-payment">
+                <option value="all">All payment methods</option>
+                <option value="cash">Cash</option>
+                <option value="card">Card</option>
+              </select>
+              <select id="orders-sort">
+                <option value="date-desc">Newest first</option>
+                <option value="date-asc">Oldest first</option>
+                <option value="total-desc">Total (high → low)</option>
+                <option value="total-asc">Total (low → high)</option>
+              </select>
+            </div>
+
+            <div class="table-wrapper" id="orders-table-wrapper">
+              <!-- Table with "Open" button per order, filled by JS -->
+            </div>
+          </section>
+
+          <!-- HELP & GUIDE -->
+          <section id="page-help" class="page">
+            <div class="page-header">
+              <div>
+                <div class="page-title" style="font-size:16px;">Help & Guide</div>
+                <div class="page-sub">
+                  Quick explanation of each page and the steps to run your booth during the event.
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-grid">
+              <div class="settings-card">
+                <div class="settings-title">1. Overview</div>
+                <p style="font-size:12px;color:var(--muted);">
+                  Overview shows your main KPIs for this event: today’s sales, orders, returns, and unique customers.
+                  You can also see your current event info and access the POS link to share with your staff.
+                </p>
+              </div>
+
+              <div class="settings-card">
+                <div class="settings-title">2. Products</div>
+                <p style="font-size:12px;color:var(--muted);">
+                  Add your products with name, price, stock, image, and simple variants (e.g. Size: S,M,L).
+                  The POS will use this list. You can adjust stock at any time and upload real product images.
+                </p>
+              </div>
+
+              <div class="settings-card">
+                <div class="settings-title">3. Staff & POS Users</div>
+                <p style="font-size:12px;color:var(--muted);">
+                  Create POS users (cashiers) with username and PIN. Share the POS link from Overview,
+                  and each cashier can login with these credentials. You can disable or delete users at any time.
+                </p>
+              </div>
+
+              <div class="settings-card">
+                <div class="settings-title">4. Customers</div>
+                <p style="font-size:12px;color:var(--muted);">
+                  Customers are automatically built from your orders. You can see how many orders each customer made
+                  and how much they spent in total. Use this to understand your best customers.
+                </p>
+              </div>
+
+              <div class="settings-card">
+                <div class="settings-title">5. Orders</div>
+                <p style="font-size:12px;color:var(--muted);">
+                  Orders shows all sale and return orders for this event. Use the filters and search to find specific orders.
+                  Click “Open” on any order to see its details, including line items and payment info.
+                </p>
+              </div>
+
+              <div class="settings-card">
+                <div class="settings-title">6. Approval & Status</div>
+                <p style="font-size:12px;color:var(--muted);">
+                  Your brand can be in pending, approved, suspended, or rejected status for this event.
+                  Pending: you can see data but POS is disabled. Approved/active: full access.
+                  Suspended: view-only, POS disabled. Rejected: dashboard blocked; you only see the rejection reason.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <!-- SETTINGS -->
+          <section id="page-settings" class="page">
+            <div class="page-header">
+              <div>
+                <div class="page-title" style="font-size:16px;">Settings</div>
+                <div class="page-sub">
+                  Basic brand info and contact details used inside the event.
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-grid">
+              <div class="settings-card">
+                <div class="settings-title">Brand Info</div>
+                <div class="field">
+                  <div class="field-label">Brand name</div>
+                  <input id="settings-brand-name" class="field-input" placeholder="Brand name"/>
+                </div>
+                <div class="field">
+                  <div class="field-label">Country</div>
+                  <input id="settings-brand-country" class="field-input" placeholder="Country"/>
+                </div>
+                <div class="field">
+                  <div class="field-label">Brand logo</div>
+                  <input id="settings-brand-logo" class="field-input" type="file" accept="image/*"/>
+                  <div class="field-hint">Upload your logo. It will show in the sidebar and POS.</div>
+                </div>
+                <button id="btn-save-settings" class="btn btn-primary" type="button">Save settings</button>
+              </div>
+
+              <div class="settings-card">
+                <div class="settings-title">Event & POS</div>
+                <p style="font-size:12px;color:var(--muted);margin-bottom:10px;">
+                  This section shows how your brand is connected to the event.
+                  You cannot change the event from here; contact the event owner if you need changes.
+                </p>
+                <div class="field">
+                  <div class="field-label">Event name</div>
+                  <input id="settings-event-name" class="field-input" disabled/>
+                </div>
+                <div class="field">
+                  <div class="field-label">Current status</div>
+                  <input id="settings-status" class="field-input" disabled/>
+                  <div class="field-hint">
+                    Status is synced with the event owner. Pending / active / suspended / rejected.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
     </div>
   </div>
 
   <!-- MODALS -->
-  <div id="modal-container"></div>
-
+  <div id="modal-container">
+    <div class="modal">
+      <div id="modal-body">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+  </div>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import {
-      getFirestore, doc, collection, addDoc, setDoc, getDoc, getDocs,
-      updateDoc, query, where, limit, serverTimestamp, onSnapshot
+      getFirestore,
+      doc,
+      collection,
+      addDoc,
+      setDoc,
+      getDoc,
+      getDocs,
+      updateDoc,
+      serverTimestamp,
+      query,
+      where,
+      limit
     } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
     import {
-      getAuth, onAuthStateChanged, signOut
+      getAuth,
+      onAuthStateChanged,
+      createUserWithEmailAndPassword,
+      signInWithEmailAndPassword,
+      updateProfile,
+      signOut
     } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
     import {
-      getStorage, ref, uploadBytes, getDownloadURL
+      getStorage,
+      ref,
+      uploadBytes,
+      getDownloadURL
     } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
 
+    /* ------------------------------
+       FIREBASE INIT
+    ------------------------------ */
     const firebaseConfig = {
       apiKey:"AIzaSyA80bAAGPuyscnTVS-zwrxE9Jp3tPiS1gM",
       authDomain:"events-339ce.firebaseapp.com",
@@ -672,518 +907,612 @@
     const auth = getAuth(app);
     const storage = getStorage(app);
 
-    const qs = s => document.querySelector(s);
-    const qsa = s => document.querySelectorAll(s);
+    /* ------------------------------
+       DOM HELPERS
+    ------------------------------ */
+    const qs = sel => document.querySelector(sel);
+    const qsa = sel => Array.from(document.querySelectorAll(sel));
 
+    /* ------------------------------
+       URL PARAMS (event/vendor ONLY)
+       brandId always comes from userBrands/{uid}
+    ------------------------------ */
     const urlParams = new URLSearchParams(window.location.search);
-    const brandId = urlParams.get("brandId");
-    const eventIdFromUrl = urlParams.get("eventId");
+    const urlEventId = urlParams.get("eventId") || null;
+    const urlVendorId = urlParams.get("vendorId") || null;
 
-    if (!brandId) {
-      alert("Missing brandId in URL.");
-    }
+    /* ------------------------------
+       DOM REFERENCES
+    ------------------------------ */
+    const authView     = qs("#auth-view");
+    const appView      = qs("#app-view");
+    const rejectedView = qs("#rejected-view");
 
-    /* DOM REFS */
-    const sidebarBrandLogo = qs("#sidebar-brand-logo");
-    const sidebarBrandName = qs("#sidebar-brand-name");
+    // auth
+    const loginForm     = qs("#login-form");
+    const createForm    = qs("#create-form");
+    const tabLogin      = qs("#tab-login");
+    const tabCreate     = qs("#tab-create");
+    const authAlertBox  = qs("#auth-alert");
+    const authEventChip = qs("#auth-event-chip");
+
+    // header / sidebar
+    const sidebarLogo       = qs("#sidebar-brand-logo");
+    const sidebarBrandName  = qs("#sidebar-brand-name");
     const sidebarEventLabel = qs("#sidebar-event-label");
-    const topbarTitle = qs("#topbar-title");
-    const topbarSubtitle = qs("#topbar-subtitle");
-    const statusPill = qs("#status-pill");
+    const topbarTitle       = qs("#topbar-brand-title");
+    const topbarSub         = qs("#topbar-subtitle");
 
-    const statusBannerEl = qs("#status-banner");
-    const statusBannerTitle = statusBannerEl.querySelector(".status-title");
-    const statusBannerBody = statusBannerEl.querySelector(".status-body");
-    const blockedView = qs("#blocked-view");
-    const blockedMessage = qs("#blocked-message");
+    // banner + rejected
+    const statusBanner          = qs("#status-banner");
+    const rejectedReasonBox     = qs("#rejected-reason");
+    const rejectedEventNameEl   = qs("#rejected-event-name");
+    const rejectedBrandNameEl   = qs("#rejected-brand-name");
+    const btnRejectedLogout     = qs("#btn-rejected-logout");
 
-    const dashSalesTodayEl = qs("#dash-sales-today");
-    const dashOrdersTodayEl = qs("#dash-orders-today");
-    const dashOrdersReturnsTodayEl = qs("#dash-orders-returns-today");
-    const dashProductsCountEl = qs("#dash-products-count");
-    const recentOrdersTable = qs("#table-recent-orders");
+    // overview KPIs
+    const dashSalesTodayEl   = qs("#dash-sales-today");
+    const dashOrdersTodayEl  = qs("#dash-orders-today");
+    const dashReturnsTodayEl = qs("#dash-returns-today");
+    const dashUniqueCustEl   = qs("#dash-unique-customers");
+    const overviewNoteEl     = qs("#overview-note");
 
-    const productsTable = qs("#products-table");
-    const staffTable = qs("#staff-table");
-    const ordersTable = qs("#orders-table");
-    const customersAnalyticsEl = qs("#customers-analytics");
-    const customersTable = qs("#customers-table");
-    const eventCardName = qs("#event-card-name");
-    const eventCardMeta = qs("#event-card-meta");
-    const posStatusNote = qs("#pos-status-note");
+    // POS card
+    const posLinkUrlEl    = qs("#pos-link-url");
+    const posStatusHintEl = qs("#pos-status-hint");
+    const btnCopyPosLink  = qs("#btn-copy-pos-link");
 
+    // overview recent orders
+    const recentOrdersWrapper = qs("#recent-orders-table");
+
+    // products
+    const productsSearchInput = qs("#products-search");
+    const productsSortSelect  = qs("#products-sort");
+    const productsTableWrapper= qs("#products-table-wrapper");
+    const btnAddProduct       = qs("#btn-add-product");
+    const lowStockPanel       = qs("#lowStockPanel");
+    const lowStockTitle       = qs("#lowStockPanelTitle");
+    const lowStockList        = qs("#lowStockList");
+
+    // staff
+    const staffSearchInput    = qs("#staff-search");
+    const staffTableWrapper   = qs("#staff-table-wrapper");
+    const btnAddStaff         = qs("#btn-add-staff");
+
+    // customers
+    const customersTotalEl    = qs("#customers-total");
+    const customersAvgSpendEl = qs("#customers-avg-spend");
+    const customersSearchInput= qs("#customers-search");
+    const customersSortSelect = qs("#customers-sort");
+    const customersTableWrapper = qs("#customers-table-wrapper");
+
+    // orders
+    const ordersTotalSalesEl  = qs("#orders-total-sales");
+    const ordersTotalCountEl  = qs("#orders-total-count");
+    const ordersSearchInput   = qs("#orders-search");
+    const ordersFilterTypeSel = qs("#orders-filter-type");
+    const ordersFilterPaySel  = qs("#orders-filter-payment");
+    const ordersSortSelect    = qs("#orders-sort");
+    const ordersTableWrapper  = qs("#orders-table-wrapper");
+
+    // settings
+    const settingsBrandNameEl   = qs("#settings-brand-name");
+    const settingsBrandCountryEl= qs("#settings-brand-country");
+    const settingsBrandLogoEl   = qs("#settings-brand-logo");
+    const settingsEventNameEl   = qs("#settings-event-name");
+    const settingsStatusEl      = qs("#settings-status");
+    const btnSaveSettings       = qs("#btn-save-settings");
+
+    // nav + logout
+    const navButtons = qsa(".nav-item[data-page]");
+    const pages      = qsa(".page");
+    const btnLogout  = qs("#btn-logout");
+
+    // modal
     const modalContainer = qs("#modal-container");
+    const modalBody      = qs("#modal-body");
 
-    /* STATE */
-    let currentUser = null;
-    let brandData = null;
-    let vendorStatus = "pending";
-    let brandStatus = "active";
-    let eventId = eventIdFromUrl || null;
-    let eventData = null;
+    /* ------------------------------
+       GLOBAL STATE
+    ------------------------------ */
+    let currentUser  = null;
+    let brandId      = null;
+    let brandData    = null;
+    let vendorData   = null;
+    let currentEventId   = null;
+    let currentEventName = null;
+    let effectiveStatus  = "pending"; // "pending" | "approved" | "suspended" | "rejected"
 
+    let orders   = [];
     let products = [];
-    let staffUsers = [];
-    let ordersList = [];
-    let customersList = [];
+    let staff    = [];
+    let customers = []; // derived from orders
 
-    let ordersUnsub = null;
+    let isCreatingBrand = false;
 
-    let canUsePOS = false;
-    let canSeeAnalytics = false;
-
-    /* MODAL HELPERS */
-    function openModal(innerHtml){
-      modalContainer.style.display = "flex";
-      modalContainer.innerHTML = `<div class="modal">${innerHtml}</div>`;
+    /* ------------------------------
+       HELPERS
+    ------------------------------ */
+    function showAuthView() {
+      authView.style.display = "block";
+      appView.style.display = "none";
+      rejectedView.style.display = "none";
     }
-    function closeModal(){
-      modalContainer.style.display = "none";
-      modalContainer.innerHTML = "";
+
+    function showAppView() {
+      authView.style.display = "none";
+      appView.style.display = "flex";
+      rejectedView.style.display = "none";
+    }
+
+    function showRejectedView() {
+      authView.style.display = "none";
+      appView.style.display = "none";
+      rejectedView.style.display = "flex";
+    }
+
+    function setAuthAlert(msg) {
+      if (!authAlertBox) return;
+      authAlertBox.textContent = msg || "";
+      authAlertBox.style.display = msg ? "block" : "none";
+    }
+
+    function openModal(html) {
+      modalBody.innerHTML = html;
+      modalContainer.classList.add("show");
+    }
+
+    function closeModal() {
+      modalContainer.classList.remove("show");
+      modalBody.innerHTML = "";
     }
     window.closeModal = closeModal;
 
-    /* DATE HELPERS */
-    function todayDate(){
-      const d = new Date();
-      const m = String(d.getMonth()+1).padStart(2,"0");
-      const day = String(d.getDate()).padStart(2,"0");
-      return `${d.getFullYear()}-${m}-${day}`;
-    }
-    function formatDate(d){
-      const m = String(d.getMonth()+1).padStart(2,"0");
-      const day = String(d.getDate()).padStart(2,"0");
-      return `${d.getFullYear()}-${m}-${day}`;
-    }
-    function formatDateTime(d){
-      return d.toLocaleString("en-EG",{year:"numeric",month:"short",day:"2-digit",hour:"2-digit",minute:"2-digit"});
-    }
-    function orderDate(o){
-      if (o.date) return o.date;
-      if (o.createdAt && typeof o.createdAt.toDate === "function"){
-        return formatDate(o.createdAt.toDate());
-      }
-      if (o.createdAtLocal && typeof o.createdAtLocal === "string"){
-        return o.createdAtLocal.slice(0,10);
-      }
-      return "";
-    }
-    function orderDateTimeString(o){
-      if (o.createdAt && typeof o.createdAt.toDate === "function"){
-        return formatDateTime(o.createdAt.toDate());
-      }
-      if (o.createdAtLocal && typeof o.createdAtLocal === "string"){
-        return o.createdAtLocal.replace("T"," ").replace("Z","");
-      }
-      return "—";
+    function money(v) {
+      const n = Number(v) || 0;
+      return n.toFixed(2);
     }
 
-    /* IMAGE UPLOAD */
-    async function uploadImageToStorage(file, path){
+    function getDateKeyFromDate(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    }
+
+    function todayKey() {
+      return getDateKeyFromDate(new Date());
+    }
+
+    function getOrderDateKey(order) {
+      if (order.createdAtLocal) {
+        const d = new Date(order.createdAtLocal);
+        if (!isNaN(d.getTime())) return getDateKeyFromDate(d);
+      }
+      if (order.createdAt && typeof order.createdAt.toDate === "function") {
+        const d = order.createdAt.toDate();
+        return getDateKeyFromDate(d);
+      }
+      if (order.dateKey) return order.dateKey;
+      return "";
+    }
+
+    function getOrderCreatedAt(order) {
+      if (order.createdAtLocal) {
+        const d = new Date(order.createdAtLocal);
+        if (!isNaN(d.getTime())) return d;
+      }
+      if (order.createdAt && typeof order.createdAt.toDate === "function") {
+        return order.createdAt.toDate();
+      }
+      return null;
+    }
+
+    function generateSku() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      const datePart = `${y}${m}${day}`;
+      const letters = (brandData?.name || "BRAND")
+        .replace(/[^a-z0-9]/gi,"")
+        .toUpperCase()
+        .slice(0,3) || "BRD";
+      const randomPart = Math.floor(1000 + Math.random()*9000);
+      return `${letters}-${datePart}-${randomPart}`;
+    }
+
+    async function uploadFileToStorage(file, path) {
       if (!file) return null;
       const storageRef = ref(storage, path);
       await uploadBytes(storageRef, file);
-      return await getDownloadURL(storageRef);
+      const url = await getDownloadURL(storageRef);
+      return url;
     }
 
-    /* STATUS + UI RULES */
-    function applyStatusUI(){
-      const statusText = `Vendor: ${vendorStatus || "unknown"} • Brand: ${brandStatus || "unknown"}`;
-      statusPill.textContent = statusText;
-
-      blockedView.style.display = "none";
-      statusBannerEl.style.display = "none";
-      statusBannerEl.classList.remove("pending","suspended","rejected");
-
-      // default
-      canUsePOS = (vendorStatus === "approved" && brandStatus === "active");
-      canSeeAnalytics = canUsePOS;
-
-      if (vendorStatus === "rejected"){
-        blockedView.style.display = "flex";
-        blockedMessage.textContent = "Your application was rejected for this event. Please contact the organizer.";
-        canUsePOS = false;
-        canSeeAnalytics = false;
-      } else if (vendorStatus === "pending"){
-        statusBannerEl.style.display = "block";
-        statusBannerEl.classList.add("pending");
-        statusBannerTitle.textContent = "Vendor approval pending";
-        statusBannerBody.textContent = "Your vendor application is pending approval. You can prepare your products and staff while you wait. POS and analytics will be enabled after approval.";
-        canUsePOS = false;
-        canSeeAnalytics = false;
-      } else if (vendorStatus === "suspended" || brandStatus === "suspended"){
-        statusBannerEl.style.display = "block";
-        statusBannerEl.classList.add("suspended");
-        statusBannerTitle.textContent = "Brand suspended";
-        statusBannerBody.textContent = "Your brand or vendor profile has been suspended by the organizer. POS access and analytics are disabled until this is resolved.";
-        canUsePOS = false;
-        canSeeAnalytics = false;
-      }
-
-      // POS card note
-      if (!canUsePOS){
-        posStatusNote.textContent = "POS is disabled until your brand is fully approved and active.";
-      } else {
-        posStatusNote.textContent = "Cashiers log in with username & PIN. Keep this link private.";
-      }
-
-      // hide analytics sections if needed
-      qsa(".analytics-section").forEach(el=>{
-        el.style.display = canSeeAnalytics ? "" : "none";
+    function applyNav(pageId) {
+      navButtons.forEach(btn => {
+        const id = btn.getAttribute("data-page");
+        if (id === pageId) btn.classList.add("active");
+        else btn.classList.remove("active");
+      });
+      pages.forEach(p => {
+        if (p.id === pageId) p.classList.add("active");
+        else p.classList.remove("active");
       });
     }
 
-    /* LOAD BRAND + EVENT + VENDOR */
-    async function loadBrandAndEvent(){
-      if (!brandId) return;
-      const brandRef = doc(db,"brands",brandId);
+    /* ------------------------------
+       STATUS / BANNER LOGIC
+    ------------------------------ */
+    function applyStatusUI() {
+      const brandStatus  = brandData?.status  || "pending";
+      const vendorStatus = vendorData?.status || "pending";
+
+      let mode = "pending";
+
+      if (vendorStatus === "rejected") {
+        mode = "rejected";
+      } else if (vendorStatus === "suspended" || brandStatus === "suspended") {
+        mode = "suspended";
+      } else if (vendorStatus === "approved" && brandStatus === "active") {
+        mode = "approved";
+      } else {
+        mode = "pending";
+      }
+
+      effectiveStatus = mode;
+
+      // reset
+      if (statusBanner) {
+        statusBanner.style.display = "none";
+        statusBanner.classList.remove(
+          "status-banner-warning",
+          "status-banner-error",
+          "status-banner-success"
+        );
+        statusBanner.textContent = "";
+      }
+
+      // POS gating
+      const posUrl = "https://luma-events.vercel.app/pos.html";
+      if (posLinkUrlEl) posLinkUrlEl.textContent = posUrl;
+
+      if (btnCopyPosLink) {
+        btnCopyPosLink.disabled = false;
+        btnCopyPosLink.title = "";
+      }
+      if (posStatusHintEl) {
+        posStatusHintEl.textContent = "";
+      }
+
+      // Overlays
+      if (mode === "rejected") {
+        // blocked dashboard
+        showRejectedView();
+        if (rejectedEventNameEl) {
+          rejectedEventNameEl.textContent = currentEventName || "this event";
+        }
+        if (rejectedBrandNameEl) {
+          rejectedBrandNameEl.textContent = brandData?.name || "your brand";
+        }
+        if (rejectedReasonBox) {
+          const reason = vendorData?.rejectionReason || vendorData?.reason || null;
+          if (reason) {
+            rejectedReasonBox.style.display = "block";
+            rejectedReasonBox.textContent = reason;
+          } else {
+            rejectedReasonBox.style.display = "none";
+          }
+        }
+        return;
+      }
+
+      // normal dashboard visible
+      showAppView();
+
+      if (!statusBanner) return;
+
+      if (mode === "pending") {
+        statusBanner.style.display = "flex";
+        statusBanner.classList.add("status-banner-warning");
+        statusBanner.textContent =
+          "Your vendor application is pending approval. You can prepare your products and staff, but POS and analytics are not active yet.";
+
+        if (btnCopyPosLink) {
+          btnCopyPosLink.disabled = true;
+          btnCopyPosLink.title = "POS will be enabled after approval.";
+        }
+        if (posStatusHintEl) {
+          posStatusHintEl.textContent = "POS will be enabled after approval.";
+        }
+        if (overviewNoteEl) {
+          overviewNoteEl.textContent =
+            "Analytics are in preview mode. Final numbers will start counting after approval.";
+        }
+      } else if (mode === "suspended") {
+        statusBanner.style.display = "flex";
+        statusBanner.classList.add("status-banner-error");
+        statusBanner.textContent =
+          "Your brand has been suspended by the organizer. POS access is disabled, but you can still view data.";
+
+        if (btnCopyPosLink) {
+          btnCopyPosLink.disabled = true;
+          btnCopyPosLink.title = "POS is disabled for this event.";
+        }
+        if (posStatusHintEl) {
+          posStatusHintEl.textContent = "POS disabled for this event.";
+        }
+        if (overviewNoteEl) {
+          overviewNoteEl.textContent =
+            "Suspended mode: analytics are view-only; new orders are blocked in the POS.";
+        }
+      } else if (mode === "approved") {
+        statusBanner.style.display = "flex";
+        statusBanner.classList.add("status-banner-success");
+        statusBanner.textContent =
+          "You are approved for this event. POS is active and analytics are live.";
+
+        if (posStatusHintEl) {
+          posStatusHintEl.textContent = "Share this POS link with your cashiers.";
+        }
+        if (overviewNoteEl) {
+          overviewNoteEl.textContent =
+            "All analytics reflect net revenue and unique customers based on your orders.";
+        }
+      }
+    }
+
+    /* ------------------------------
+       LOAD BRAND + EVENT + VENDOR
+    ------------------------------ */
+    async function loadBrandAndStatus() {
+      if (!brandId) throw new Error("No brandId");
+
+      const brandRef = doc(db, "brands", brandId);
       const snap = await getDoc(brandRef);
       if (!snap.exists()) throw new Error("Brand not found");
       brandData = snap.data();
 
+      // brand name / logo
       const name = brandData.name || "Brand";
-      const country = brandData.country || "";
-      const logo = brandData.logoUrl || brandData.logo || null;
-      brandStatus = brandData.status || "active";
-      eventId = brandData.eventId || eventId || null;
-
       sidebarBrandName.textContent = name;
-      topbarTitle.textContent = `Brand Dashboard — ${name}`;
-      topbarSubtitle.textContent = eventId ? "Loading event details..." : "Event not linked.";
+      topbarTitle.textContent = `${name} — Brand Dashboard`;
 
-      if (logo){
-        sidebarBrandLogo.style.backgroundImage = `url("${logo}")`;
-        sidebarBrandLogo.textContent = "";
+      const logoUrl = brandData.logoUrl || brandData.logo || null;
+      if (logoUrl) {
+        sidebarLogo.style.backgroundImage = `url("${logoUrl}")`;
+        sidebarLogo.textContent = "";
       } else {
-        sidebarBrandLogo.style.backgroundImage = "none";
-        sidebarBrandLogo.textContent = name[0]?.toUpperCase() || "B";
+        sidebarLogo.style.backgroundImage = "";
+        sidebarLogo.textContent = name[0]?.toUpperCase() || "B";
       }
 
-      const setBrandName = qs("#set-brand-name");
-      const setBrandCountry = qs("#set-brand-country");
-      const setVat = qs("#set-vat");
-      const setServiceFee = qs("#set-service-fee");
+      // determine event
+      currentEventId = urlEventId || brandData.eventId || null;
+      currentEventName = brandData.eventName || null;
 
-      if (setBrandName) setBrandName.value = name;
-      if (setBrandCountry) setBrandCountry.value = country;
-      if (setVat) setVat.value = brandData.vat ?? 0;
-      if (setServiceFee) setServiceFee.value = brandData.serviceFee ?? 0;
-
-      // event meta
-      if (eventId){
-        const evRef = doc(db,"events",eventId);
-        const evSnap = await getDoc(evRef);
-        if (evSnap.exists()){
-          eventData = evSnap.data();
+      if (currentEventId) {
+        const evSnap = await getDoc(doc(db, "events", currentEventId));
+        if (evSnap.exists()) {
+          const ev = evSnap.data();
+          const evName = ev.name || ev.title || currentEventName || "Event";
+          currentEventName = evName;
         }
       }
 
-      const eventName = brandData.eventName || eventData?.name || eventData?.title || "Event";
-      const date = eventData?.date || eventData?.startDate || "";
-      const location = eventData?.location || eventData?.venue || "";
+      if (currentEventName) {
+        if (sidebarEventLabel) sidebarEventLabel.textContent = currentEventName;
+        if (topbarSub) {
+          topbarSub.textContent = `Sales and POS dashboard for "${currentEventName}".`;
+        }
+        if (qs("#event-name-title")) {
+          qs("#event-name-title").textContent = currentEventName;
+        }
+        if (settingsEventNameEl) {
+          settingsEventNameEl.value = currentEventName;
+        }
+        if (authEventChip) {
+          authEventChip.textContent = `You are managing: ${currentEventName}`;
+        }
+      }
 
-      sidebarEventLabel.textContent = eventName;
-      topbarSubtitle.textContent = `Brand dashboard for "${eventName}".`;
-
-      eventCardName.textContent = eventName;
-      const metaParts = [];
-      if (date) metaParts.push(date);
-      if (location) metaParts.push(location);
-      eventCardMeta.textContent = metaParts.join(" • ") || "Event details from organizer.";
+      // settings prefill
+      if (settingsBrandNameEl) settingsBrandNameEl.value = name;
+      if (settingsBrandCountryEl) settingsBrandCountryEl.value = brandData.country || "";
 
       // vendor doc
-      if (eventId){
-        const vendorsRef = collection(doc(db,"events",eventId),"vendors");
-        const qRef = query(vendorsRef, where("brandId","==",brandId), limit(1));
-        const vSnap = await getDocs(qRef);
-        if (!vSnap.empty){
-          const vDoc = vSnap.docs[0].data();
-          vendorStatus = vDoc.status || "pending";
-        } else {
-          vendorStatus = "approved"; // fallback if vendor doc not found
+      vendorData = null;
+      if (currentEventId) {
+        let vendorSnap = null;
+        if (urlVendorId) {
+          const vr = await getDoc(
+            doc(db, "events", currentEventId, "vendors", urlVendorId)
+          );
+          if (vr.exists()) vendorSnap = vr;
         }
-      } else {
-        vendorStatus = "approved";
+        if (!vendorSnap) {
+          const qVendor = query(
+            collection(db, "events", currentEventId, "vendors"),
+            where("brandId", "==", brandId),
+            limit(1)
+          );
+          const vSnap = await getDocs(qVendor);
+          if (!vSnap.empty) vendorSnap = vSnap.docs[0];
+        }
+        if (vendorSnap && vendorSnap.exists()) {
+          vendorData = { id: vendorSnap.id, ...vendorSnap.data() };
+        }
+      }
+
+      if (settingsStatusEl) {
+        const bStatus = brandData.status || "pending";
+        const vStatus = vendorData?.status || "pending";
+        settingsStatusEl.value = `Brand: ${bStatus} / Vendor: ${vStatus}`;
       }
 
       applyStatusUI();
     }
 
-    /* LOAD PRODUCTS */
-    async function loadProducts(){
+    /* ------------------------------
+       LOAD PRODUCTS
+    ------------------------------ */
+    async function loadProducts() {
+      products = [];
       if (!brandId) return;
-      const colRef = collection(doc(db,"brands",brandId),"products");
-      const snap = await getDocs(colRef);
-      products = snap.docs.map(d=>({id:d.id,...d.data()}));
-      dashProductsCountEl.textContent = String(products.length);
-      renderProductsTable();
+      const prodsRef = collection(doc(db, "brands", brandId), "products");
+      const snap = await getDocs(prodsRef);
+      products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderProducts();
+      renderLowStockPanel();
     }
 
-    /* LOAD STAFF */
-    async function loadStaff(){
-      if (!brandId) return;
-      const colRef = collection(doc(db,"brands",brandId),"staff");
-      const snap = await getDocs(colRef);
-      staffUsers = snap.docs.map(d=>({id:d.id,...d.data()}));
-      renderStaffTable();
-    }
+    function renderProducts() {
+      if (!productsTableWrapper) return;
 
-    /* LOAD CUSTOMERS */
-    async function loadCustomers(){
-      if (!brandId) return;
-      const colRef = collection(doc(db,"brands",brandId),"customers");
-      const snap = await getDocs(colRef);
-      customersList = snap.docs.map(d=>({id:d.id,...d.data()}));
-      updateCustomersAnalyticsAndTable();
-    }
+      const search = (productsSearchInput?.value || "").toLowerCase();
+      const sort = productsSortSelect?.value || "name-asc";
 
-    /* LOAD ORDERS (from brands/{brandId}/orders) */
-    async function loadOrders(){
-      if (!brandId) return;
-      const colRef = collection(doc(db,"brands",brandId),"orders");
-      const snap = await getDocs(colRef);
-      ordersList = snap.docs.map(d=>({id:d.id,...d.data()}));
-
-      updateDashboardFromOrders();
-      renderOrdersTable();
-      renderRecentOrdersTable();
-      updateCustomersAnalyticsAndTable(); // recompute from orders
-    }
-
-    function listenToOrdersRealtime(){
-      if (!brandId) return;
-      if (ordersUnsub) ordersUnsub();
-
-      const colRef = collection(doc(db,"brands",brandId),"orders");
-      ordersUnsub = onSnapshot(colRef,snap=>{
-        ordersList = snap.docs.map(d=>({id:d.id,...d.data()}));
-        updateDashboardFromOrders();
-        renderOrdersTable();
-        renderRecentOrdersTable();
-        updateCustomersAnalyticsAndTable();
-      });
-    }
-
-    /* DASHBOARD METRICS FROM ORDERS */
-    function updateDashboardFromOrders(){
-      if (!canSeeAnalytics){
-        dashSalesTodayEl.textContent = "0";
-        dashOrdersTodayEl.textContent = "0";
-        dashOrdersReturnsTodayEl.textContent = "0";
-        return;
-      }
-      const todayStr = todayDate();
-      let sales = 0;
-      let salesCount = 0;
-      let returnCount = 0;
-
-      for (const o of ordersList){
-        const d = orderDate(o);
-        if (d !== todayStr) continue;
-
-        const total = Number(o.total || 0);
-        const isReturn = !!o.isReturn;
-
-        if (isReturn){
-          sales -= Math.abs(total);
-          returnCount += 1;
-        } else {
-          sales += total;
-          salesCount += 1;
-        }
-      }
-
-      dashSalesTodayEl.textContent = sales.toFixed(2);
-      dashOrdersTodayEl.textContent = String(salesCount);
-      dashOrdersReturnsTodayEl.textContent = String(returnCount);
-    }
-
-    /* CUSTOMERS ANALYTICS FROM ORDERS */
-    function buildCustomerStats(){
-      const stats = {};
-      for (const o of ordersList){
-        const cid = o.customerId || null;
-        if (!cid) continue;
-        if (!stats[cid]){
-          stats[cid] = {ordersCount:0,totalSpent:0};
-        }
-        const total = Number(o.total || 0);
-        const isReturn = !!o.isReturn;
-        if (isReturn){
-          stats[cid].ordersCount += 1;
-          stats[cid].totalSpent -= Math.abs(total);
-        } else {
-          stats[cid].ordersCount += 1;
-          stats[cid].totalSpent += total;
-        }
-      }
-      return stats;
-    }
-
-    function updateCustomersAnalyticsAndTable(){
-      customersAnalyticsEl.innerHTML = "";
-      customersTable.innerHTML = "";
-
-      if (!canSeeAnalytics){
-        customersAnalyticsEl.innerHTML = "";
-        customersTable.innerHTML = `<div class="table-empty">Customer analytics are disabled in your current status.</div>`;
-        return;
-      }
-
-      const stats = buildCustomerStats();
-      const customersWithStats = customersList.map(c=>{
-        const s = stats[c.id] || {ordersCount:0,totalSpent:0};
-        return {...c,ordersCount:s.ordersCount,totalSpent:s.totalSpent};
-      });
-
-      // analytics card
-      const totalCustomers = customersWithStats.length;
-      let totalSpentAll = 0;
-      let totalOrdersAll = 0;
-      customersWithStats.forEach(c=>{
-        totalSpentAll += Number(c.totalSpent || 0);
-        totalOrdersAll += Number(c.ordersCount || 0);
-      });
-
-      if (totalCustomers){
-        customersAnalyticsEl.innerHTML = `
-          <div class="card">
-            <div class="card-title">Customers</div>
-            <div class="card-number">${totalCustomers}</div>
-            <div class="card-note">Unique customers saved for this brand.</div>
-          </div>
-          <div class="card">
-            <div class="card-title">Total Orders</div>
-            <div class="card-number">${totalOrdersAll}</div>
-            <div class="card-note">Orders linked to saved customers.</div>
-          </div>
-          <div class="card">
-            <div class="card-title">Recorded Spend</div>
-            <div class="card-number">${totalSpentAll.toFixed(2)}</div>
-            <div class="card-note">Net spend (sales − returns).</div>
-          </div>
-        `;
-      }
-
-      renderCustomersTable(customersWithStats);
-    }
-
-    /* RENDER PRODUCTS TABLE */
-    function renderProductsTable(){
       let list = products.slice();
-      const searchVal = (qs("#search-products")?.value || "").toLowerCase();
-      const sortVal = qs("#sort-products")?.value || "name-asc";
 
-      if (searchVal){
-        list = list.filter(p=>{
-          const s = `${p.name || ""} ${p.sku || ""} ${(p.code || "")}`.toLowerCase();
-          return s.includes(searchVal);
+      if (search) {
+        list = list.filter(p => {
+          const s = `${p.name || ""} ${p.sku || ""}`.toLowerCase();
+          return s.includes(search);
         });
       }
 
-      list.sort((a,b)=>{
-        switch(sortVal){
-          case "name-desc": return (b.name || "").localeCompare(a.name || "");
-          case "price-asc": return Number(a.price || 0) - Number(b.price || 0);
-          case "price-desc": return Number(b.price || 0) - Number(a.price || 0);
+      list.sort((a,b) => {
+        const nameA = (a.name || "").toLowerCase();
+        const nameB = (b.name || "").toLowerCase();
+        const priceA = Number(a.price || 0);
+        const priceB = Number(b.price || 0);
+        const stockA = Number(a.stock || 0);
+        const stockB = Number(b.stock || 0);
+
+        switch (sort) {
+          case "name-desc": return nameB.localeCompare(nameA);
+          case "price-asc": return priceA - priceB;
+          case "price-desc": return priceB - priceA;
+          case "stock-asc": return stockA - stockB;
+          case "stock-desc": return stockB - stockA;
           case "name-asc":
-          default: return (a.name || "").localeCompare(b.name || "");
+          default: return nameA.localeCompare(nameB);
         }
       });
 
-      if (!list.length){
-        productsTable.innerHTML = `<div class="table-empty">No products yet. Add your first product.</div>`;
+      if (!list.length) {
+        productsTableWrapper.innerHTML =
+          `<div class="table-empty">No products yet. Add your first product.</div>`;
         return;
       }
 
-      const rows = list.map(p=>{
-        const name = p.name || "Unnamed";
-        const sku = p.sku || "—";
-        const code = p.code || "—";
-        const price = Number(p.price || 0).toFixed(2);
-        const imgStyle = p.imageUrl ? `style="background-image:url('${p.imageUrl}');"` : "";
-        const active = p.isActive !== false;
-        const variants = Array.isArray(p.variants) ? p.variants : [];
-        const variantHtml = variants.map(v=>{
-          const labels = Array.isArray(v.labels) ? v.labels.join(", ") : "";
-          return `<span class="variant-pill">${v.name || ""}: ${labels}</span>`;
-        }).join(" ");
+      const rows = list.map(p => {
+        const img = p.imageUrl
+          ? `<div class="product-thumb" style="background-image:url('${p.imageUrl}')"></div>`
+          : `<div class="product-thumb product-thumb-placeholder">No image</div>`;
+        const variantsLabel = (Array.isArray(p.variants) && p.variants.length)
+          ? p.variants.map(v => v.name).join(", ")
+          : "-";
+        const active = p.isActive === false ? "Inactive" : "Active";
 
         return `
           <tr>
+            <td>${img}</td>
+            <td>${p.name || "-"}</td>
+            <td>${p.sku || "-"}</td>
+            <td>${money(p.price)}</td>
+            <td>${Number(p.stock || 0)}</td>
+            <td>${variantsLabel}</td>
+            <td>${active}</td>
             <td>
-              <span class="product-img-thumb" ${imgStyle}></span>
-            </td>
-            <td>${name}</td>
-            <td>${sku}</td>
-            <td>${code}</td>
-            <td>${price}</td>
-            <td>${active ? '<span class="chip chip-green">Active</span>' : '<span class="chip chip-red">Inactive</span>'}</td>
-            <td>${variantHtml || '<span style="font-size:10px;color:var(--muted);">—</span>'}</td>
-            <td>
-              <button class="btn btn-ghost btn-sm" data-action="edit-product" data-id="${p.id}">Edit</button>
-              <button class="btn btn-danger btn-sm" data-action="delete-product" data-id="${p.id}">Delete</button>
+              <button class="btn btn-ghost btn-xs" data-action="edit-product" data-id="${p.id}">Edit</button>
+              <button class="btn btn-danger btn-xs" data-action="delete-product" data-id="${p.id}">Delete</button>
             </td>
           </tr>
         `;
       }).join("");
 
-      productsTable.innerHTML = `
+      productsTableWrapper.innerHTML = `
         <table>
           <thead>
             <tr>
               <th>Image</th>
               <th>Name</th>
               <th>SKU</th>
-              <th>Code</th>
               <th>Price</th>
-              <th>Status</th>
+              <th>Stock</th>
               <th>Variants</th>
-              <th>Actions</th>
+              <th>Status</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
         </table>
       `;
 
-      productsTable.querySelectorAll("button[data-action]").forEach(btn=>{
-        const id = btn.getAttribute("data-id");
-        const action = btn.getAttribute("data-action");
-        btn.addEventListener("click",()=>{
-          const prod = products.find(p=>p.id === id);
-          if (action === "edit-product" && prod){
-            openProductModal(prod);
-          } else if (action === "delete-product"){
-            confirmDeleteProduct(id);
-          }
+      productsTableWrapper
+        .querySelectorAll("button[data-action]")
+        .forEach(btn => {
+          const id = btn.getAttribute("data-id");
+          const action = btn.getAttribute("data-action");
+          btn.addEventListener("click", () => {
+            const p = products.find(x => x.id === id);
+            if (action === "edit-product") openProductModal(p);
+            if (action === "delete-product") confirmDeleteProduct(id);
+          });
         });
+    }
+
+    function renderLowStockPanel() {
+      if (!lowStockPanel) return;
+      const low = products.filter(p => {
+        const stock = Number(p.stock || 0);
+        const threshold = p.lowStockThreshold != null
+          ? Number(p.lowStockThreshold)
+          : 5;
+        return stock <= threshold;
       });
+      if (!low.length) {
+        lowStockPanel.style.display = "none";
+        return;
+      }
+      lowStockPanel.style.display = "block";
+      lowStockTitle.textContent = `Low stock alerts (${low.length})`;
+      lowStockList.innerHTML = low.map(p => {
+        const s = Number(p.stock || 0);
+        return `<div>• ${p.name || "Unnamed product"} — <span class="low-stock">${s}</span> left</div>`;
+      }).join("");
     }
 
-    /* PRODUCT MODAL WITH VARIANTS + IMAGE + AUTO SKU */
-    function generateSku(name){
-      const base = (name || "BRAND").split(/\s+/)[0].toUpperCase().slice(0,5);
-      const d = new Date();
-      const y = d.getFullYear();
-      const m = String(d.getMonth()+1).padStart(2,"0");
-      const day = String(d.getDate()).padStart(2,"0");
-      const rand = Math.floor(1000 + Math.random()*9000);
-      return `${base}-${y}${m}${day}-${rand}`;
-    }
-
-    function openProductModal(product){
+    function openProductModal(product) {
       const isEdit = !!product;
-      const title = isEdit ? "Edit Product" : "Add Product";
+      const title = isEdit ? "Edit product" : "Add product";
+
+      const vName  = Array.isArray(product?.variants) && product.variants[0]?.name
+        ? product.variants[0].name
+        : "";
+      const vLabels = Array.isArray(product?.variants) && product.variants[0]?.labels
+        ? product.variants[0].labels.join(", ")
+        : "";
 
       openModal(`
         <div class="modal-title">${title}</div>
         <form id="product-form">
           <div class="field">
-            <div class="field-label">Product Name</div>
-            <input id="prod-name" class="field-input" value="${product?.name || ""}" required/>
+            <div class="field-label">Name</div>
+            <input id="prod-name" class="field-input" required value="${product?.name || ""}"/>
           </div>
           <div class="field">
-            <div class="field-label">SKU (auto if empty)</div>
+            <div class="field-label">Price</div>
+            <input id="prod-price" class="field-input" type="number" min="0" step="0.01" required value="${product?.price ?? ""}"/>
+          </div>
+          <div class="field">
+            <div class="field-label">Stock</div>
+            <input id="prod-stock" class="field-input" type="number" min="0" step="1" required value="${product?.stock ?? 0}"/>
+          </div>
+          <div class="field">
+            <div class="field-label">SKU (auto if left empty)</div>
             <input id="prod-sku" class="field-input" value="${product?.sku || ""}"/>
           </div>
           <div class="field">
@@ -1191,203 +1520,172 @@
             <input id="prod-code" class="field-input" value="${product?.code || ""}"/>
           </div>
           <div class="field">
-            <div class="field-label">Price</div>
-            <input id="prod-price" type="number" step="0.01" class="field-input" value="${product?.price ?? ""}" required/>
+            <div class="field-label">Variants (optional)</div>
+            <div class="field-hint">Example: Name = Size, Options = S,M,L</div>
+            <input id="prod-variant-name" class="field-input" placeholder="Group name (e.g. Size)" value="${vName}"/>
+            <input id="prod-variant-labels" class="field-input" placeholder="Comma separated options" value="${vLabels}"/>
           </div>
           <div class="field">
-            <label>
-              <input id="prod-active" type="checkbox" ${product?.isActive === false ? "" : "checked"}/>
-              Active product
+            <div class="field-label">Product image</div>
+            <input id="prod-image" class="field-input" type="file" accept="image/*"/>
+            <div class="field-hint">Will be stored under brands/${brandId || "brandId"}/products/{productId}/main.jpg</div>
+          </div>
+          <div class="field">
+            <label style="font-size:12px;">
+              <input id="prod-active" type="checkbox" ${product?.isActive === false ? "" : "checked"}/> Active
             </label>
           </div>
-
-          <div class="field">
-            <div class="field-label">Product Image</div>
-            <input id="prod-image" type="file" class="field-input" accept="image/*"/>
-            <div class="field-hint">Stored at <code>brands/&lt;brandId&gt;/products/&lt;productId&gt;/main.jpg</code>.</div>
-          </div>
-
-          <div class="field">
-            <div class="field-label">Variants (optional)</div>
-            <div class="variants-container">
-              <div id="variants-list"></div>
-              <button type="button" id="btn-add-variant" class="btn btn-ghost btn-sm" style="margin-top:4px;">Add variant group</button>
-              <div class="field-hint">Example: group "Size" with labels "S, M, L".</div>
-            </div>
-          </div>
-
           <div class="modal-actions">
             <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="submit" class="btn btn-primary">${isEdit ? "Save changes" : "Create product"}</button>
           </div>
         </form>
       `);
 
-      const variantsListEl = document.getElementById("variants-list");
-      const existingVariants = Array.isArray(product?.variants) ? product.variants : [];
+      const form = qs("#product-form");
+      const fileInput = qs("#prod-image");
 
-      function renderVariantRows(){
-        variantsListEl.innerHTML = "";
-        if (!existingVariants.length){
-          return;
-        }
-        existingVariants.forEach((v,idx)=>{
-          const labels = Array.isArray(v.labels) ? v.labels.join(", ") : "";
-          const row = document.createElement("div");
-          row.className = "variant-row";
-          row.innerHTML = `
-            <input data-role="name" data-index="${idx}" class="field-input" placeholder="Group name (e.g. Size)" value="${v.name || ""}"/>
-            <input data-role="labels" data-index="${idx}" class="field-input" placeholder="Labels (comma-separated)" value="${labels}"/>
-            <button type="button" class="btn btn-ghost btn-sm" data-role="remove" data-index="${idx}">X</button>
-          `;
-          variantsListEl.appendChild(row);
-        });
-
-        variantsListEl.querySelectorAll("button[data-role='remove']").forEach(btn=>{
-          const i = Number(btn.getAttribute("data-index"));
-          btn.addEventListener("click",()=>{
-            existingVariants.splice(i,1);
-            renderVariantRows();
-          });
-        });
-
-        variantsListEl.querySelectorAll("input[data-role]").forEach(inp=>{
-          inp.addEventListener("input",()=>{
-            const role = inp.getAttribute("data-role");
-            const i = Number(inp.getAttribute("data-index"));
-            const v = existingVariants[i] || (existingVariants[i] = {name:"",labels:[]});
-            if (role === "name"){
-              v.name = inp.value.trim();
-            } else if (role === "labels"){
-              v.labels = inp.value.split(",").map(s=>s.trim()).filter(Boolean);
-            }
-          });
-        });
-      }
-
-      renderVariantRows();
-
-      document.getElementById("btn-add-variant").addEventListener("click",()=>{
-        existingVariants.push({name:"",labels:[]});
-        renderVariantRows();
-      });
-
-      document.getElementById("product-form").addEventListener("submit", async evt=>{
-        evt.preventDefault();
+      form.addEventListener("submit", async e => {
+        e.preventDefault();
         if (!brandId) return;
 
-        const name = document.getElementById("prod-name").value.trim();
-        let sku = document.getElementById("prod-sku").value.trim();
-        const code = document.getElementById("prod-code").value.trim() || null;
-        const price = Number(document.getElementById("prod-price").value || 0);
-        const isActive = document.getElementById("prod-active").checked;
-        const imgInput = document.getElementById("prod-image");
+        const name  = qs("#prod-name").value.trim();
+        const price = Number(qs("#prod-price").value || 0);
+        const stock = Number(qs("#prod-stock").value || 0);
+        let sku     = qs("#prod-sku").value.trim();
+        const code  = qs("#prod-code").value.trim() || null;
+        const vNameVal = qs("#prod-variant-name").value.trim();
+        const vLabelsVal = qs("#prod-variant-labels").value.trim();
+        const isActive = qs("#prod-active").checked;
 
-        if (!name){
-          alert("Product name is required.");
+        if (!name) {
+          alert("Enter product name.");
           return;
         }
-        if (!price || price < 0){
-          alert("Enter a valid price.");
+        if (!price && price !== 0) {
+          alert("Enter product price.");
           return;
         }
 
-        if (!sku){
-          sku = generateSku(name);
+        if (!sku) {
+          sku = generateSku();
         }
 
-        const brandRef = doc(db,"brands",brandId);
-        const colRef = collection(brandRef,"products");
+        const variants = [];
+        if (vNameVal && vLabelsVal) {
+          const labelsArr = vLabelsVal
+            .split(",")
+            .map(x => x.trim())
+            .filter(Boolean);
+          if (labelsArr.length) {
+            variants.push({ name: vNameVal, labels: labelsArr });
+          }
+        }
 
-        const data = {
+        const baseData = {
           name,
+          price,
+          stock,
           sku,
           code,
-          price,
+          variants,
           isActive,
-          variants: existingVariants.filter(v=>v.name && Array.isArray(v.labels) && v.labels.length),
           updatedAt: serverTimestamp()
         };
 
-        let productId = product?.id || null;
-        if (isEdit){
-          productId = product.id;
-          await updateDoc(doc(brandRef,"products",productId), data);
-        } else {
-          const newDocRef = await addDoc(colRef, {
-            ...data,
-            createdAt: serverTimestamp()
-          });
-          productId = newDocRef.id;
-        }
+        const prodsRef = collection(doc(db, "brands", brandId), "products");
 
-        if (imgInput.files && imgInput.files[0]){
-          const url = await uploadImageToStorage(imgInput.files[0], `brands/${brandId}/products/${productId}/main.jpg`);
-          await updateDoc(doc(brandRef,"products",productId), {imageUrl:url});
-        }
+        try {
+          if (product) {
+            const prodRef = doc(prodsRef, product.id);
+            await updateDoc(prodRef, baseData);
 
-        closeModal();
-        await loadProducts();
+            if (fileInput && fileInput.files[0]) {
+              const path = `brands/${brandId}/products/${product.id}/main.jpg`;
+              const url = await uploadFileToStorage(fileInput.files[0], path);
+              await updateDoc(prodRef, { imageUrl: url });
+            }
+          } else {
+            const newRef = await addDoc(prodsRef, {
+              ...baseData,
+              createdAt: serverTimestamp()
+            });
+            if (fileInput && fileInput.files[0]) {
+              const path = `brands/${brandId}/products/${newRef.id}/main.jpg`;
+              const url = await uploadFileToStorage(fileInput.files[0], path);
+              await updateDoc(newRef, { imageUrl: url });
+            }
+          }
+
+          await loadProducts();
+          closeModal();
+        } catch (err) {
+          console.error("Error saving product", err);
+          alert("Failed to save product. Try again.");
+        }
       });
     }
 
-    async function confirmDeleteProduct(id){
-      if (!brandId) return;
+    async function confirmDeleteProduct(productId) {
+      if (!brandId || !productId) return;
       if (!confirm("Delete this product?")) return;
-      const brandRef = doc(db,"brands",brandId);
-      await updateDoc(doc(brandRef,"products",id), {deleted:true,isActive:false});
-      // soft-delete: keep record; you can change to deleteDoc if you want
-      await loadProducts();
+      const refProd = doc(collection(doc(db, "brands", brandId), "products"), productId);
+      try {
+        await updateDoc(refProd, { isActive: false });
+        await loadProducts();
+      } catch (err) {
+        console.error("Error deleting product", err);
+        alert("Failed to delete product.");
+      }
     }
 
-    /* STAFF TABLE + MODAL */
-    function renderStaffTable(){
-      let list = staffUsers.slice();
-      const searchVal = (qs("#search-staff")?.value || "").toLowerCase();
-      const sortVal = qs("#sort-staff")?.value || "username-asc";
+    /* ------------------------------
+       LOAD STAFF
+    ------------------------------ */
+    async function loadStaff() {
+      staff = [];
+      if (!brandId) return;
+      const snap = await getDocs(collection(doc(db, "brands", brandId), "staff"));
+      staff = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderStaff();
+    }
 
-      if (searchVal){
-        list = list.filter(s=>{
-          const t = `${s.username || ""} ${s.name || ""}`.toLowerCase();
-          return t.includes(searchVal);
+    function renderStaff() {
+      if (!staffTableWrapper) return;
+      const search = (staffSearchInput?.value || "").toLowerCase();
+
+      let list = staff.slice();
+      if (search) {
+        list = list.filter(s => {
+          const sText = `${s.name || ""} ${s.username || ""}`.toLowerCase();
+          return sText.includes(search);
         });
       }
 
-      list.sort((a,b)=>{
-        switch(sortVal){
-          case "username-desc": return (b.username || "").localeCompare(a.username || "");
-          case "role": return (a.role || "").localeCompare(b.role || "");
-          case "active-first": return (b.isActive === false) - (a.isActive === false);
-          case "username-asc":
-          default: return (a.username || "").localeCompare(b.username || "");
-        }
-      });
-
-      if (!list.length){
-        staffTable.innerHTML = `<div class="table-empty">No staff yet. Add your first cashier or staff user.</div>`;
+      if (!list.length) {
+        staffTableWrapper.innerHTML =
+          `<div class="table-empty">No staff yet. Add your first POS user.</div>`;
         return;
       }
 
-      const rows = list.map(s=>{
-        const name = s.name || "-";
-        const username = s.username || "-";
-        const role = s.role || "-";
-        const isActive = s.isActive !== false;
+      const rows = list.map(s => {
+        const role = s.role || "cashier";
+        const active = s.isActive === false ? "Inactive" : "Active";
         return `
           <tr>
-            <td>${name}</td>
-            <td>${username}</td>
+            <td>${s.name || "-"}</td>
+            <td>${s.username || "-"}</td>
             <td>${role}</td>
-            <td>${isActive ? '<span class="chip chip-green">Active</span>' : '<span class="chip chip-red">Inactive</span>'}</td>
+            <td>${active}</td>
             <td>
-              <button class="btn btn-ghost btn-sm" data-action="edit-staff" data-id="${s.id}">Edit</button>
-              <button class="btn btn-danger btn-sm" data-action="delete-staff" data-id="${s.id}">Delete</button>
+              <button class="btn btn-ghost btn-xs" data-action="edit-staff" data-id="${s.id}">Edit</button>
+              <button class="btn btn-danger btn-xs" data-action="delete-staff" data-id="${s.id}">Delete</button>
             </td>
           </tr>
         `;
       }).join("");
 
-      staffTable.innerHTML = `
+      staffTableWrapper.innerHTML = `
         <table>
           <thead>
             <tr>
@@ -1395,247 +1693,324 @@
               <th>Username</th>
               <th>Role</th>
               <th>Status</th>
-              <th>Actions</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
         </table>
       `;
 
-      staffTable.querySelectorAll("button[data-action]").forEach(btn=>{
-        const id = btn.getAttribute("data-id");
-        const action = btn.getAttribute("data-action");
-        btn.addEventListener("click",()=>{
-          const st = staffUsers.find(s=>s.id === id);
-          if (action === "edit-staff" && st) openStaffModal(st);
-          else if (action === "delete-staff") confirmDeleteStaff(id);
+      staffTableWrapper
+        .querySelectorAll("button[data-action]")
+        .forEach(btn => {
+          const id = btn.getAttribute("data-id");
+          const action = btn.getAttribute("data-action");
+          btn.addEventListener("click", () => {
+            const user = staff.find(x => x.id === id);
+            if (action === "edit-staff") openStaffModal(user);
+            if (action === "delete-staff") confirmDeleteStaff(id);
+          });
         });
-      });
     }
 
-    function openStaffModal(staff){
-      const isEdit = !!staff;
-      const title = isEdit ? "Edit Staff User" : "Add Staff User";
+    function openStaffModal(user) {
+      const isEdit = !!user;
+      const title = isEdit ? "Edit POS user" : "Add POS user";
 
       openModal(`
         <div class="modal-title">${title}</div>
         <form id="staff-form">
           <div class="field">
             <div class="field-label">Name</div>
-            <input id="staff-name" class="field-input" value="${staff?.name || ""}" required/>
+            <input id="staff-name" class="field-input" required value="${user?.name || ""}"/>
           </div>
           <div class="field">
             <div class="field-label">Username</div>
-            <input id="staff-username" class="field-input" value="${staff?.username || ""}" required/>
+            <input id="staff-username" class="field-input" required value="${user?.username || ""}"/>
           </div>
           <div class="field">
-            <div class="field-label">PIN (POS login)</div>
-            <input id="staff-pin" class="field-input" value="${staff?.pin || ""}" placeholder="e.g. 1234"/>
+            <div class="field-label">PIN</div>
+            <input id="staff-pin" class="field-input" placeholder="POS PIN" value="${user?.pin || ""}"/>
           </div>
           <div class="field">
             <div class="field-label">Role</div>
             <select id="staff-role" class="field-input">
-              <option value="cashier" ${staff?.role === "cashier" ? "selected":""}>Cashier</option>
-              <option value="staff" ${staff?.role === "staff" ? "selected":""}>Staff</option>
-              <option value="brand_owner" ${staff?.role === "brand_owner" ? "selected":""}>Brand Owner</option>
+              <option value="cashier" ${user?.role === "cashier" ? "selected" : ""}>Cashier</option>
+              <option value="staff" ${user?.role === "staff" ? "selected" : ""}>Staff</option>
+              <option value="brand_owner" ${user?.role === "brand_owner" ? "selected" : ""}>Brand owner</option>
             </select>
           </div>
           <div class="field">
-            <label>
-              <input id="staff-active" type="checkbox" ${staff?.isActive === false ? "" : "checked"}/>
-              Active (can use POS)
+            <label style="font-size:12px;">
+              <input id="staff-active" type="checkbox" ${user?.isActive === false ? "" : "checked"}/> Active
             </label>
           </div>
           <div class="modal-actions">
             <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="submit" class="btn btn-primary">${isEdit ? "Save changes" : "Create user"}</button>
           </div>
         </form>
       `);
 
-      document.getElementById("staff-form").addEventListener("submit", async evt=>{
-        evt.preventDefault();
+      const form = qs("#staff-form");
+      form.addEventListener("submit", async e => {
+        e.preventDefault();
         if (!brandId) return;
 
-        const name = document.getElementById("staff-name").value.trim();
-        const username = document.getElementById("staff-username").value.trim();
-        const pin = document.getElementById("staff-pin").value.trim() || null;
-        const role = document.getElementById("staff-role").value || "cashier";
-        const isActive = document.getElementById("staff-active").checked;
+        const name     = qs("#staff-name").value.trim();
+        const username = qs("#staff-username").value.trim();
+        const pin      = qs("#staff-pin").value.trim();
+        const role     = qs("#staff-role").value || "cashier";
+        const isActive = qs("#staff-active").checked;
 
-        if (!name || !username){
-          alert("Name and username are required.");
+        if (!name || !username) {
+          alert("Enter name and username.");
           return;
         }
 
-        const brandRef = doc(db,"brands",brandId);
         const data = {
           name,
           username,
-          pin,
+          pin: pin || null,
           role,
           isActive,
-          eventId: eventId || null,
+          eventId: currentEventId || null,
           updatedAt: serverTimestamp()
         };
 
-        if (isEdit){
-          await updateDoc(doc(brandRef,"staff",staff.id), data);
-        } else {
-          await addDoc(collection(brandRef,"staff"), {
-            ...data,
-            createdAt: serverTimestamp()
-          });
+        const staffRef = collection(doc(db, "brands", brandId), "staff");
+        try {
+          if (user) {
+            await updateDoc(doc(staffRef, user.id), data);
+          } else {
+            await addDoc(staffRef, {
+              ...data,
+              createdAt: serverTimestamp()
+            });
+          }
+          await loadStaff();
+          closeModal();
+        } catch (err) {
+          console.error("Error saving staff", err);
+          alert("Failed to save staff user.");
         }
+      });
+    }
 
-        closeModal();
+    async function confirmDeleteStaff(id) {
+      if (!brandId || !id) return;
+      if (!confirm("Delete this POS user?")) return;
+      const staffRef = collection(doc(db, "brands", brandId), "staff");
+      try {
+        await updateDoc(doc(staffRef, id), { isActive: false });
         await loadStaff();
-      });
+      } catch (err) {
+        console.error("Error deleting staff", err);
+        alert("Failed to delete staff user.");
+      }
     }
 
-    async function confirmDeleteStaff(id){
+    /* ------------------------------
+       LOAD ORDERS (brands/{brandId}/orders)
+    ------------------------------ */
+    async function loadOrders() {
+      orders = [];
       if (!brandId) return;
-      if (!confirm("Delete this staff user?")) return;
-      const brandRef = doc(db,"brands",brandId);
-      await updateDoc(doc(brandRef,"staff",id), {isActive:false,deleted:true});
-      await loadStaff();
+      const ordersRef = collection(doc(db, "brands", brandId), "orders");
+      const snap = await getDocs(ordersRef);
+      orders = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      computeAnalyticsFromOrders();
+      renderOrders();
+      renderRecentOrders();
+      rebuildCustomersFromOrders();
+      renderCustomers();
     }
 
-    /* CUSTOMERS TABLE (gets pre-enriched data) */
-    function renderCustomersTable(customersWithStats){
-      if (!canSeeAnalytics){
-        customersTable.innerHTML = `<div class="table-empty">Customer analytics are disabled in your current status.</div>`;
-        return;
-      }
+    function computeAnalyticsFromOrders() {
+      const today = todayKey();
+      let todayNet = 0;
+      let todaySalesCount = 0;
+      let todayReturnsCount = 0;
 
-      const searchVal = (qs("#search-customers")?.value || "").toLowerCase();
-      const sortVal = qs("#sort-customers")?.value || "name-asc";
+      let totalNet = 0;
+      let totalCount = 0;
+      const uniqueCustomersSet = new Set();
 
-      let list = customersWithStats.slice();
+      for (const o of orders) {
+        const total = Number(o.total || 0);
+        const isReturn = !!o.isReturn || o.type === "return";
+        const dKey = getOrderDateKey(o);
+        const sign = isReturn ? -1 : 1;
+        const netVal = Math.abs(total) * sign;
 
-      if (searchVal){
-        list = list.filter(c=>{
-          const t = `${c.name || ""} ${c.phone || ""} ${c.email || ""}`.toLowerCase();
-          return t.includes(searchVal);
-        });
-      }
+        totalNet += netVal;
+        totalCount += 1;
 
-      list.sort((a,b)=>{
-        const nameA = (a.name || "").toLowerCase();
-        const nameB = (b.name || "").toLowerCase();
-        const totalA = Number(a.totalSpent || 0);
-        const totalB = Number(b.totalSpent || 0);
-        const ordersA = Number(a.ordersCount || 0);
-        const ordersB = Number(b.ordersCount || 0);
-
-        switch(sortVal){
-          case "name-desc": return nameB.localeCompare(nameA);
-          case "total-desc": return totalB - totalA;
-          case "orders-desc": return ordersB - ordersA;
-          case "name-asc":
-          default: return nameA.localeCompare(nameB);
+        if (dKey === today) {
+          todayNet += netVal;
+          if (isReturn) todayReturnsCount += 1;
+          else todaySalesCount += 1;
         }
-      });
 
-      if (!list.length){
-        customersTable.innerHTML = `<div class="table-empty">No customers recorded yet.</div>`;
+        const custKey =
+          o.customerId ||
+          o.customerEmail ||
+          o.customerPhone ||
+          (o.customerName && o.customerName.toLowerCase()) ||
+          null;
+        if (custKey) uniqueCustomersSet.add(custKey);
+      }
+
+      if (effectiveStatus !== "approved") {
+        // still show numbers but they might be "preview"
+      }
+
+      if (dashSalesTodayEl)   dashSalesTodayEl.textContent   = money(todayNet);
+      if (dashOrdersTodayEl)  dashOrdersTodayEl.textContent  = String(todaySalesCount);
+      if (dashReturnsTodayEl) dashReturnsTodayEl.textContent = String(todayReturnsCount);
+      if (dashUniqueCustEl)   dashUniqueCustEl.textContent   = String(uniqueCustomersSet.size);
+
+      if (ordersTotalSalesEl) ordersTotalSalesEl.textContent = money(totalNet);
+      if (ordersTotalCountEl) ordersTotalCountEl.textContent = String(totalCount);
+    }
+
+    function renderRecentOrders() {
+      if (!recentOrdersWrapper) return;
+
+      if (!orders.length) {
+        recentOrdersWrapper.innerHTML =
+          `<div class="table-empty">No orders yet.</div>`;
         return;
       }
 
-      const rows = list.map(c=>{
-        const name = c.name || "-";
-        const phone = c.phone || "-";
-        const email = c.email || "-";
-        const total = Number(c.totalSpent || 0).toFixed(2);
-        const ordersCount = c.ordersCount || 0;
+      const list = orders.slice().sort((a,b) => {
+        const da = getOrderCreatedAt(a);
+        const db = getOrderCreatedAt(b);
+        const ta = da ? da.getTime() : 0;
+        const tb = db ? db.getTime() : 0;
+        return tb - ta;
+      }).slice(0, 10);
+
+      const rows = list.map(o => {
+        const d = getOrderCreatedAt(o);
+        const dateStr = d ? d.toLocaleString() : getOrderDateKey(o) || "-";
+        const isReturn = !!o.isReturn || o.type === "return";
+        const typeLabel = isReturn ? "Return" : "Sale";
         return `
           <tr>
-            <td>${name}</td>
-            <td>${phone}</td>
-            <td>${email}</td>
-            <td>${ordersCount}</td>
-            <td>${total}</td>
+            <td>${o.orderId || o.id}</td>
+            <td>${dateStr}</td>
+            <td>${typeLabel}</td>
+            <td>${money(o.total)}</td>
+            <td><button class="btn btn-ghost btn-xs" data-open-order="${o.id}">Open</button></td>
           </tr>
         `;
       }).join("");
 
-      customersTable.innerHTML = `
+      recentOrdersWrapper.innerHTML = `
         <table>
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Phone</th>
-              <th>Email</th>
-              <th>Orders</th>
-              <th>Total Spent</th>
+              <th>Order</th>
+              <th>Created at</th>
+              <th>Type</th>
+              <th>Total</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
         </table>
       `;
+
+      recentOrdersWrapper
+        .querySelectorAll("button[data-open-order]")
+        .forEach(btn => {
+          const id = btn.getAttribute("data-open-order");
+          btn.addEventListener("click", () => {
+            const o = orders.find(x => x.id === id);
+            if (o) openOrderModal(o);
+          });
+        });
     }
 
-    /* ORDERS TABLE (with OPEN ORDER button) */
-    function renderOrdersTable(){
-      if (!canSeeAnalytics){
-        ordersTable.innerHTML = `<div class="table-empty">Orders analytics are disabled in your current status.</div>`;
+    function renderOrders() {
+      if (!ordersTableWrapper) return;
+
+      if (!orders.length) {
+        ordersTableWrapper.innerHTML =
+          `<div class="table-empty">No orders yet.</div>`;
         return;
       }
 
-      let list = ordersList.slice();
-      const searchVal = (qs("#search-orders")?.value || "").toLowerCase();
-      const sortVal = qs("#sort-orders")?.value || "date-desc";
+      const search = (ordersSearchInput?.value || "").toLowerCase();
+      const typeFilter = ordersFilterTypeSel?.value || "all";
+      const payFilter  = ordersFilterPaySel?.value || "all";
+      const sort       = ordersSortSelect?.value || "date-desc";
 
-      if (searchVal){
-        list = list.filter(o=>{
-          const t = `${o.orderId || o.id || ""} ${(o.customerName || o.customer?.name || "")}`.toLowerCase();
-          return t.includes(searchVal);
+      let list = orders.slice();
+
+      if (search) {
+        list = list.filter(o => {
+          const s = `${o.orderId || o.id || ""} ${o.customerName || ""}`.toLowerCase();
+          return s.includes(search);
         });
       }
 
-      list.sort((a,b)=>{
-        const dA = orderDate(a);
-        const dB = orderDate(b);
-        const tA = Number(a.total || 0);
-        const tB = Number(b.total || 0);
-        switch(sortVal){
-          case "date-asc": return dA.localeCompare(dB);
-          case "total-desc": return tB - tA;
-          case "total-asc": return tA - tB;
+      if (typeFilter !== "all") {
+        list = list.filter(o => {
+          const isReturn = !!o.isReturn || o.type === "return";
+          if (typeFilter === "sale") return !isReturn;
+          if (typeFilter === "return") return isReturn;
+          return true;
+        });
+      }
+
+      if (payFilter !== "all") {
+        list = list.filter(o => {
+          const pm = (o.paymentMethod || "").toLowerCase();
+          if (payFilter === "cash") return pm.includes("cash");
+          if (payFilter === "card") return pm.includes("card") || pm.includes("visa") || pm.includes("master");
+          return true;
+        });
+      }
+
+      list.sort((a,b) => {
+        const ta = getOrderCreatedAt(a)?.getTime() || 0;
+        const tb = getOrderCreatedAt(b)?.getTime() || 0;
+        const totalA = Number(a.total || 0);
+        const totalB = Number(b.total || 0);
+        switch (sort) {
+          case "date-asc":   return ta - tb;
+          case "total-desc": return totalB - totalA;
+          case "total-asc":  return totalA - totalB;
           case "date-desc":
-          default: return dB.localeCompare(dA);
+          default:           return tb - ta;
         }
       });
 
-      if (!list.length){
-        ordersTable.innerHTML = `<div class="table-empty">No orders yet.</div>`;
-        return;
-      }
-
-      const rows = list.map(o=>{
-        const id = o.orderId || o.id;
-        const dateStr = orderDate(o) || "—";
-        const isReturn = !!o.isReturn;
-        const total = Number(o.total || 0).toFixed(2);
-        const customerName = o.customerName || o.customer?.name || "—";
-        const paymentMethod = o.paymentMethod || "—";
+      const rows = list.map(o => {
+        const d = getOrderCreatedAt(o);
+        const dateStr = d ? d.toLocaleString() : getOrderDateKey(o) || "-";
+        const isReturn = !!o.isReturn || o.type === "return";
         const typeLabel = isReturn ? "Return" : "Sale";
+        const customerName = o.customerName || o.customer?.name || "-";
+        const paymentMethod = o.paymentMethod || "-";
         return `
           <tr>
-            <td>${id}</td>
+            <td>${o.orderId || o.id}</td>
             <td>${dateStr}</td>
             <td>${typeLabel}</td>
-            <td>${total}</td>
+            <td>${money(o.total)}</td>
             <td>${customerName}</td>
             <td>${paymentMethod}</td>
             <td>
-              <button class="btn btn-ghost btn-sm" data-action="open-order" data-id="${o.id}">Open</button>
+              <button class="btn btn-ghost btn-xs" data-open-order="${o.id}">Open</button>
             </td>
           </tr>
         `;
       }).join("");
 
-      ordersTable.innerHTML = `
+      ordersTableWrapper.innerHTML = `
         <table>
           <thead>
             <tr>
@@ -1645,252 +2020,462 @@
               <th>Total</th>
               <th>Customer</th>
               <th>Payment</th>
-              <th>Actions</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
         </table>
       `;
 
-      ordersTable.querySelectorAll("button[data-action='open-order']").forEach(btn=>{
-        const id = btn.getAttribute("data-id");
-        btn.addEventListener("click",()=>{
-          const o = ordersList.find(x=>x.id === id);
-          if (o) openOrderDetailsModal(o);
+      ordersTableWrapper
+        .querySelectorAll("button[data-open-order]")
+        .forEach(btn => {
+          const id = btn.getAttribute("data-open-order");
+          btn.addEventListener("click", () => {
+            const o = orders.find(x => x.id === id);
+            if (o) openOrderModal(o);
+          });
         });
-      });
     }
 
-    function renderRecentOrdersTable(){
-      if (!canSeeAnalytics){
-        recentOrdersTable.innerHTML = `<div class="table-empty">Orders analytics are disabled in your current status.</div>`;
-        return;
-      }
+    function openOrderModal(order) {
+      const items = Array.isArray(order.items) ? order.items : [];
+      const rows = items.map(it => `
+        <tr>
+          <td>${it.name || "-"}</td>
+          <td>${it.code || it.productId || "-"}</td>
+          <td>${Number(it.qty || 0)}</td>
+          <td>${money(it.price)}</td>
+          <td>${money(it.lineTotal)}</td>
+        </tr>
+      `).join("");
 
-      let list = ordersList.slice();
-      list.sort((a,b)=>orderDate(b).localeCompare(orderDate(a)));
-      list = list.slice(0,10);
-
-      if (!list.length){
-        recentOrdersTable.innerHTML = `<div class="table-empty">No recent orders yet.</div>`;
-        return;
-      }
-
-      const rows = list.map(o=>{
-        const id = o.orderId || o.id;
-        const dateStr = orderDate(o) || "—";
-        const isReturn = !!o.isReturn;
-        const total = Number(o.total || 0).toFixed(2);
-        const typeLabel = isReturn ? "Return" : "Sale";
-        return `
-          <tr>
-            <td>${id}</td>
-            <td>${dateStr}</td>
-            <td>${typeLabel}</td>
-            <td>${total}</td>
-          </tr>
-        `;
-      }).join("");
-
-      recentOrdersTable.innerHTML = `
-        <table>
-          <thead>
-            <tr>
-              <th>Order</th>
-              <th>Date</th>
-              <th>Type</th>
-              <th>Total</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      `;
-    }
-
-    function openOrderDetailsModal(o){
-      const id = o.orderId || o.id;
-      const typeLabel = o.isReturn ? "Return" : "Sale";
-      const dt = orderDateTimeString(o);
-      const pm = o.paymentMethod || "—";
-      const customerName = o.customerName || o.customer?.name || "—";
-      const customerEmail = o.customerEmail || o.customer?.email || "—";
-      const customerPhone = o.customerPhone || o.customer?.phone || "—";
-
-      const subtotal = Number(o.subtotal ?? 0);
-      const discountAmount = Number(o.discountAmount ?? 0);
-      const serviceAmount = Number(o.serviceAmount ?? 0);
-      const taxAmount = Number(o.taxAmount ?? 0);
-      const total = Number(o.total ?? 0);
-
-      const items = Array.isArray(o.items) ? o.items : [];
-      const itemsHtml = items.map(it=>{
-        const name = it.name || "Item";
-        const code = it.code || "";
-        const qty = Number(it.qty || 0);
-        const price = Number(it.price || 0).toFixed(2);
-        const lineTotal = Number(it.lineTotal || price*qty).toFixed(2);
-        const variant = it.variantKey || (Array.isArray(it.variantChoices) ? it.variantChoices.join(" / ") : "");
-        return `
-          <tr>
-            <td>${name}${code ? ` <span style="font-size:10px;color:var(--muted);">(${code})</span>` : ""}</td>
-            <td>${variant || "—"}</td>
-            <td>${qty}</td>
-            <td>${price}</td>
-            <td>${lineTotal}</td>
-          </tr>
-        `;
-      }).join("");
+      const isReturn = !!order.isReturn || order.type === "return";
+      const typeLabel = isReturn ? "Return" : "Sale";
 
       openModal(`
-        <div class="modal-title">Order ${id}</div>
+        <div class="modal-title">Order ${order.orderId || order.id}</div>
         <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">
-          <div>Type: <b>${typeLabel}</b></div>
-          <div>Date &amp; time: ${dt}</div>
-          <div>Payment method: ${pm}</div>
+          Type: ${typeLabel} • Payment: ${order.paymentMethod || "-"}
         </div>
-
-        <div class="modal-section-title">Customer</div>
-        <div style="font-size:12px;color:var(--muted);">
-          <div>Name: ${customerName}</div>
-          <div>Email: ${customerEmail}</div>
-          <div>Phone: ${customerPhone}</div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px;">
+          <thead>
+            <tr>
+              <th style="text-align:left;padding:4px 6px;border-bottom:1px solid var(--border);">Item</th>
+              <th style="text-align:left;padding:4px 6px;border-bottom:1px solid var(--border);">Code</th>
+              <th style="text-align:left;padding:4px 6px;border-bottom:1px solid var(--border);">Qty</th>
+              <th style="text-align:left;padding:4px 6px;border-bottom:1px solid var(--border);">Price</th>
+              <th style="text-align:left;padding:4px 6px;border-bottom:1px solid var(--border);">Line total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows || `<tr><td colspan="5" style="padding:6px;">No line items recorded.</td></tr>`}
+          </tbody>
+        </table>
+        <div style="font-size:12px;margin-bottom:6px;">
+          Subtotal: <strong>${money(order.subtotal)}</strong><br/>
+          Discount: <strong>${money(order.discountAmount)}</strong><br/>
+          Service: <strong>${money(order.serviceAmount)}</strong><br/>
+          Tax: <strong>${money(order.taxAmount)}</strong><br/>
+          Total: <strong>${money(order.total)}</strong>
         </div>
-
-        <div class="modal-section-title">Items</div>
-        <div class="table-wrapper" style="margin-bottom:8px;">
-          <table>
-            <thead>
-              <tr>
-                <th>Item</th>
-                <th>Variant</th>
-                <th>Qty</th>
-                <th>Price</th>
-                <th>Line total</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${itemsHtml || `<tr><td colspan="5" style="text-align:center;font-size:12px;color:var(--muted);">No items array on this order.</td></tr>`}
-            </tbody>
-          </table>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">
+          Customer: ${order.customerName || "-"}${order.customerEmail ? " • " + order.customerEmail : ""}${order.customerPhone ? " • " + order.customerPhone : ""}
         </div>
-
-        <div class="modal-section-title">Totals</div>
-        <div style="font-size:12px;color:var(--muted);line-height:1.5;">
-          <div>Subtotal: ${subtotal.toFixed(2)}</div>
-          <div>Discount: −${discountAmount.toFixed(2)}</div>
-          <div>Service: ${serviceAmount.toFixed(2)}</div>
-          <div>Tax: ${taxAmount.toFixed(2)}</div>
-          <div><b>Total: ${total.toFixed(2)}</b></div>
-        </div>
-
         <div class="modal-actions">
           <button type="button" class="btn btn-ghost" onclick="closeModal()">Close</button>
         </div>
       `);
     }
 
-    /* SETTINGS SAVE */
-    qs("#btn-save-brand-settings")?.addEventListener("click", async ()=>{
-      if (!brandId) return;
-      const nameInput = qs("#set-brand-name");
-      const countryInput = qs("#set-brand-country");
-      const logoInput = qs("#set-brand-logo");
+    /* ------------------------------
+       CUSTOMERS from ORDERS
+    ------------------------------ */
+    function rebuildCustomersFromOrders() {
+      const map = new Map();
+      for (const o of orders) {
+        const key =
+          o.customerId ||
+          o.customerEmail ||
+          o.customerPhone ||
+          (o.customerName && o.customerName.toLowerCase());
+        if (!key) continue;
 
-      const name = nameInput?.value.trim() || "Brand";
-      const country = countryInput?.value.trim() || null;
-      const brandRef = doc(db,"brands",brandId);
-      const updateData = {name, country};
+        const isReturn = !!o.isReturn || o.type === "return";
+        const total = Number(o.total || 0);
+        const val = isReturn ? -Math.abs(total) : Math.abs(total);
 
-      if (logoInput && logoInput.files && logoInput.files[0]){
-        const url = await uploadImageToStorage(logoInput.files[0], `brands/${brandId}/branding/logo`);
-        updateData.logoUrl = url;
+        if (!map.has(key)) {
+          map.set(key, {
+            id: key,
+            name: o.customerName || "-",
+            email: o.customerEmail || "",
+            phone: o.customerPhone || "",
+            ordersCount: 0,
+            totalSpent: 0
+          });
+        }
+        const c = map.get(key);
+        c.ordersCount += 1;
+        c.totalSpent += val;
+      }
+      customers = Array.from(map.values());
+    }
+
+    function renderCustomers() {
+      if (!customersTableWrapper) return;
+
+      const totalCustomers = customers.length;
+      const totalRevenue = customers.reduce((sum,c) => sum + (c.totalSpent || 0), 0);
+
+      if (customersTotalEl) customersTotalEl.textContent = String(totalCustomers);
+      if (customersAvgSpendEl) {
+        const avg = totalCustomers ? totalRevenue / totalCustomers : 0;
+        customersAvgSpendEl.textContent = money(avg);
       }
 
-      await updateDoc(brandRef, updateData);
-      await loadBrandAndEvent();
-      alert("Brand settings saved.");
-    });
+      const search = (customersSearchInput?.value || "").toLowerCase();
+      const sort   = customersSortSelect?.value || "spend-desc";
 
-    qs("#btn-save-financial-settings")?.addEventListener("click", async ()=>{
+      let list = customers.slice();
+
+      if (search) {
+        list = list.filter(c => {
+          const s = `${c.name || ""} ${c.email || ""} ${c.phone || ""}`.toLowerCase();
+          return s.includes(search);
+        });
+      }
+
+      list.sort((a,b) => {
+        const spendA = Number(a.totalSpent || 0);
+        const spendB = Number(b.totalSpent || 0);
+        const ordA   = Number(a.ordersCount || 0);
+        const ordB   = Number(b.ordersCount || 0);
+        const nameA  = (a.name || "").toLowerCase();
+        const nameB  = (b.name || "").toLowerCase();
+
+        switch (sort) {
+          case "spend-asc":  return spendA - spendB;
+          case "orders-desc":return ordB - ordA;
+          case "orders-asc": return ordA - ordB;
+          case "name-asc":   return nameA.localeCompare(nameB);
+          case "spend-desc":
+          default:           return spendB - spendA;
+        }
+      });
+
+      if (!list.length) {
+        customersTableWrapper.innerHTML =
+          `<div class="table-empty">No customers detected yet.</div>`;
+        return;
+      }
+
+      const rows = list.map(c => `
+        <tr>
+          <td>${c.name || "-"}</td>
+          <td>${c.email || "-"}</td>
+          <td>${c.phone || "-"}</td>
+          <td>${c.ordersCount || 0}</td>
+          <td>${money(c.totalSpent)}</td>
+        </tr>
+      `).join("");
+
+      customersTableWrapper.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Orders</th>
+              <th>Total spent</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    }
+
+    /* ------------------------------
+       SETTINGS SAVE
+    ------------------------------ */
+    async function saveSettings() {
       if (!brandId) return;
-      const vatVal = Number(qs("#set-vat")?.value || 0);
-      const serviceVal = Number(qs("#set-service-fee")?.value || 0);
-      const brandRef = doc(db,"brands",brandId);
-      await updateDoc(brandRef,{vat:vatVal,serviceFee:serviceVal});
-      await loadBrandAndEvent();
-      alert("Financial settings saved.");
+      const name    = settingsBrandNameEl?.value.trim() || brandData?.name || "Brand";
+      const country = settingsBrandCountryEl?.value.trim() || "";
+
+      const upd = { name, country };
+      const logoFile = settingsBrandLogoEl?.files?.[0] || null;
+
+      const brandRef = doc(db, "brands", brandId);
+
+      try {
+        if (logoFile) {
+          const path = `brands/${brandId}/branding/logo.jpg`;
+          const url = await uploadFileToStorage(logoFile, path);
+          upd.logoUrl = url;
+        }
+        await updateDoc(brandRef, upd);
+        await loadBrandAndStatus();
+        alert("Settings saved.");
+      } catch (err) {
+        console.error("Error saving settings", err);
+        alert("Failed to save settings.");
+      }
+    }
+
+    /* ------------------------------
+       AUTH: LOGIN + CREATE BRAND
+    ------------------------------ */
+    function switchAuthTab(tab) {
+      if (!loginForm || !createForm || !tabLogin || !tabCreate) return;
+      if (tab === "login") {
+        tabLogin.classList.add("active");
+        tabCreate.classList.remove("active");
+        loginForm.style.display  = "block";
+        createForm.style.display = "none";
+      } else {
+        tabLogin.classList.remove("active");
+        tabCreate.classList.add("active");
+        loginForm.style.display  = "none";
+        createForm.style.display = "block";
+      }
+    }
+
+    if (tabLogin) {
+      tabLogin.addEventListener("click", () => switchAuthTab("login"));
+    }
+    if (tabCreate) {
+      tabCreate.addEventListener("click", () => switchAuthTab("create"));
+    }
+
+    if (loginForm) {
+      loginForm.addEventListener("submit", async e => {
+        e.preventDefault();
+        setAuthAlert("");
+        const email = qs("#login-email")?.value.trim();
+        const pass  = qs("#login-password")?.value;
+        if (!email || !pass) {
+          setAuthAlert("Enter email and password.");
+          return;
+        }
+        try {
+          await signInWithEmailAndPassword(auth, email, pass);
+        } catch (err) {
+          console.error("Login error", err);
+          let msg = "Login failed.";
+          if (err.code === "auth/user-not-found") msg = "User not found.";
+          if (err.code === "auth/wrong-password") msg = "Wrong password.";
+          setAuthAlert(msg);
+        }
+      });
+    }
+
+    if (createForm) {
+      createForm.addEventListener("submit", async e => {
+        e.preventDefault();
+        setAuthAlert("");
+
+        const brandName   = qs("#create-brand-name")?.value.trim();
+        const country     = qs("#create-brand-country")?.value.trim();
+        const ownerName   = qs("#create-owner-name")?.value.trim();
+        const email       = qs("#create-owner-email")?.value.trim();
+        const password    = qs("#create-owner-password")?.value;
+
+        if (!brandName || !ownerName || !email || !password) {
+          setAuthAlert("Fill all required fields.");
+          return;
+        }
+        if (password.length < 6) {
+          setAuthAlert("Password must be at least 6 characters.");
+          return;
+        }
+
+        try {
+          isCreatingBrand = true;
+          const cred = await createUserWithEmailAndPassword(auth, email, password);
+          const user = cred.user;
+          await updateProfile(user, { displayName: ownerName });
+
+          // brand
+          const brandRef = await addDoc(collection(db, "brands"), {
+            name: brandName,
+            country: country || "",
+            ownerUserId: user.uid,
+            ownerEmail: email,
+            status: "pending",
+            eventId: urlEventId || null,
+            eventName: currentEventName || null,
+            createdAt: serverTimestamp()
+          });
+
+          // userBrands
+          await setDoc(doc(db, "userBrands", user.uid), {
+            primaryBrandId: brandRef.id,
+            brandIds: [brandRef.id]
+          });
+
+          // users
+          await setDoc(doc(db, "users", user.uid), {
+            uid: user.uid,
+            name: ownerName,
+            email,
+            primaryBrandId: brandRef.id,
+            role: "brand_owner",
+            createdAt: serverTimestamp()
+          });
+
+          // vendor doc (optional, if eventId provided) -> pending
+          if (urlEventId) {
+            await addDoc(collection(doc(db, "events", urlEventId), "vendors"), {
+              brandId: brandRef.id,
+              brandName,
+              status: "pending",
+              ownerEmail: email,
+              createdAt: serverTimestamp()
+            });
+          }
+
+          // from here, auth state listener will continue
+        } catch (err) {
+          console.error("Create brand error", err);
+          let msg = "Failed to create brand.";
+          if (err.code === "auth/email-already-in-use") {
+            msg = "Email already in use.";
+          }
+          setAuthAlert(msg);
+        } finally {
+          isCreatingBrand = false;
+        }
+      });
+    }
+
+    /* ------------------------------
+       AUTH STATE
+    ------------------------------ */
+    onAuthStateChanged(auth, async user => {
+      currentUser = user || null;
+
+      if (!user) {
+        brandId = null;
+        brandData = null;
+        vendorData = null;
+        orders = [];
+        products = [];
+        staff = [];
+        customers = [];
+        showAuthView();
+        return;
+      }
+
+      if (isCreatingBrand) {
+        // let create flow finish, then this will run again
+        return;
+      }
+
+      try {
+        // read userBrands/{uid} to get primaryBrandId
+        const ubSnap = await getDoc(doc(db, "userBrands", user.uid));
+        if (!ubSnap.exists()) {
+          setAuthAlert("No brand linked to this account yet. Use 'Create brand' to get started.");
+          showAuthView();
+          return;
+        }
+        const ub = ubSnap.data();
+        brandId = ub.primaryBrandId || (Array.isArray(ub.brandIds) ? ub.brandIds[0] : null);
+        if (!brandId) {
+          setAuthAlert("No brand found for your account.");
+          showAuthView();
+          return;
+        }
+
+        await loadBrandAndStatus();
+        await loadProducts();
+        await loadStaff();
+        await loadOrders();
+
+        showAppView();
+      } catch (err) {
+        console.error("Error loading dashboard", err);
+        setAuthAlert("Error loading your brand dashboard. Contact support.");
+        showAuthView();
+      }
     });
 
-    /* COPY POS LINK */
-    qs("#btn-copy-pos")?.addEventListener("click",()=>{
-      const link = qs("#pos-link-text").textContent.trim();
-      navigator.clipboard.writeText(link).then(()=>{
-        alert("POS link copied.");
-      }).catch(()=>alert("Failed to copy link."));
-    });
-
-    /* SEARCH/SORT HOOKS */
-    qs("#search-products")?.addEventListener("input",renderProductsTable);
-    qs("#sort-products")?.addEventListener("change",renderProductsTable);
-
-    qs("#search-staff")?.addEventListener("input",renderStaffTable);
-    qs("#sort-staff")?.addEventListener("change",renderStaffTable);
-
-    qs("#search-orders")?.addEventListener("input",renderOrdersTable);
-    qs("#sort-orders")?.addEventListener("change",renderOrdersTable);
-
-    qs("#search-customers")?.addEventListener("input",()=>updateCustomersAnalyticsAndTable());
-    qs("#sort-customers")?.addEventListener("change",()=>updateCustomersAnalyticsAndTable());
-
-    /* BUTTON HOOKS */
-    qs("#btn-add-product")?.addEventListener("click",()=>openProductModal(null));
-    qs("#btn-add-staff")?.addEventListener("click",()=>openStaffModal(null));
-
-    qs("#btn-logout")?.addEventListener("click",async ()=>{
-      try{ await signOut(auth); }catch(e){}
-      window.location.href = "/"; // or keep same page
-    });
-    qs("#blocked-logout")?.addEventListener("click",async ()=>{
-      try{ await signOut(auth); }catch(e){}
-      window.location.href = "/";
-    });
-
-    /* NAVIGATION */
-    qsa(".nav-item[data-page]").forEach(btn=>{
-      btn.addEventListener("click",()=>{
+    /* ------------------------------
+       NAV + FILTER HANDLERS
+    ------------------------------ */
+    navButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
         const pageId = btn.getAttribute("data-page");
-        if (!pageId) return;
-
-        qsa(".nav-item[data-page]").forEach(b=>b.classList.remove("active"));
-        btn.classList.add("active");
-
-        qsa(".page").forEach(p=>p.classList.remove("active"));
-        const pageEl = document.getElementById(pageId);
-        if (pageEl) pageEl.classList.add("active");
+        if (pageId) applyNav(pageId);
       });
     });
 
-    /* AUTH CHECK + INITIAL LOAD */
-    onAuthStateChanged(auth, async user=>{
-      currentUser = user || null;
-      try{
-        await loadBrandAndEvent();
-        if (vendorStatus === "rejected"){
-          // blocked view shows; don't load rest
-          return;
+    if (btnLogout) {
+      btnLogout.addEventListener("click", async () => {
+        await signOut(auth);
+      });
+    }
+    if (btnRejectedLogout) {
+      btnRejectedLogout.addEventListener("click", async () => {
+        await signOut(auth);
+      });
+    }
+
+    if (btnCopyPosLink && posLinkUrlEl) {
+      btnCopyPosLink.addEventListener("click", async () => {
+        const text = posLinkUrlEl.textContent || "";
+        try {
+          await navigator.clipboard.writeText(text);
+          posStatusHintEl.textContent = "POS link copied.";
+        } catch {
+          alert("Copy failed. You can copy the link manually.");
         }
-        await Promise.all([
-          loadProducts(),
-          loadStaff(),
-          loadCustomers(),
-          loadOrders()
-        ]);
-        listenToOrdersRealtime();
-      }catch(err){
-        console.error(err);
-        alert("Error loading brand dashboard.");
-      }
-    });
+      });
+    }
+
+    if (productsSearchInput) {
+      productsSearchInput.addEventListener("input", renderProducts);
+    }
+    if (productsSortSelect) {
+      productsSortSelect.addEventListener("change", renderProducts);
+    }
+    if (btnAddProduct) {
+      btnAddProduct.addEventListener("click", () => openProductModal(null));
+    }
+
+    if (staffSearchInput) {
+      staffSearchInput.addEventListener("input", renderStaff);
+    }
+    if (btnAddStaff) {
+      btnAddStaff.addEventListener("click", () => openStaffModal(null));
+    }
+
+    if (customersSearchInput) {
+      customersSearchInput.addEventListener("input", renderCustomers);
+    }
+    if (customersSortSelect) {
+      customersSortSelect.addEventListener("change", renderCustomers);
+    }
+
+    if (ordersSearchInput) {
+      ordersSearchInput.addEventListener("input", renderOrders);
+    }
+    if (ordersFilterTypeSel) {
+      ordersFilterTypeSel.addEventListener("change", renderOrders);
+    }
+    if (ordersFilterPaySel) {
+      ordersFilterPaySel.addEventListener("change", renderOrders);
+    }
+    if (ordersSortSelect) {
+      ordersSortSelect.addEventListener("change", renderOrders);
+    }
+
+    if (btnSaveSettings) {
+      btnSaveSettings.addEventListener("click", saveSettings);
+    }
   </script>
 </body>
 </html>
+
