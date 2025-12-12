@@ -961,42 +961,6 @@
 
     <div id="authAlert" class="auth-alert auth-alert-info" style="display:none;"></div>
 
-    <!-- LOGIN -->
-    <div id="loginForm">
-      <div class="field">
-        <div class="field-label">Email</div>
-        <input id="loginEmail" class="field-input" type="email" placeholder="you@brand.com"/>
-      </div>
-      <div class="field">
-        <div class="field-label">Password</div>
-        <input id="loginPass" class="field-input" type="password" placeholder="••••••••"/>
-      </div>
-      <button id="btnLogin" class="btn btn-primary" style="width:100%;">Login</button>
-    </div>
-
-    <!-- REGISTER -->
-    <div id="registerForm" style="display:none;">
-      <div class="field">
-        <div class="field-label">Brand name</div>
-        <input id="regBrandName" class="field-input" placeholder="Your brand name"/>
-      </div>
-      <div class="field">
-        <div class="field-label">Email</div>
-        <input id="regEmail" class="field-input" type="email" placeholder="you@brand.com"/>
-      </div>
-      <div class="field">
-        <div class="field-label">Password</div>
-        <input id="regPass" class="field-input" type="password" placeholder="••••••••"/>
-      </div>
-      <div class="field">
-        <div class="field-label">Phone (optional)</div>
-        <input id="regPhone" class="field-input" placeholder="+20 01x xxx xxxx"/>
-      </div>
-      <button id="btnRegister" class="btn btn-primary" style="width:100%;">Create account</button>
-      <div class="auth-footer">After registration, your brand may need approval by the event owner.</div>
-    </div>
-  </div>
-
   <!-- APP -->
   <div id="appShell" class="app-shell">
     <aside class="sidebar">
@@ -1100,18 +1064,6 @@
             <span id="shopify-store" class="muted" style="font-size:12px;"></span>
           </div>
 
-          <div class="toolbar">
-            <input id="products-search" type="text" placeholder="Search products by name or SKU"/>
-            <select id="products-sort">
-              <option value="name-asc">Sort by name (A–Z)</option>
-              <option value="name-desc">Sort by name (Z–A)</option>
-              <option value="price-asc">Price (low → high)</option>
-              <option value="price-desc">Price (high → low)</option>
-              <option value="stock-asc">Stock (low → high)</option>
-              <option value="stock-desc">Stock (high → low)</option>
-            </select>
-          </div>
-
           <div class="table-wrapper" id="products-table-wrapper">
             <!-- Filled by JS -->
           </div>
@@ -1143,9 +1095,6 @@
             </div>
           </div>
 
-          <div class="toolbar" style="margin-top:12px;">
-            <input id="staff-search" type="text" placeholder="Search staff by name or username"/>
-          </div>
 
           <div class="table-wrapper" id="staff-table-wrapper">
             <!-- Filled by JS -->
@@ -1174,18 +1123,6 @@
               <div id="customers-avg-spend" class="card-number">0</div>
               <div class="card-note">Total revenue divided by unique customers.</div>
             </div>
-          </div>
-
-          <div class="toolbar">
-            <input id="customers-search" type="text" placeholder="Search by name, phone, or email"/>
-            <select id="customers-sort">
-              <option value="spend-desc">Sort by spend (high → low)</option>
-              <option value="spend-asc">Spend (low → high)</option>
-              <option value="orders-desc">Orders (high → low)</option>
-              <option value="orders-asc">Orders (low → high)</option>
-              <option value="name-asc">Name (A–Z)</option>
-              <option value="name-desc">Name (Z–A)</option>
-            </select>
           </div>
 
           <div class="table-wrapper" id="customers-table-wrapper">
@@ -1857,138 +1794,153 @@
      ***********************/
     btnAddProduct?.addEventListener("click", ()=>openAddProduct());
 
-    function openAddProduct(){
-      openModal(`
-        <div class="modal-title">Add product</div>
+function openAddProduct(){
+  openModal(`
+    <div class="modal-title">Add product</div>
 
-        <div class="field" style="margin-top:10px;">
-          <div class="field-label">Name</div>
-          <input id="p-name" class="field-input" placeholder="Product name"/>
-        </div>
-        <div class="field">
-          <div class="field-label">SKU</div>
-          <input id="p-sku" class="field-input" placeholder="Optional SKU"/>
-        </div>
-        <div class="field">
-          <div class="field-label">Price</div>
-          <input id="p-price" class="field-input" type="number" step="0.01" placeholder="0.00"/>
-        </div>
-        <div class="field">
-          <div class="field-label">Stock</div>
-          <input id="p-stock" class="field-input" type="number" step="1" placeholder="0"/>
-        </div>
-        <div class="field">
-          <div class="field-label">Image</div>
-          <input id="p-img" class="field-input" type="file" accept="image/*"/>
-        </div>
+    <div class="field" style="margin-top:10px;">
+      <div class="field-label">Name</div>
+      <input data-p-name class="field-input" placeholder="Product name"/>
+    </div>
+    <div class="field">
+      <div class="field-label">SKU</div>
+      <input data-p-sku class="field-input" placeholder="Optional SKU"/>
+    </div>
+    <div class="field">
+      <div class="field-label">Price</div>
+      <input data-p-price class="field-input" type="number" step="0.01" placeholder="0.00"/>
+    </div>
+    <div class="field">
+      <div class="field-label">Stock</div>
+      <input data-p-stock class="field-input" type="number" step="1" placeholder="0"/>
+    </div>
+    <div class="field">
+      <div class="field-label">Image</div>
+      <input data-p-img class="field-input" type="file" accept="image/*"/>
+    </div>
 
-        <div class="modal-actions">
-          <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-          <button id="p-save" class="btn btn-primary">Save</button>
-        </div>
-      `);
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button data-p-save class="btn btn-primary">Save</button>
+    </div>
+  `);
 
-      qs("#p-save").addEventListener("click", async ()=>{
-        try{
-          const name = qs("#p-name").value.trim();
-          const sku  = qs("#p-sku").value.trim() || null;
-          const price = Number(qs("#p-price").value||0);
-          const stock = Number(qs("#p-stock").value||0);
-          const file = qs("#p-img").files?.[0] || null;
+  const nameEl  = modalBody.querySelector("[data-p-name]");
+  const skuEl   = modalBody.querySelector("[data-p-sku]");
+  const priceEl = modalBody.querySelector("[data-p-price]");
+  const stockEl = modalBody.querySelector("[data-p-stock]");
+  const imgEl   = modalBody.querySelector("[data-p-img]");
+  const saveBtn = modalBody.querySelector("[data-p-save]");
 
-          if(!name) return alert("Name required.");
+  saveBtn.addEventListener("click", async ()=>{
+    try{
+      const name = nameEl.value.trim();
+      const sku  = skuEl.value.trim() || null;
+      const price = Number(priceEl.value || 0);
+      const stock = Number(stockEl.value || 0);
+      const file = imgEl.files?.[0] || null;
 
-          let imageUrl = null;
-          if(file){
-            const path = `brands/${brandId}/products/${Date.now()}_${file.name}`;
-            const r = sRef(storage, path);
-            await uploadBytes(r, file);
-            imageUrl = await getDownloadURL(r);
-          }
+      if(!name) return alert("Name required.");
 
-          await addDoc(collection(db,"brands",brandId,"products"),{
-            name, sku, price, stock,
-            imageUrl,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-            eventId: currentEventId || null
-          });
+      let imageUrl = null;
+      if(file){
+        const path = `brands/${brandId}/products/${Date.now()}_${file.name}`;
+        const r = sRef(storage, path);
+        await uploadBytes(r, file);
+        imageUrl = await getDownloadURL(r);
+      }
 
-          closeModal();
-          await loadProducts();
-        } catch(err){
-          console.error(err);
-          alert(err.message || "Save failed.");
-        }
+      await addDoc(collection(db,"brands",brandId,"products"),{
+        name, sku, price, stock,
+        imageUrl,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        eventId: currentEventId || null
       });
+
+      closeModal();
+      await loadProducts();
+    } catch(err){
+      console.error(err);
+      alert(err.message || "Save failed.");
     }
+  });
+}
 
-    function openEditProduct(prodId){
-      const p = products.find(x=>x.id===prodId);
-      if(!p) return;
+function openEditProduct(prodId){
+  const p = products.find(x=>x.id===prodId);
+  if(!p) return;
 
-      openModal(`
-        <div class="modal-title">Edit product</div>
+  openModal(`
+    <div class="modal-title">Edit product</div>
 
-        <div class="field" style="margin-top:10px;">
-          <div class="field-label">Name</div>
-          <input id="p-name" class="field-input" value="${escapeHtml(p.name||"")}"/>
-        </div>
-        <div class="field">
-          <div class="field-label">SKU</div>
-          <input id="p-sku" class="field-input" value="${escapeHtml(p.sku||"")}"/>
-        </div>
-        <div class="field">
-          <div class="field-label">Price</div>
-          <input id="p-price" class="field-input" type="number" step="0.01" value="${Number(p.price||0)}"/>
-        </div>
-        <div class="field">
-          <div class="field-label">Stock</div>
-          <input id="p-stock" class="field-input" type="number" step="1" value="${Number(p.stock||0)}"/>
-        </div>
-        <div class="field">
-          <div class="field-label">Replace image</div>
-          <input id="p-img" class="field-input" type="file" accept="image/*"/>
-          <div class="field-hint">Leave empty to keep existing image.</div>
-        </div>
+    <div class="field" style="margin-top:10px;">
+      <div class="field-label">Name</div>
+      <input data-p-name class="field-input" value="${escapeHtml(p.name||"")}"/>
+    </div>
+    <div class="field">
+      <div class="field-label">SKU</div>
+      <input data-p-sku class="field-input" value="${escapeHtml(p.sku||"")}"/>
+    </div>
+    <div class="field">
+      <div class="field-label">Price</div>
+      <input data-p-price class="field-input" type="number" step="0.01" value="${Number(p.price||0)}"/>
+    </div>
+    <div class="field">
+      <div class="field-label">Stock</div>
+      <input data-p-stock class="field-input" type="number" step="1" value="${Number(p.stock||0)}"/>
+    </div>
+    <div class="field">
+      <div class="field-label">Replace image</div>
+      <input data-p-img class="field-input" type="file" accept="image/*"/>
+      <div class="field-hint">Leave empty to keep existing image.</div>
+    </div>
 
-        <div class="modal-actions">
-          <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-          <button id="p-save" class="btn btn-primary">Save</button>
-        </div>
-      `);
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button data-p-save class="btn btn-primary">Save</button>
+    </div>
+  `);
 
-      qs("#p-save").addEventListener("click", async ()=>{
-        try{
-          const name = qs("#p-name").value.trim();
-          const sku  = qs("#p-sku").value.trim() || null;
-          const price = Number(qs("#p-price").value||0);
-          const stock = Number(qs("#p-stock").value||0);
-          const file = qs("#p-img").files?.[0] || null;
+  const nameEl  = modalBody.querySelector("[data-p-name]");
+  const skuEl   = modalBody.querySelector("[data-p-sku]");
+  const priceEl = modalBody.querySelector("[data-p-price]");
+  const stockEl = modalBody.querySelector("[data-p-stock]");
+  const imgEl   = modalBody.querySelector("[data-p-img]");
+  const saveBtn = modalBody.querySelector("[data-p-save]");
 
-          if(!name) return alert("Name required.");
+  saveBtn.addEventListener("click", async ()=>{
+    try{
+      const name = nameEl.value.trim();
+      const sku  = skuEl.value.trim() || null;
+      const price = Number(priceEl.value || 0);
+      const stock = Number(stockEl.value || 0);
+      const file = imgEl.files?.[0] || null;
 
-          let imageUrl = p.imageUrl || null;
-          if(file){
-            const path = `brands/${brandId}/products/${prodId}_${Date.now()}_${file.name}`;
-            const r = sRef(storage, path);
-            await uploadBytes(r, file);
-            imageUrl = await getDownloadURL(r);
-          }
+      if(!name) return alert("Name required.");
 
-          await updateDoc(doc(db,"brands",brandId,"products",prodId),{
-            name, sku, price, stock, imageUrl,
-            updatedAt: serverTimestamp()
-          });
+      let imageUrl = p.imageUrl || null;
+      if(file){
+        const path = `brands/${brandId}/products/${prodId}_${Date.now()}_${file.name}`;
+        const r = sRef(storage, path);
+        await uploadBytes(r, file);
+        imageUrl = await getDownloadURL(r);
+      }
 
-          closeModal();
-          await loadProducts();
-        } catch(err){
-          console.error(err);
-          alert(err.message || "Update failed.");
-        }
+      await updateDoc(doc(db,"brands",brandId,"products",prodId),{
+        name, sku, price, stock, imageUrl,
+        updatedAt: serverTimestamp()
       });
+
+      closeModal();
+      await loadProducts();
+    } catch(err){
+      console.error(err);
+      alert(err.message || "Update failed.");
     }
+  });
+}
+
 
     /***********************
      * LOAD: STAFF (brands/{brandId}/staff)
