@@ -722,6 +722,12 @@
   /***********************
    * 1) FIREBASE (placeholders)
    ***********************/
+    async function reloadBrand(){
+  if(!brandId) throw new Error("brandId is missing (userBrands mapping not found).");
+  const bSnap = await getDoc(doc(db, "brands", brandId));
+  ...
+}
+
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import {
     getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signOut
@@ -1355,11 +1361,15 @@
   }
   currentEventId = getUrlParam("eventId");
 
-  async function resolveBrandIdForUser(userUid){
-    const ub = await getDoc(doc(db, "userBrands", userUid));
-    if(!ub.exists()) throw new Error("No brand linked to this user (userBrands missing).");
-    return ub.data().brandId;
-  }
+    async function resolveBrandIdForUser(userUid){
+  const ub = await getDoc(doc(db, "userBrands", userUid));
+  if(!ub.exists()) throw new Error("No brand linked to this user (userBrands missing).");
+
+  const data = ub.data() || {};
+  // support BOTH schemas
+  return data.brandId || data.primaryBrandId || (Array.isArray(data.brandIds) ? data.brandIds[0] : null);
+}
+
 
   onAuthStateChanged(auth, async (user)=>{
     if(!user){
