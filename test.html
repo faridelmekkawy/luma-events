@@ -725,7 +725,6 @@
     async function reloadBrand(){
   if(!brandId) throw new Error("brandId is missing (userBrands mapping not found).");
   const bSnap = await getDoc(doc(db, "brands", brandId));
-  ...
 }
 
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
