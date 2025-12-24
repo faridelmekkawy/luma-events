@@ -187,6 +187,27 @@
       justify-content:flex-end;
       font-size:12px;
     }
+    .topbar-links{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      align-items:center;
+    }
+    .topbar-link{
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:var(--panel-soft);
+      font-size:11px;
+      cursor:pointer;
+      color:var(--muted);
+    }
+    .topbar-link.active{
+      background:var(--accent-soft);
+      border-color:var(--accent-soft);
+      color:var(--accent-strong);
+      font-weight:600;
+    }
     .topbar-select{
       padding:6px 9px;border-radius:8px;
       border:1px solid var(--border);background:var(--panel-soft);
@@ -292,6 +313,33 @@
       font-size:11px;
       color:var(--muted);
     }
+
+    .metric-stack{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .metric-title{font-size:12px;color:var(--muted);font-weight:600;}
+    .metric-value{font-size:20px;font-weight:700;}
+    .metric-note{font-size:11px;color:var(--muted);}
+
+    .insight-list{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      margin-top:8px;
+    }
+    .insight-item{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:var(--panel-soft);
+      font-size:12px;
+    }
+    .insight-item strong{font-size:12px;}
 
     .chart-container{
       position:relative;
@@ -502,11 +550,13 @@
       </div>
       <nav class="sidebar-nav">
         <button class="nav-item active" data-page="page-overview">Overview</button>
+        <button class="nav-item" data-page="page-ticketing">Ticketing</button>
+        <button class="nav-item" data-page="page-analytics">Analytics</button>
+        <button class="nav-item" data-page="page-attention">Attention</button>
         <button class="nav-item" data-page="page-vendors">Vendors</button>
         <button class="nav-item" data-page="page-products">Products &amp; Returns</button>
         <button class="nav-item" data-page="page-customers">Customers</button>
-        <button class="nav-item" data-page="page-sales">Sales &amp; POS</button>
-        <button class="nav-item" data-page="page-settings">Event Settings</button>
+        <button class="nav-item" data-page="page-sales">Orders</button>
       </nav>
       <button id="btn-logout" class="nav-item logout">Logout</button>
     </aside>
@@ -517,6 +567,14 @@
         <div class="topbar-left">
           <div id="topbar-title" class="topbar-title">Event Overview</div>
           <div id="topbar-sub" class="topbar-sub">Monitor vendors, customers, products and live sales</div>
+        </div>
+        <div class="topbar-links">
+          <button class="topbar-link active" data-page="page-overview">Overview</button>
+          <button class="topbar-link" data-page="page-ticketing">Ticketing</button>
+          <button class="topbar-link" data-page="page-sales">Orders</button>
+          <button class="topbar-link" data-page="page-customers">Customers</button>
+          <button class="topbar-link" data-page="page-analytics">Analytics</button>
+          <button class="topbar-link" data-page="page-settings">Event Settings</button>
         </div>
         <div class="topbar-right">
           <div>
@@ -651,13 +709,174 @@
           <!-- Row 4: Live feed snippet -->
           <div class="card">
             <div class="section-title-row">
-              <div>
-                <div class="section-title">Live Activity</div>
-                <div class="section-sub">Last 10 orders for this view.</div>
-              </div>
+                <div>
+                  <div class="section-title">Live Activity</div>
+                <div class="section-sub">Last 7 orders for this view.</div>
+                </div>
             </div>
             <div id="overview-live-feed" class="live-feed">
               <!-- filled by JS -->
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= TICKETING PAGE ================ -->
+        <section id="page-ticketing" class="page">
+          <div class="page-header">
+            <div>
+              <div class="page-title">Ticketing</div>
+              <div class="page-sub">Live tier and wave availability synced with your event orders.</div>
+            </div>
+          </div>
+
+          <div id="ticketing-summary-cards" class="cards-grid"></div>
+
+          <div class="split-grid-2">
+            <div class="card">
+              <div class="section-title-row">
+                <div>
+                  <div class="section-title">Tiers</div>
+                  <div class="section-sub">Capacity, sold, and remaining by ticket tier.</div>
+                </div>
+              </div>
+              <div id="ticketing-tiers-table" class="table-wrapper" style="margin-top:8px;">
+                <!-- tiers table injected -->
+              </div>
+            </div>
+            <div class="card">
+              <div class="section-title-row">
+                <div>
+                  <div class="section-title">Waves</div>
+                  <div class="section-sub">Wave caps update as tickets are sold.</div>
+                </div>
+              </div>
+              <div id="ticketing-waves-table" class="table-wrapper" style="margin-top:8px;">
+                <!-- waves table injected -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= ANALYTICS PAGE ================ -->
+        <section id="page-analytics" class="page">
+          <div class="page-header">
+            <div>
+              <div class="page-title">Analytics</div>
+              <div class="page-sub">Full ticketing analytics to help you optimize sales and inventory.</div>
+            </div>
+          </div>
+
+          <div class="cards-grid">
+            <div class="card">
+              <div class="card-title">Tickets Sold</div>
+              <div id="analytics-total-tickets" class="card-number">0</div>
+              <div class="card-note">Total tickets sold across all tiers.</div>
+            </div>
+            <div class="card">
+              <div class="card-title">Ticket Revenue</div>
+              <div id="analytics-total-revenue" class="card-number">0.00</div>
+              <div class="card-note">Total ticket revenue for this event.</div>
+            </div>
+            <div class="card">
+              <div class="card-title">Average Ticket Price</div>
+              <div id="analytics-avg-price" class="card-number">0.00</div>
+              <div class="card-note">Revenue divided by tickets sold.</div>
+            </div>
+            <div class="card">
+              <div class="card-title">Sell-through Rate</div>
+              <div id="analytics-sell-through" class="card-number">0%</div>
+              <div class="card-note">Tickets sold vs total capacity.</div>
+            </div>
+            <div class="card">
+              <div class="card-title">Active Tiers</div>
+              <div id="analytics-active-tiers" class="card-number">0</div>
+              <div class="card-note">Tiers with at least one sale.</div>
+            </div>
+            <div class="card">
+              <div class="card-title">Refunds</div>
+              <div id="analytics-refunds" class="card-number">0</div>
+              <div class="card-note">Refunded or cancelled tickets.</div>
+            </div>
+          </div>
+
+          <div class="split-grid-2">
+            <div class="card">
+              <div class="section-title-row">
+                <div>
+                  <div class="section-title">Tickets by Tier</div>
+                  <div class="section-sub">How demand is distributed across tiers.</div>
+                </div>
+              </div>
+              <div class="chart-container">
+                <canvas id="chart-tickets-by-tier"></canvas>
+              </div>
+            </div>
+            <div class="card">
+              <div class="section-title-row">
+                <div>
+                  <div class="section-title">Revenue by Wave</div>
+                  <div class="section-sub">Which waves are performing best.</div>
+                </div>
+              </div>
+              <div class="chart-container">
+                <canvas id="chart-revenue-by-wave"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="split-grid-2">
+            <div class="card">
+              <div class="section-title-row">
+                <div>
+                  <div class="section-title">Ticket Orders Over Time</div>
+                  <div class="section-sub">Daily ticket sales volume.</div>
+                </div>
+              </div>
+              <div class="chart-container">
+                <canvas id="chart-ticket-orders-timeline"></canvas>
+              </div>
+            </div>
+            <div class="card">
+              <div class="section-title-row">
+                <div>
+                  <div class="section-title">Buyer Age Mix</div>
+                  <div class="section-sub">Distribution of ages when provided.</div>
+                </div>
+              </div>
+              <div class="chart-container">
+                <canvas id="chart-age-mix"></canvas>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= ATTENTION PAGE ================ -->
+        <section id="page-attention" class="page">
+          <div class="page-header">
+            <div>
+              <div class="page-title">Attention</div>
+              <div class="page-sub">Key items that need your review across ticketing and sales.</div>
+            </div>
+          </div>
+
+          <div class="split-grid-2">
+            <div class="card">
+              <div class="section-title-row">
+                <div>
+                  <div class="section-title">Low Inventory</div>
+                  <div class="section-sub">Tiers and waves that are close to selling out.</div>
+                </div>
+              </div>
+              <div id="attention-low-inventory" class="insight-list"></div>
+            </div>
+            <div class="card">
+              <div class="section-title-row">
+                <div>
+                  <div class="section-title">Anomalies</div>
+                  <div class="section-sub">Refund spikes, empty tiers, and inactive waves.</div>
+                </div>
+              </div>
+              <div id="attention-anomalies" class="insight-list"></div>
             </div>
           </div>
         </section>
@@ -762,8 +981,8 @@
         <section id="page-sales" class="page">
           <div class="page-header">
             <div>
-              <div class="page-title">Sales &amp; POS</div>
-              <div class="page-sub">Raw order list across all brands for this event (respecting date filter).</div>
+              <div class="page-title">Orders</div>
+              <div class="page-sub">Ticket orders for this event (respecting the date filter).</div>
             </div>
             <div class="page-actions">
               <button id="btn-export-orders" class="btn btn-ghost">Export orders CSV</button>
@@ -971,6 +1190,7 @@
   const topbarSubtitleEl = qs("#topbar-sub");
   const eventSelectEl = qs("#event-select");
   const dateFilterContainer = qs("#date-filter");
+  const topbarLinks = qsa(".topbar-link[data-page]");
 
   // Overview KPIs
   const kpiTotalRevenueEl = qs("#kpi-total-revenue");
@@ -1017,6 +1237,23 @@
   const ordersTableWrapperEl = qs("#orders-table-wrapper");
   const btnExportOrders = qs("#btn-export-orders");
 
+  // Ticketing page
+  const ticketingSummaryCardsEl = qs("#ticketing-summary-cards");
+  const ticketingTiersTableEl = qs("#ticketing-tiers-table");
+  const ticketingWavesTableEl = qs("#ticketing-waves-table");
+
+  // Analytics page
+  const analyticsTotalTicketsEl = qs("#analytics-total-tickets");
+  const analyticsTotalRevenueEl = qs("#analytics-total-revenue");
+  const analyticsAvgPriceEl = qs("#analytics-avg-price");
+  const analyticsSellThroughEl = qs("#analytics-sell-through");
+  const analyticsActiveTiersEl = qs("#analytics-active-tiers");
+  const analyticsRefundsEl = qs("#analytics-refunds");
+
+  // Attention page
+  const attentionLowInventoryEl = qs("#attention-low-inventory");
+  const attentionAnomaliesEl = qs("#attention-anomalies");
+
   // Settings
   const setEventNameEl = qs("#set-event-name");
   const setEventLocationEl = qs("#set-event-location");
@@ -1025,7 +1262,7 @@
   const btnSaveEventSettings = qs("#btn-save-event");
 
   // Nav
-  const navItems = qsa(".nav-item[data-page]");
+  const navItems = qsa(".nav-item[data-page], .topbar-link[data-page]");
   const pages = qsa(".page");
 
   // Modal
@@ -1045,7 +1282,12 @@
 
   let vendors = [];
   let ordersAll = []; // all orders for eventId
+  let ticketOrders = [];
+  let tiers = [];
+  let waves = [];
   let brandMap = {};  // brandId -> brand data (logo, status, etc.)
+  let tierMap = {};
+  let waveMap = {};
 
   let vendorStatusFilter = "all";
   let vendorSearchTerm = "";
@@ -1055,14 +1297,22 @@
   let dateFilterMode = "general"; // "general" or "YYYY-MM-DD"
   let timelineMode = "auto";      // "auto" | "day" | "hour"
 
+  let unsubEvent = null;
   let unsubVendors = null;
   let unsubOrders = null;
+  let unsubTicketOrders = null;
+  let unsubTiers = null;
+  let unsubWaves = null;
 
   // Chart instances
   let chartRevenueTimeline = null;
   let chartPeakSparkline = null;
   let chartPaymentMix = null;
   let chartTopProducts = null;
+  let chartTicketsByTier = null;
+  let chartRevenueByWave = null;
+  let chartTicketOrdersTimeline = null;
+  let chartAgeMix = null;
 
   // -----------------------------
   // AUTH ALERTS
@@ -1223,12 +1473,24 @@
   // LOAD EVENTS FOR OWNER
   // -----------------------------
   async function loadEventsForOwner(uid) {
-    const qEv = query(
-      collection(db, "events"),
-      where("ownerUserId", "==", uid)
-    );
-    const snap = await getDocs(qEv);
     eventsList = [];
+    const ownerEventsSnap = await getDoc(doc(db, "ownerEvents", uid));
+    const ownerData = ownerEventsSnap.exists() ? ownerEventsSnap.data() : {};
+    const ownedIds = Array.isArray(ownerData.eventIds) ? ownerData.eventIds : [];
+
+    if (ownedIds.length) {
+      const eventDocs = await Promise.all(ownedIds.map((id) => getDoc(doc(db, "events", id))));
+      eventDocs.forEach((snap) => {
+        if (!snap.exists()) return;
+        const data = snap.data();
+        if (data.ownerUserId && data.ownerUserId !== uid) return;
+        eventsList.push({ id: snap.id, ...data });
+      });
+      return;
+    }
+
+    const qEv = query(collection(db, "events"), where("ownerUserId", "==", uid));
+    const snap = await getDocs(qEv);
     snap.forEach((d) => {
       eventsList.push({ id: d.id, ...d.data() });
     });
@@ -1319,7 +1581,7 @@
       });
     }
 
-    dateFilterContainer.addEventListener("click", (e) => {
+    dateFilterContainer.onclick = (e) => {
       const target = e.target;
       if (!(target instanceof HTMLElement)) return;
       if (!target.classList.contains("date-chip")) return;
@@ -1327,7 +1589,7 @@
       dateFilterMode = val;
       updateActiveChip();
       recomputeAllAnalytics();
-    });
+    };
 
     // default
     dateFilterMode = "general";
@@ -1340,44 +1602,58 @@
   async function selectEvent(eventId) {
     if (!eventId) return;
 
+    if (unsubEvent) unsubEvent();
     if (unsubVendors) unsubVendors();
     if (unsubOrders) unsubOrders();
-    unsubVendors = unsubOrders = null;
+    if (unsubTicketOrders) unsubTicketOrders();
+    if (unsubTiers) unsubTiers();
+    if (unsubWaves) unsubWaves();
+    unsubEvent = unsubVendors = unsubOrders = unsubTicketOrders = unsubTiers = unsubWaves = null;
 
     currentEventData = null;
     vendors = [];
     ordersAll = [];
+    ticketOrders = [];
+    tiers = [];
+    waves = [];
     brandMap = {};
+    tierMap = {};
+    waveMap = {};
 
-    const evSnap = await getDoc(doc(db, "events", eventId));
-    if (!evSnap.exists()) return;
-    currentEventData = { id: eventId, ...evSnap.data() };
+    const evRef = doc(db, "events", eventId);
+    unsubEvent = onSnapshot(evRef, (evSnap) => {
+      if (!evSnap.exists()) return;
+      currentEventData = { id: eventId, ...evSnap.data() };
 
-    const name = currentEventData.name || "Event";
-    const location = currentEventData.location || "";
-    const startDate = currentEventData.startDate || "";
-    const endDate = currentEventData.endDate || "";
+      const name = currentEventData.name || "Event";
+      const location = currentEventData.location || "";
+      const startDate = currentEventData.startDate || "";
+      const endDate = currentEventData.endDate || "";
 
-    if (sidebarEventNameEl) sidebarEventNameEl.textContent = name;
-    if (sidebarEventLogoEl) {
-      sidebarEventLogoEl.textContent = (name[0] || "E").toUpperCase();
-    }
+      if (sidebarEventNameEl) sidebarEventNameEl.textContent = name;
+      if (sidebarEventLogoEl) {
+        sidebarEventLogoEl.textContent = (name[0] || "E").toUpperCase();
+      }
 
-    if (topbarTitleEl) topbarTitleEl.textContent = "Event Overview";
-    if (topbarSubtitleEl) {
-      const parts = [name];
-      if (startDate && endDate) parts.push(`${startDate} → ${endDate}`);
-      if (location) parts.push(location);
-      topbarSubtitleEl.textContent = parts.filter(Boolean).join(" • ");
-    }
+      if (topbarTitleEl) topbarTitleEl.textContent = "Event Overview";
+      if (topbarSubtitleEl) {
+        const parts = [name];
+        if (startDate && endDate) parts.push(`${startDate} → ${endDate}`);
+        if (location) parts.push(location);
+        topbarSubtitleEl.textContent = parts.filter(Boolean).join(" • ");
+      }
 
-    // settings fields
-    if (setEventNameEl) setEventNameEl.value = name;
-    if (setEventLocationEl) setEventLocationEl.value = location;
-    if (setEventStartEl) setEventStartEl.value = startDate || "";
-    if (setEventEndEl) setEventEndEl.value = endDate || "";
+      // settings fields
+      if (setEventNameEl) setEventNameEl.value = name;
+      if (setEventLocationEl) setEventLocationEl.value = location;
+      if (setEventStartEl) setEventStartEl.value = startDate || "";
+      if (setEventEndEl) setEventEndEl.value = endDate || "";
 
-    buildDateFilterChips();
+      buildDateFilterChips();
+      renderTicketingSection();
+      renderAttentionPage();
+      renderTicketingAnalytics();
+    });
 
     // vendors listener
     const vendorsRef = collection(db, "events", eventId, "vendors");
@@ -1407,6 +1683,43 @@
         console.error("Orders listener error:", err);
       }
     );
+
+    const tiersRef = collection(db, "events", eventId, "tiers");
+    unsubTiers = onSnapshot(tiersRef, (snap) => {
+      tiers = [];
+      snap.forEach((d) => tiers.push({ id: d.id, ...d.data() }));
+      tierMap = {};
+      tiers.forEach((t) => {
+        tierMap[t.id] = t;
+      });
+      renderTicketingSection();
+      renderTicketingAnalytics();
+      renderAttentionPage();
+    });
+
+    const wavesRef = collection(db, "events", eventId, "waves");
+    unsubWaves = onSnapshot(wavesRef, (snap) => {
+      waves = [];
+      snap.forEach((d) => waves.push({ id: d.id, ...d.data() }));
+      waveMap = {};
+      waves.forEach((w) => {
+        waveMap[w.id] = w;
+      });
+      normalizeWaveNames();
+      renderTicketingSection();
+      renderTicketingAnalytics();
+      renderAttentionPage();
+    });
+
+    const ticketOrdersRef = collection(db, "events", eventId, "orders");
+    unsubTicketOrders = onSnapshot(ticketOrdersRef, (snap) => {
+      ticketOrders = [];
+      snap.forEach((d) => ticketOrders.push({ id: d.id, ...d.data() }));
+      renderTicketingSection();
+      renderTicketingAnalytics();
+      renderAttentionPage();
+      recomputeAllAnalytics();
+    });
   }
 
   async function ensureBrandDocsLoaded() {
@@ -1453,16 +1766,31 @@
     });
   }
 
+  function getFilteredTicketOrders() {
+    if (!ticketOrders.length) return [];
+    if (dateFilterMode === "general") return [...ticketOrders];
+
+    const target = dateFilterMode;
+    return ticketOrders.filter((o) => {
+      const d = parseOrderDate(o);
+      const key = formatDateKey(d);
+      return key === target;
+    });
+  }
+
   // -----------------------------
   // AGGREGATIONS & ANALYTICS
   // -----------------------------
   function recomputeAllAnalytics() {
     const filteredOrders = getFilteredOrders();
+    const filteredTicketOrders = getFilteredTicketOrders();
     computeAndRenderOverview(filteredOrders);
     computeAndRenderProducts(filteredOrders);
-    computeAndRenderCustomers(filteredOrders);
-    renderOrdersTable(filteredOrders);
+    computeAndRenderCustomers(filteredTicketOrders);
+    renderOrdersTable(filteredTicketOrders);
     renderVendorsSection(); // vendor revenue % etc
+    renderTicketingAnalytics();
+    renderAttentionPage();
   }
 
   function computeAndRenderOverview(filteredOrders) {
@@ -1481,7 +1809,7 @@
       const da = parseOrderDate(a).getTime();
       const db = parseOrderDate(b).getTime();
       return db - da;
-    }).slice(0, 10);
+    }).slice(0, 7);
 
     filteredOrders.forEach((o) => {
       const isReturn = !!o.isReturn;
@@ -1801,15 +2129,19 @@
     const custMap = {}; // key -> aggregated
 
     filteredOrders.forEach((o) => {
-      let cust = o.customer || {};
-      // fallback if you store directly on order
-      const name = cust.name || o.customerName || "";
-      const phone = cust.phone || o.customerPhone || "";
-      const email = cust.email || o.customerEmail || "";
+      const cust = o.customer || {};
+      const name = o.name || cust.name || o.customerName || "";
+      const phone = o.phone || cust.phone || o.customerPhone || "";
+      const email = o.email || cust.email || o.customerEmail || "";
+      const age = o.age || cust.age || "";
+      const tierId = o.tierId || "";
+      const waveId = o.waveId || "";
+      const ticketId = o.ticketId || o.ticketid || "";
       const key = phone || email || name || "anonymous";
 
       const total = Number(o.total) || 0;
       const isReturn = !!o.isReturn;
+      const qty = Number(o.quantity || o.qty || 1) || 1;
 
       const d = parseOrderDate(o);
 
@@ -1819,7 +2151,12 @@
           name: name || "Customer",
           phone: phone || "",
           email: email || "",
+          age: age || "",
+          tierId: tierId || "",
+          waveId: waveId || "",
+          ticketId: ticketId || "",
           orders: 0,
+          tickets: 0,
           totalSpent: 0,
           lastOrderAt: d
         };
@@ -1827,7 +2164,12 @@
       const c = custMap[key];
       if (!isReturn) {
         c.orders += 1;
+        c.tickets += qty;
         c.totalSpent += total;
+        c.tierId = tierId || c.tierId;
+        c.waveId = waveId || c.waveId;
+        c.ticketId = ticketId || c.ticketId;
+        c.age = age || c.age;
       } else {
         c.totalSpent -= Math.abs(total);
       }
@@ -1861,7 +2203,7 @@
           <div class="card-header">
             <div>
               <div class="card-title">${c.name}</div>
-              <div class="card-note">${c.orders} orders</div>
+              <div class="card-note">${c.tickets} tickets</div>
             </div>
             ${highValue ? '<span class="badge">High value</span>' : ""}
           </div>
@@ -1889,9 +2231,13 @@
           <thead>
             <tr>
               <th>Customer</th>
+              <th>Age</th>
               <th>Phone</th>
               <th>Email</th>
+              <th>Tier</th>
+              <th>Wave</th>
               <th>Orders</th>
+              <th>Tickets</th>
               <th>Total Spent</th>
               <th>Avg Order</th>
               <th>Last Order</th>
@@ -1903,12 +2249,18 @@
         const last = c.lastOrderAt
           ? c.lastOrderAt.toLocaleString("en-EG", { day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit" })
           : "";
+        const tierName = c.tierId ? (tierMap[c.tierId]?.name || c.tierId) : "—";
+        const waveName = c.waveId ? (waveMap[c.waveId]?.name || c.waveId) : "—";
         html += `
           <tr>
             <td>${c.name}</td>
+            <td>${c.age || "—"}</td>
             <td>${c.phone || "—"}</td>
             <td>${c.email || "—"}</td>
+            <td>${tierName}</td>
+            <td>${waveName}</td>
             <td>${c.orders}</td>
+            <td>${c.tickets}</td>
             <td>${formatCurrency(c.totalSpent)}</td>
             <td>${c.orders ? formatCurrency(c.totalSpent / c.orders) : "0.00"}</td>
             <td>${last}</td>
@@ -1922,6 +2274,506 @@
 
     // store global customers for export
     window.__customersForExport = customersArr;
+  }
+
+  // -----------------------------
+  // TICKETING HELPERS
+  // -----------------------------
+  function getTicketQty(order) {
+    const qty = Number(order.quantity || order.qty || order.tickets || 1);
+    return Number.isFinite(qty) && qty > 0 ? qty : 1;
+  }
+
+  function getTierCapacity(tier) {
+    const cap = Number(tier.totalCapacity || tier.capacity || 0);
+    return Number.isFinite(cap) ? cap : 0;
+  }
+
+  function getWaveCapacity(wave) {
+    const cap = Number(wave.capacity || wave.totalCapacity || 0);
+    return Number.isFinite(cap) ? cap : 0;
+  }
+
+  function parseWaveNumber(name) {
+    if (!name) return null;
+    const match = String(name).match(/wave\s*(\d+)/i);
+    return match ? parseInt(match[1], 10) : null;
+  }
+
+  function getWaveSortKey(wave) {
+    if (Number.isFinite(wave.orderIndex)) return wave.orderIndex;
+    const fromName = parseWaveNumber(wave.name);
+    if (Number.isFinite(fromName)) return fromName;
+    if (wave.createdAt && typeof wave.createdAt.toDate === "function") {
+      return wave.createdAt.toDate().getTime();
+    }
+    return 9999;
+  }
+
+  function computeTicketStats(list) {
+    const tierStats = {};
+    const waveStats = {};
+    let totalSold = 0;
+    let totalRevenue = 0;
+    let totalRefunds = 0;
+
+    list.forEach((o) => {
+      const tierId = o.tierId || null;
+      const waveId = o.waveId || null;
+      const qty = getTicketQty(o);
+      const total = Number(o.total) || 0;
+      const isReturn = !!o.isReturn;
+      const signedQty = isReturn ? -qty : qty;
+      const signedTotal = isReturn ? -Math.abs(total) : total;
+
+      totalSold += signedQty;
+      totalRevenue += signedTotal;
+      if (isReturn) totalRefunds += qty;
+
+      if (tierId) {
+        if (!tierStats[tierId]) tierStats[tierId] = { sold: 0, revenue: 0, refunds: 0 };
+        tierStats[tierId].sold += signedQty;
+        tierStats[tierId].revenue += signedTotal;
+        if (isReturn) tierStats[tierId].refunds += qty;
+      }
+      if (waveId) {
+        if (!waveStats[waveId]) waveStats[waveId] = { sold: 0, revenue: 0, refunds: 0 };
+        waveStats[waveId].sold += signedQty;
+        waveStats[waveId].revenue += signedTotal;
+        if (isReturn) waveStats[waveId].refunds += qty;
+      }
+    });
+
+    return { tierStats, waveStats, totalSold, totalRevenue, totalRefunds };
+  }
+
+  async function normalizeWaveNames() {
+    if (!currentEventId || !waves.length) return;
+    const grouped = {};
+    waves.forEach((w) => {
+      const tierId = w.tierId || "none";
+      if (!grouped[tierId]) grouped[tierId] = [];
+      grouped[tierId].push(w);
+    });
+
+    await Promise.all(
+      Object.values(grouped).map(async (group) => {
+        const sorted = [...group].sort((a, b) => getWaveSortKey(a) - getWaveSortKey(b));
+        await Promise.all(
+          sorted.map(async (w, idx) => {
+            const desiredName = `Wave ${idx + 1}`;
+            const desiredIndex = idx + 1;
+            if (w.name === desiredName && w.orderIndex === desiredIndex) return;
+            try {
+              await updateDoc(doc(db, "events", currentEventId, "waves", w.id), {
+                name: desiredName,
+                orderIndex: desiredIndex
+              });
+            } catch (err) {
+              console.error("Failed to normalize wave name:", err);
+            }
+          })
+        );
+      })
+    );
+  }
+
+  function renderTicketingSection() {
+    if (!ticketingSummaryCardsEl || !ticketingTiersTableEl || !ticketingWavesTableEl) return;
+
+    const stats = computeTicketStats(ticketOrders);
+    const totalCapacity = tiers.reduce((sum, t) => sum + getTierCapacity(t), 0);
+    const totalSold = Math.max(0, stats.totalSold);
+    const remaining = Math.max(totalCapacity - totalSold, 0);
+    const totalRevenue = stats.totalRevenue;
+
+    ticketingSummaryCardsEl.innerHTML = `
+      <div class="card">
+        <div class="card-title">Total Capacity</div>
+        <div class="card-number">${totalCapacity}</div>
+        <div class="card-note">Across all tiers.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Tickets Sold</div>
+        <div class="card-number">${totalSold}</div>
+        <div class="card-note">Net of refunds.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Tickets Remaining</div>
+        <div class="card-number">${remaining}</div>
+        <div class="card-note">Inventory left to sell.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Ticket Revenue</div>
+        <div class="card-number">${formatCurrency(totalRevenue)}</div>
+        <div class="card-note">Net of refunds.</div>
+      </div>
+    `;
+
+    if (!tiers.length) {
+      ticketingTiersTableEl.innerHTML = `<div class="table-empty">No tiers created for this event.</div>`;
+    } else {
+      const sortedTiers = [...tiers].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+      let html = `
+        <table>
+          <thead>
+            <tr>
+              <th>Tier</th>
+              <th>Price</th>
+              <th>Sold / Capacity</th>
+              <th>Remaining</th>
+              <th>Revenue</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      sortedTiers.forEach((tier) => {
+        const tierStat = stats.tierStats[tier.id] || { sold: 0, revenue: 0 };
+        const capacity = getTierCapacity(tier);
+        const sold = Math.max(0, tierStat.sold);
+        const remain = Math.max(capacity - sold, 0);
+        const price = Number(tier.price || tier.amount || 0) || 0;
+        html += `
+          <tr>
+            <td>${tier.name || "Tier"}</td>
+            <td>${price ? formatCurrency(price) : "—"}</td>
+            <td>${sold} / ${capacity}</td>
+            <td>${remain}</td>
+            <td>${formatCurrency(tierStat.revenue || 0)}</td>
+            <td><button class="btn btn-ghost" data-action="edit-tier" data-id="${tier.id}" style="padding:4px 8px;font-size:10px;">Edit</button></td>
+          </tr>
+        `;
+      });
+      html += `</tbody></table>`;
+      ticketingTiersTableEl.innerHTML = html;
+    }
+
+    if (!waves.length) {
+      ticketingWavesTableEl.innerHTML = `<div class="table-empty">No waves created for this event.</div>`;
+    } else {
+      const sortedWaves = [...waves].sort((a, b) => getWaveSortKey(a) - getWaveSortKey(b));
+      let html = `
+        <table>
+          <thead>
+            <tr>
+              <th>Wave</th>
+              <th>Tier</th>
+              <th>Sold / Capacity</th>
+              <th>Remaining</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      sortedWaves.forEach((wave) => {
+        const waveStat = stats.waveStats[wave.id] || { sold: 0 };
+        const capacity = getWaveCapacity(wave);
+        const sold = Math.max(0, waveStat.sold);
+        const remain = Math.max(capacity - sold, 0);
+        const tierName = wave.tierId ? (tierMap[wave.tierId]?.name || wave.tierId) : "—";
+        html += `
+          <tr>
+            <td>${wave.name || "Wave"}</td>
+            <td>${tierName}</td>
+            <td>${sold} / ${capacity}</td>
+            <td>${remain}</td>
+            <td><button class="btn btn-ghost" data-action="edit-wave" data-id="${wave.id}" style="padding:4px 8px;font-size:10px;">Edit</button></td>
+          </tr>
+        `;
+      });
+      html += `</tbody></table>`;
+      ticketingWavesTableEl.innerHTML = html;
+    }
+
+    ticketingTiersTableEl.querySelectorAll("button[data-action='edit-tier']").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-id");
+        const tier = tiers.find((t) => t.id === id);
+        if (tier) openTierEditModal(tier);
+      });
+    });
+
+    ticketingWavesTableEl.querySelectorAll("button[data-action='edit-wave']").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-id");
+        const wave = waves.find((w) => w.id === id);
+        if (wave) openWaveEditModal(wave);
+      });
+    });
+  }
+
+  function openTierEditModal(tier) {
+    const stats = computeTicketStats(ticketOrders);
+    const sold = Math.max(0, stats.tierStats[tier.id]?.sold || 0);
+    const capacity = getTierCapacity(tier);
+    const price = Number(tier.price || tier.amount || 0) || 0;
+
+    openModal(`
+      <div class="modal-title" style="font-weight:700;margin-bottom:8px;font-size:16px;">Edit Tier</div>
+      <div class="field">
+        <div class="field-label">Tier name</div>
+        <input id="edit-tier-name" class="field-input" value="${tier.name || ""}"/>
+      </div>
+      <div class="field">
+        <div class="field-label">Total capacity</div>
+        <input id="edit-tier-capacity" class="field-input" type="number" value="${capacity}"/>
+        <div class="field-hint">Sold so far: ${sold} tickets.</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Price</div>
+        <input id="edit-tier-price" class="field-input" type="number" value="${price || ""}"/>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">
+        <button onclick="closeModal()" class="btn btn-ghost">Cancel</button>
+        <button id="btn-save-tier" class="btn btn-primary">Save changes</button>
+      </div>
+    `);
+
+    const btnSave = qs("#btn-save-tier");
+    btnSave?.addEventListener("click", async () => {
+      const name = qs("#edit-tier-name")?.value.trim();
+      const newCapacity = Number(qs("#edit-tier-capacity")?.value || 0);
+      const newPrice = qs("#edit-tier-price")?.value;
+
+      if (!name) {
+        alert("Tier name is required.");
+        return;
+      }
+      if (newCapacity < sold) {
+        alert(`Capacity cannot be lower than sold tickets (${sold}).`);
+        return;
+      }
+
+      try {
+        await updateDoc(doc(db, "events", currentEventId, "tiers", tier.id), {
+          name,
+          totalCapacity: newCapacity,
+          price: newPrice ? Number(newPrice) : null
+        });
+        closeModal();
+      } catch (err) {
+        console.error("Error updating tier:", err);
+        alert("Failed to update tier.");
+      }
+    });
+  }
+
+  function openWaveEditModal(wave) {
+    const stats = computeTicketStats(ticketOrders);
+    const waveSold = Math.max(0, stats.waveStats[wave.id]?.sold || 0);
+    const tier = tierMap[wave.tierId] || tiers[0];
+    const tierCapacity = tier ? getTierCapacity(tier) : 0;
+    const tierSold = Math.max(0, stats.tierStats[wave.tierId]?.sold || 0);
+    const maxCapacity = Math.max(0, tierCapacity - (tierSold - waveSold));
+    const capacity = getWaveCapacity(wave);
+
+    const tierOptions = tiers.map((t) => {
+      const selected = t.id === wave.tierId ? "selected" : "";
+      return `<option value="${t.id}" ${selected}>${t.name || t.id}</option>`;
+    }).join("");
+
+    openModal(`
+      <div class="modal-title" style="font-weight:700;margin-bottom:8px;font-size:16px;">Edit Wave</div>
+      <div class="field">
+        <div class="field-label">Wave name</div>
+        <input id="edit-wave-name" class="field-input" value="${wave.name || ""}"/>
+      </div>
+      <div class="field">
+        <div class="field-label">Tier</div>
+        <select id="edit-wave-tier" class="field-select">
+          ${tierOptions}
+        </select>
+      </div>
+      <div class="field">
+        <div class="field-label">Capacity</div>
+        <input id="edit-wave-capacity" class="field-input" type="number" value="${capacity}"/>
+        <div class="field-hint">Sold: ${waveSold} • Max allowed: ${maxCapacity}</div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">
+        <button onclick="closeModal()" class="btn btn-ghost">Cancel</button>
+        <button id="btn-save-wave" class="btn btn-primary">Save changes</button>
+      </div>
+    `);
+
+    const btnSave = qs("#btn-save-wave");
+    btnSave?.addEventListener("click", async () => {
+      const name = qs("#edit-wave-name")?.value.trim();
+      const tierId = qs("#edit-wave-tier")?.value;
+      const newCapacity = Number(qs("#edit-wave-capacity")?.value || 0);
+
+      if (!name) {
+        alert("Wave name is required.");
+        return;
+      }
+      if (newCapacity < waveSold) {
+        alert(`Capacity cannot be lower than sold tickets (${waveSold}).`);
+        return;
+      }
+
+      const nextTier = tierMap[tierId];
+      const nextTierCapacity = nextTier ? getTierCapacity(nextTier) : 0;
+      const nextTierSold = Math.max(0, stats.tierStats[tierId]?.sold || 0);
+      const nextMax = Math.max(0, nextTierCapacity - (nextTierSold - waveSold));
+      if (newCapacity > nextMax) {
+        alert(`Wave capacity cannot exceed ${nextMax} for this tier.`);
+        return;
+      }
+
+      try {
+        await updateDoc(doc(db, "events", currentEventId, "waves", wave.id), {
+          name,
+          tierId,
+          capacity: newCapacity
+        });
+        closeModal();
+      } catch (err) {
+        console.error("Error updating wave:", err);
+        alert("Failed to update wave.");
+      }
+    });
+  }
+
+  function renderTicketingAnalytics() {
+    const filteredOrders = getFilteredTicketOrders();
+    const stats = computeTicketStats(filteredOrders);
+    const totalCapacity = tiers.reduce((sum, t) => sum + getTierCapacity(t), 0);
+    const totalSold = Math.max(0, stats.totalSold);
+    const totalRevenue = stats.totalRevenue;
+    const avgPrice = totalSold > 0 ? totalRevenue / totalSold : 0;
+    const sellThrough = totalCapacity > 0 ? (totalSold / totalCapacity) * 100 : 0;
+    const activeTierCount = Object.values(stats.tierStats).filter((t) => t.sold > 0).length;
+
+    if (analyticsTotalTicketsEl) analyticsTotalTicketsEl.textContent = String(totalSold);
+    if (analyticsTotalRevenueEl) analyticsTotalRevenueEl.textContent = formatCurrency(totalRevenue);
+    if (analyticsAvgPriceEl) analyticsAvgPriceEl.textContent = formatCurrency(avgPrice);
+    if (analyticsSellThroughEl) analyticsSellThroughEl.textContent = `${sellThrough.toFixed(1)}%`;
+    if (analyticsActiveTiersEl) analyticsActiveTiersEl.textContent = String(activeTierCount);
+    if (analyticsRefundsEl) analyticsRefundsEl.textContent = String(stats.totalRefunds);
+
+    const tierLabels = tiers.map((t) => t.name || "Tier");
+    const tierData = tiers.map((t) => Math.max(0, stats.tierStats[t.id]?.sold || 0));
+    updateBarChart(chartTicketsByTier, "chart-tickets-by-tier", tierLabels, tierData, "Tickets");
+
+    const waveLabels = waves.map((w) => w.name || "Wave");
+    const waveData = waves.map((w) => Math.max(0, stats.waveStats[w.id]?.revenue || 0));
+    updateBarChart(chartRevenueByWave, "chart-revenue-by-wave", waveLabels, waveData, "Revenue");
+
+    const dailyBuckets = {};
+    filteredOrders.forEach((o) => {
+      const d = parseOrderDate(o);
+      const key = formatDateKey(d);
+      if (!dailyBuckets[key]) dailyBuckets[key] = 0;
+      dailyBuckets[key] += getTicketQty(o) * (o.isReturn ? -1 : 1);
+    });
+    const dailyLabels = Object.keys(dailyBuckets).sort();
+    const dailyData = dailyLabels.map((k) => dailyBuckets[k]);
+    updateLineChart(chartTicketOrdersTimeline, "chart-ticket-orders-timeline", dailyLabels, dailyData, "Tickets");
+
+    const ageBuckets = { "<18":0, "18-24":0, "25-34":0, "35-44":0, "45+":0 };
+    filteredOrders.forEach((o) => {
+      const age = Number(o.age || o.customer?.age || 0);
+      if (!Number.isFinite(age) || age <= 0) return;
+      if (age < 18) ageBuckets["<18"] += 1;
+      else if (age <= 24) ageBuckets["18-24"] += 1;
+      else if (age <= 34) ageBuckets["25-34"] += 1;
+      else if (age <= 44) ageBuckets["35-44"] += 1;
+      else ageBuckets["45+"] += 1;
+    });
+    const ageLabels = Object.keys(ageBuckets);
+    const ageData = ageLabels.map((k) => ageBuckets[k]);
+    updateDoughnutChart(chartAgeMix, "chart-age-mix", ageLabels, ageData);
+  }
+
+  function renderAttentionPage() {
+    if (!attentionLowInventoryEl || !attentionAnomaliesEl) return;
+
+    const stats = computeTicketStats(ticketOrders);
+    const lowInventoryItems = [];
+    const anomalyItems = [];
+
+    tiers.forEach((tier) => {
+      const cap = getTierCapacity(tier);
+      if (!cap) return;
+      const sold = Math.max(0, stats.tierStats[tier.id]?.sold || 0);
+      const remaining = Math.max(cap - sold, 0);
+      const remainingPct = cap ? remaining / cap : 0;
+      if (remainingPct <= 0.1 || remaining <= 10) {
+        lowInventoryItems.push({
+          title: `${tier.name || "Tier"} is nearly sold out`,
+          note: `${remaining} / ${cap} tickets remaining`
+        });
+      }
+      if (sold === 0) {
+        anomalyItems.push({
+          title: `${tier.name || "Tier"} has no sales yet`,
+          note: "Consider promoting or adjusting pricing."
+        });
+      }
+    });
+
+    waves.forEach((wave) => {
+      const cap = getWaveCapacity(wave);
+      if (!cap) return;
+      const sold = Math.max(0, stats.waveStats[wave.id]?.sold || 0);
+      const remaining = Math.max(cap - sold, 0);
+      const remainingPct = cap ? remaining / cap : 0;
+      if (remainingPct <= 0.1 || remaining <= 5) {
+        lowInventoryItems.push({
+          title: `${wave.name || "Wave"} is almost sold out`,
+          note: `${remaining} / ${cap} tickets remaining`
+        });
+      }
+      if (sold === 0) {
+        anomalyItems.push({
+          title: `${wave.name || "Wave"} has no sales yet`,
+          note: "Double-check wave visibility and pricing."
+        });
+      }
+    });
+
+    if (stats.totalRefunds > 0) {
+      anomalyItems.push({
+        title: "Refund activity detected",
+        note: `${stats.totalRefunds} refunded tickets`
+      });
+    }
+
+    attentionLowInventoryEl.innerHTML = "";
+    if (!lowInventoryItems.length) {
+      attentionLowInventoryEl.innerHTML = `<div class="table-empty">No low inventory alerts right now.</div>`;
+    } else {
+      lowInventoryItems.forEach((item) => {
+        const div = document.createElement("div");
+        div.className = "insight-item";
+        div.innerHTML = `
+          <div>
+            <strong>${item.title}</strong>
+            <div class="metric-note">${item.note}</div>
+          </div>
+          <span class="badge">Action</span>
+        `;
+        attentionLowInventoryEl.appendChild(div);
+      });
+    }
+
+    attentionAnomaliesEl.innerHTML = "";
+    if (!anomalyItems.length) {
+      attentionAnomaliesEl.innerHTML = `<div class="table-empty">No anomalies detected.</div>`;
+    } else {
+      anomalyItems.forEach((item) => {
+        const div = document.createElement("div");
+        div.className = "insight-item";
+        div.innerHTML = `
+          <div>
+            <strong>${item.title}</strong>
+            <div class="metric-note">${item.note}</div>
+          </div>
+          <span class="badge">Review</span>
+        `;
+        attentionAnomaliesEl.appendChild(div);
+      });
+    }
   }
 
   // -----------------------------
@@ -2364,7 +3216,11 @@
         <thead>
           <tr>
             <th>Order ID</th>
-            <th>Brand</th>
+            <th>Customer</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Tier</th>
+            <th>Wave</th>
             <th>Total</th>
             <th>Payment</th>
             <th>Type</th>
@@ -2376,12 +3232,20 @@
     list.forEach((o) => {
       const d = parseOrderDate(o);
       const dateStr = d.toLocaleString("en-EG", { day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit" });
-      const brandName = o.brandName || (brandMap[o.brandId]?.name) || "Brand";
+      const name = o.name || o.customerName || "Customer";
+      const email = o.email || o.customerEmail || "—";
+      const phone = o.phone || o.customerPhone || "—";
+      const tierName = o.tierId ? (tierMap[o.tierId]?.name || o.tierId) : "—";
+      const waveName = o.waveId ? (waveMap[o.waveId]?.name || o.waveId) : "—";
       const isReturn = !!o.isReturn;
       html += `
         <tr>
           <td>${o.orderId || o.id}</td>
-          <td>${brandName}</td>
+          <td>${name}</td>
+          <td>${email}</td>
+          <td>${phone}</td>
+          <td>${tierName}</td>
+          <td>${waveName}</td>
           <td>${formatCurrency(o.total)}</td>
           <td>${o.paymentMethod || ""}</td>
           <td>${isReturn ? "refund" : "sale"}</td>
@@ -2401,12 +3265,16 @@
       alert("No orders to export.");
       return;
     }
-    const rows = [["orderId","brand","total","paymentMethod","type","createdAt"]];
+    const rows = [["orderId","customer","email","phone","tier","wave","total","paymentMethod","type","createdAt"]];
     list.forEach((o) => {
       const d = parseOrderDate(o);
       rows.push([
         o.orderId || o.id,
-        o.brandName || (brandMap[o.brandId]?.name) || "",
+        o.name || o.customerName || "",
+        o.email || o.customerEmail || "",
+        o.phone || o.customerPhone || "",
+        o.tierId ? (tierMap[o.tierId]?.name || o.tierId) : "",
+        o.waveId ? (waveMap[o.waveId]?.name || o.waveId) : "",
         o.total || 0,
         o.paymentMethod || "",
         o.isReturn ? "refund" : "sale",
@@ -2425,13 +3293,17 @@
       alert("No customers to export.");
       return;
     }
-    const rows = [["name","phone","email","orders","totalSpent","avgOrder","lastOrder"]];
+    const rows = [["name","age","phone","email","tier","wave","orders","tickets","totalSpent","avgOrder","lastOrder"]];
     list.forEach((c) => {
       rows.push([
         c.name,
+        c.age || "",
         c.phone || "",
         c.email || "",
+        c.tierId ? (tierMap[c.tierId]?.name || c.tierId) : "",
+        c.waveId ? (waveMap[c.waveId]?.name || c.waveId) : "",
         c.orders,
+        c.tickets || 0,
         c.totalSpent,
         c.orders ? c.totalSpent / c.orders : 0,
         c.lastOrderAt ? c.lastOrderAt.toISOString() : ""
@@ -2453,10 +3325,10 @@
       alert("No event selected.");
       return;
     }
-    const name = setEventNameEl?.value.trim() || null;
-    const location = setEventLocationEl?.value.trim() || null;
-    const startDate = setEventStartEl?.value.trim() || null;
-    const endDate = setEventEndEl?.value.trim() || null;
+    const name = setEventNameEl?.value.trim() || currentEventData?.name || null;
+    const location = setEventLocationEl?.value.trim() || currentEventData?.location || null;
+    const startDate = setEventStartEl?.value.trim() || currentEventData?.startDate || null;
+    const endDate = setEventEndEl?.value.trim() || currentEventData?.endDate || null;
 
     try {
       await updateDoc(doc(db, "events", currentEventId), {
@@ -2518,6 +3390,7 @@
     });
     if (canvasId === "chart-revenue-timeline") chartRevenueTimeline = instance;
     if (canvasId === "chart-peak-sparkline") chartPeakSparkline = instance;
+    if (canvasId === "chart-ticket-orders-timeline") chartTicketOrdersTimeline = instance;
   }
 
   function updateDoughnutChart(instance, canvasId, labels, data) {
@@ -2542,6 +3415,7 @@
       }
     });
     if (canvasId === "chart-payment-mix") chartPaymentMix = instance;
+    if (canvasId === "chart-age-mix") chartAgeMix = instance;
   }
 
   function updateBarChart(instance, canvasId, labels, data, label) {
@@ -2575,6 +3449,8 @@
       }
     });
     if (canvasId === "chart-top-products") chartTopProducts = instance;
+    if (canvasId === "chart-tickets-by-tier") chartTicketsByTier = instance;
+    if (canvasId === "chart-revenue-by-wave") chartRevenueByWave = instance;
   }
 
   // -----------------------------
@@ -2584,17 +3460,22 @@
     btn.addEventListener("click", () => {
       const pageId = btn.dataset.page;
       if (!pageId) return;
-      navItems.forEach((b) => b.classList.remove("active"));
+      navItems.forEach((b) => {
+        if (b.dataset.page === pageId) b.classList.add("active");
+        else b.classList.remove("active");
+      });
       pages.forEach((p) => p.classList.remove("active"));
-      btn.classList.add("active");
       const pageEl = qs("#" + pageId);
       if (pageEl) pageEl.classList.add("active");
 
       if (pageId === "page-overview" && topbarTitleEl) topbarTitleEl.textContent = "Event Overview";
+      if (pageId === "page-ticketing" && topbarTitleEl) topbarTitleEl.textContent = "Ticketing";
+      if (pageId === "page-analytics" && topbarTitleEl) topbarTitleEl.textContent = "Analytics";
+      if (pageId === "page-attention" && topbarTitleEl) topbarTitleEl.textContent = "Attention";
       if (pageId === "page-vendors" && topbarTitleEl) topbarTitleEl.textContent = "Vendors";
       if (pageId === "page-products" && topbarTitleEl) topbarTitleEl.textContent = "Products & Returns";
       if (pageId === "page-customers" && topbarTitleEl) topbarTitleEl.textContent = "Customers";
-      if (pageId === "page-sales" && topbarTitleEl) topbarTitleEl.textContent = "Sales & POS";
+      if (pageId === "page-sales" && topbarTitleEl) topbarTitleEl.textContent = "Orders";
       if (pageId === "page-settings" && topbarTitleEl) topbarTitleEl.textContent = "Event Settings";
     });
   });
@@ -2619,9 +3500,13 @@
   // LOGOUT
   // -----------------------------
   logoutBtn?.addEventListener("click", async () => {
+    if (unsubEvent) unsubEvent();
     if (unsubVendors) unsubVendors();
     if (unsubOrders) unsubOrders();
-    unsubVendors = unsubOrders = null;
+    if (unsubTicketOrders) unsubTicketOrders();
+    if (unsubTiers) unsubTiers();
+    if (unsubWaves) unsubWaves();
+    unsubEvent = unsubVendors = unsubOrders = unsubTicketOrders = unsubTiers = unsubWaves = null;
     await signOut(auth);
     showAuthView();
   });
@@ -2638,10 +3523,19 @@
       currentEventData = null;
       vendors = [];
       ordersAll = [];
+      ticketOrders = [];
+      tiers = [];
+      waves = [];
       brandMap = {};
+      tierMap = {};
+      waveMap = {};
+      if (unsubEvent) unsubEvent();
       if (unsubVendors) unsubVendors();
       if (unsubOrders) unsubOrders();
-      unsubVendors = unsubOrders = null;
+      if (unsubTicketOrders) unsubTicketOrders();
+      if (unsubTiers) unsubTiers();
+      if (unsubWaves) unsubWaves();
+      unsubEvent = unsubVendors = unsubOrders = unsubTicketOrders = unsubTiers = unsubWaves = null;
       showAuthView();
       return;
     }
