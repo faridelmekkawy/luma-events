@@ -182,6 +182,16 @@
       margin-bottom:4px;
       line-height:1.4;
     }
+    .system-banner{
+      display:none;
+      margin-top:8px;
+      padding:8px 10px;
+      border-radius:10px;
+      background:#eff6ff;
+      color:#1d4ed8;
+      border:1px solid #bfdbfe;
+      font-size:11px;
+    }
   </style>
 </head>
 <body>
@@ -200,7 +210,8 @@
       </div>
     </div>
 
-    <div id="alert-container"></div>
+    <div id="alert-container" aria-live="polite"></div>
+    <div id="system-status-banner" class="system-banner" aria-live="polite"></div>
 
     <form id="vendor-form">
       <!-- BRAND -->
@@ -209,7 +220,7 @@
           <span>Brand name</span>
           <span class="field-required">Required</span>
         </div>
-        <input id="brand-name" class="field-input" placeholder="Example: Nizu, Oudies…"/>
+        <input id="brand-name" class="field-input" placeholder="Example: Nizu, Oudies…" autocomplete="organization" required/>
       </div>
 
       <div class="field">
@@ -217,7 +228,7 @@
           <span>Product category</span>
           <span class="field-required">Required</span>
         </div>
-        <input id="category" class="field-input" placeholder="Coffee, food, desserts, accessories, clothing…"/>
+        <input id="category" class="field-input" placeholder="Coffee, food, desserts, accessories, clothing…" required/>
       </div>
 
       <hr class="divider"/>
@@ -228,7 +239,7 @@
           <span>Owner / main contact name</span>
           <span class="field-required">Required</span>
         </div>
-        <input id="owner-name" class="field-input" placeholder="Full name"/>
+        <input id="owner-name" class="field-input" placeholder="Full name" autocomplete="name" required/>
       </div>
 
       <div class="field">
@@ -236,7 +247,7 @@
           <span>Phone (WhatsApp)</span>
           <span class="field-required">Required</span>
         </div>
-        <input id="phone" class="field-input" placeholder="+20…"/>
+        <input id="phone" class="field-input" placeholder="+20…" autocomplete="tel" required/>
       </div>
 
       <div class="field">
@@ -244,7 +255,7 @@
           <span>Email</span>
           <span class="field-required">Required</span>
         </div>
-        <input id="email" class="field-input" type="email" placeholder="you@example.com"/>
+        <input id="email" class="field-input" type="email" placeholder="you@example.com" autocomplete="email" required/>
       </div>
 
       <div class="field">
@@ -252,7 +263,7 @@
           <span>Create password (for your Brand Portal login)</span>
           <span class="field-required">Required</span>
         </div>
-        <input id="password" class="field-input" type="password" placeholder="Minimum 6 characters"/>
+        <input id="password" class="field-input" type="password" placeholder="Minimum 6 characters" minlength="6" autocomplete="new-password" required/>
         <div class="field-hint">
           You’ll use this email + password to access your Luma Store OS brand dashboard.
         </div>
@@ -293,7 +304,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import {
-    getFirestore, doc, collection, addDoc, setDoc, getDoc, serverTimestamp
+    getFirestore, doc, collection, addDoc, setDoc, getDoc, serverTimestamp, onSnapshot
   } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
   import {
     getAuth, createUserWithEmailAndPassword, updateProfile
@@ -323,8 +334,11 @@
   const subtitleEl     = qs("#auth-subtitle");
   const form           = qs("#vendor-form");
   const submitBtn      = qs("#btn-submit");
+  const systemStatusBanner = qs("#system-status-banner");
 
   let currentEventMeta = null; // will hold the loaded event doc data
+  let systemStatus = {};
+  let unsubSystemSettings = null;
 
   function showAlert(msg, type="error"){
     const cls =
@@ -335,6 +349,32 @@
     alertContainer.innerHTML = `
       <div class="auth-alert ${cls}">${msg}</div>
     `;
+  }
+
+  function applySystemStatus() {
+    const maintenanceMode = !!systemStatus.maintenanceMode;
+    const message = systemStatus.maintenanceMessage || "Maintenance in progress. Please check back soon.";
+    const vendorSignupDisabled = !!systemStatus.vendorSignupDisabled;
+
+    if (systemStatusBanner) {
+      if (maintenanceMode) {
+        systemStatusBanner.style.display = "block";
+        systemStatusBanner.textContent = message;
+      } else {
+        systemStatusBanner.style.display = "none";
+        systemStatusBanner.textContent = "";
+      }
+    }
+
+    if (submitBtn) submitBtn.disabled = maintenanceMode || vendorSignupDisabled;
+  }
+
+  function startSystemSettingsListener() {
+    if (unsubSystemSettings) unsubSystemSettings();
+    unsubSystemSettings = onSnapshot(doc(db, "systemSettings", "production"), (snap) => {
+      systemStatus = snap.exists() ? snap.data() : {};
+      applySystemStatus();
+    });
   }
 
   function clearAlert(){
@@ -423,6 +463,7 @@
     }
   }
 
+  startSystemSettingsListener();
   loadEventMeta();
 
   form.addEventListener("submit", async (e) => {

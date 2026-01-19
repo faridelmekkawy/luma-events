@@ -109,6 +109,10 @@
       cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
       gap:6px;
     }
+    .btn:disabled{
+      opacity:.5;
+      cursor:not-allowed;
+    }
     .btn-primary{background:var(--accent);color:#fff;}
     .btn-primary:hover{background:var(--accent-strong);}
     .btn-ghost{
@@ -270,6 +274,73 @@
       background:#fee2e2;
       color:#b91c1c;
     }
+    .badge-warning{
+      background:#fef3c7;
+      color:#92400e;
+    }
+    .readiness-list{
+      list-style:none;
+      margin-top:10px;
+      display:grid;
+      gap:8px;
+      font-size:12px;
+    }
+    .readiness-item{
+      display:flex;
+      align-items:flex-start;
+      gap:8px;
+      padding:8px 10px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:var(--panel-soft);
+    }
+    .readiness-item p{margin:0;color:var(--muted);}
+    .status-pill{
+      display:inline-flex;
+      align-items:center;
+      padding:2px 8px;
+      border-radius:999px;
+      font-size:10px;
+      font-weight:600;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+    }
+    .status-blocked{
+      background:#fee2e2;
+      color:#b91c1c;
+    }
+    .status-inprogress{
+      background:#fef3c7;
+      color:#92400e;
+    }
+    .status-ready{
+      background:#dcfce7;
+      color:#166534;
+    }
+    .system-banner{
+      margin-top:8px;
+      margin-bottom:10px;
+    }
+    .system-controls{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      font-size:12px;
+    }
+    .system-controls label{
+      display:flex;
+      gap:8px;
+      align-items:flex-start;
+    }
+    .admin-card{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .admin-metric{
+      font-size:20px;
+      font-weight:700;
+    }
 
     .split-grid-2{
       display:grid;
@@ -429,7 +500,8 @@
       </div>
     </div>
 
-    <div id="auth-alert-container"></div>
+    <div id="auth-alert-container" aria-live="polite"></div>
+    <div id="system-status-banner" class="auth-alert auth-alert-info system-banner" style="display:none;" aria-live="polite"></div>
 
     <div class="auth-tabs">
       <button type="button" id="tab-login" class="auth-tab active">Sign in</button>
@@ -440,11 +512,11 @@
     <form id="login-form">
       <div class="field">
         <div class="field-label">Email</div>
-        <input id="login-email" class="field-input" type="email" placeholder="you@example.com"/>
+        <input id="login-email" class="field-input" type="email" placeholder="you@example.com" autocomplete="email" required/>
       </div>
       <div class="field">
         <div class="field-label">Password</div>
-        <input id="login-password" class="field-input" type="password" placeholder="Your password"/>
+        <input id="login-password" class="field-input" type="password" placeholder="Your password" autocomplete="current-password" required/>
       </div>
       <button type="submit" id="login-btn" class="btn btn-primary" style="width:100%;">Sign in</button>
     </form>
@@ -453,24 +525,24 @@
     <form id="signup-form" style="display:none;">
       <div class="field">
         <div class="field-label">Your name</div>
-        <input id="signup-name" class="field-input" placeholder="Full name"/>
+        <input id="signup-name" class="field-input" placeholder="Full name" autocomplete="name" required/>
       </div>
       <div class="field">
         <div class="field-label">Email</div>
-        <input id="signup-email" class="field-input" type="email" placeholder="you@example.com"/>
+        <input id="signup-email" class="field-input" type="email" placeholder="you@example.com" autocomplete="email" required/>
       </div>
       <div class="field">
         <div class="field-label">Password</div>
-        <input id="signup-password" class="field-input" type="password" placeholder="Minimum 6 characters"/>
+        <input id="signup-password" class="field-input" type="password" placeholder="Minimum 6 characters" minlength="6" autocomplete="new-password" required/>
       </div>
 
       <div class="field">
         <div class="field-label">Event name</div>
-        <input id="signup-event-name" class="field-input" placeholder="Lokamania 5, Soueast Owners, ..."/>
+        <input id="signup-event-name" class="field-input" placeholder="Lokamania 5, Soueast Owners, ..." required/>
       </div>
       <div class="field">
         <div class="field-label">Event location</div>
-        <input id="signup-event-location" class="field-input" placeholder="Cairo Festival City, Dubai, ..."/>
+        <input id="signup-event-location" class="field-input" placeholder="Cairo Festival City, Dubai, ..." autocomplete="address-level2"/>
       </div>
       <div class="field">
         <div class="field-label">Event start date</div>
@@ -506,6 +578,7 @@
         <button class="nav-item" data-page="page-products">Products &amp; Returns</button>
         <button class="nav-item" data-page="page-customers">Customers</button>
         <button class="nav-item" data-page="page-sales">Sales &amp; POS</button>
+        <button id="nav-admin" class="nav-item" data-page="page-admin" style="display:none;">Super Admin</button>
         <button class="nav-item" data-page="page-settings">Event Settings</button>
       </nav>
       <button id="btn-logout" class="nav-item logout">Logout</button>
@@ -519,6 +592,7 @@
           <div id="topbar-sub" class="topbar-sub">Monitor vendors, customers, products and live sales</div>
         </div>
         <div class="topbar-right">
+          <span id="role-badge" class="badge badge-warning" style="display:none;">Super Admin</span>
           <div>
             <span style="font-size:11px;color:var(--muted);margin-right:4px;">Event:</span>
             <select id="event-select" class="topbar-select">
@@ -775,6 +849,99 @@
           </div>
         </section>
 
+        <!-- ================= SUPER ADMIN PAGE ================ -->
+        <section id="page-admin" class="page">
+          <div class="page-header">
+            <div>
+              <div class="page-title">Super Admin Control Center</div>
+              <div class="page-sub">Monitor all events and apply overrides for Luma staff.</div>
+            </div>
+          </div>
+
+          <div class="cards-grid">
+            <div class="card admin-card">
+              <div class="card-title">Total Events</div>
+              <div id="admin-total-events" class="admin-metric">0</div>
+              <div class="card-note">Live count across all events.</div>
+            </div>
+            <div class="card admin-card">
+              <div class="card-title">Total Vendors</div>
+              <div id="admin-total-vendors" class="admin-metric">0</div>
+              <div class="card-note">All vendors linked to events.</div>
+            </div>
+            <div class="card admin-card">
+              <div class="card-title">Total Orders</div>
+              <div id="admin-total-orders" class="admin-metric">0</div>
+              <div class="card-note">Orders across all brands and events.</div>
+            </div>
+            <div class="card admin-card">
+              <div class="card-title">Total Revenue</div>
+              <div id="admin-total-revenue" class="admin-metric">0.00</div>
+              <div class="card-note">Gross revenue across all events.</div>
+            </div>
+          </div>
+
+          <div class="split-grid-2">
+            <div class="card">
+              <div class="section-title-row">
+                <div>
+                  <div class="section-title">Event Oversight</div>
+                  <div class="section-sub">Status overrides and high-level ownership data.</div>
+                </div>
+              </div>
+              <div id="admin-events-table-wrapper" class="table-wrapper" style="margin-top:6px;">
+                <!-- admin events table injected -->
+              </div>
+            </div>
+            <div class="card">
+              <div class="section-title-row">
+                <div>
+                  <div class="section-title">Global vendor status</div>
+                  <div class="section-sub">Pending approvals and override actions.</div>
+                </div>
+              </div>
+              <div id="admin-vendor-summary" style="margin-top:10px;font-size:12px;color:var(--muted);"></div>
+            </div>
+          </div>
+          <div class="cards-grid">
+            <div class="card">
+              <div class="section-title-row">
+                <div>
+                  <div class="section-title">System Controls</div>
+                  <div class="section-sub">Production toggles stored in Firestore.</div>
+                </div>
+              </div>
+              <div class="system-controls">
+                <label>
+                  <input id="sys-maintenance-toggle" type="checkbox"/>
+                  <span>Maintenance mode (lock non-admin access)</span>
+                </label>
+                <label>
+                  <input id="sys-owner-signup-toggle" type="checkbox"/>
+                  <span>Disable owner signups</span>
+                </label>
+                <label>
+                  <input id="sys-brand-signup-toggle" type="checkbox"/>
+                  <span>Disable brand signups</span>
+                </label>
+                <label>
+                  <input id="sys-vendor-signup-toggle" type="checkbox"/>
+                  <span>Disable vendor signups</span>
+                </label>
+                <label>
+                  <input id="sys-pos-login-toggle" type="checkbox"/>
+                  <span>Disable POS logins</span>
+                </label>
+                <div class="field">
+                  <div class="field-label">Maintenance message</div>
+                  <textarea id="sys-maintenance-message" class="field-input" rows="2" placeholder="Message shown to staff and vendors."></textarea>
+                </div>
+                <button id="btn-save-system-settings" class="btn btn-primary" style="align-self:flex-start;">Save system settings</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <!-- ================= EVENT SETTINGS PAGE ================ -->
         <section id="page-settings" class="page">
           <div class="page-header">
@@ -787,11 +954,11 @@
             <div class="card">
               <div class="field">
                 <div class="field-label">Event name</div>
-                <input id="set-event-name" class="field-input"/>
+                <input id="set-event-name" class="field-input" autocomplete="organization"/>
               </div>
               <div class="field">
                 <div class="field-label">Location</div>
-                <input id="set-event-location" class="field-input"/>
+                <input id="set-event-location" class="field-input" autocomplete="address-level2"/>
               </div>
               <div class="field">
                 <div class="field-label">Start date</div>
@@ -802,6 +969,51 @@
                 <input id="set-event-end" class="field-input" type="date"/>
               </div>
               <button id="btn-save-event" class="btn btn-primary" style="margin-top:6px;">Save settings</button>
+            </div>
+            <div class="card">
+              <div class="section-title-row">
+                <div>
+                  <div class="section-title">Production readiness checklist</div>
+                  <div class="section-sub">Track launch blockers before going live.</div>
+                </div>
+              </div>
+              <ul class="readiness-list">
+                <li class="readiness-item">
+                  <span class="status-pill status-blocked">Blocked</span>
+                  <div>
+                    <strong>Server-side validation &amp; rate limits</strong>
+                    <p>Protect write endpoints against abuse and enforce schema validation.</p>
+                  </div>
+                </li>
+                <li class="readiness-item">
+                  <span class="status-pill status-inprogress">In progress</span>
+                  <div>
+                    <strong>Audit logging &amp; export retention</strong>
+                    <p>Capture admin actions and define data retention policies for exports.</p>
+                  </div>
+                </li>
+                <li class="readiness-item">
+                  <span class="status-pill status-blocked">Blocked</span>
+                  <div>
+                    <strong>Security rules review</strong>
+                    <p>Verify Firestore rules and role-based access for owners, brands, and POS.</p>
+                  </div>
+                </li>
+                <li class="readiness-item">
+                  <span class="status-pill status-inprogress">In progress</span>
+                  <div>
+                    <strong>Monitoring &amp; alerting</strong>
+                    <p>Set up uptime checks, error monitoring, and SLA response workflows.</p>
+                  </div>
+                </li>
+                <li class="readiness-item">
+                  <span class="status-pill status-ready">Ready</span>
+                  <div>
+                    <strong>Operational runbook</strong>
+                    <p>Escalation contacts and incident response playbooks documented.</p>
+                  </div>
+                </li>
+              </ul>
             </div>
           </div>
         </section>
@@ -941,6 +1153,15 @@
     return new Date();
   }
 
+  function getEventIdFromRef(ref) {
+    return ref?.parent?.parent?.id || null;
+  }
+
+  function getEventNameById(id) {
+    const ev = eventsList.find((e) => e.id === id);
+    return ev?.name || "Event";
+  }
+
   // -----------------------------
   // AUTH DOM
   // -----------------------------
@@ -950,9 +1171,11 @@
   const signupForm = qs("#signup-form");
   const authAlertContainer = qs("#auth-alert-container");
   const authSubtitle = qs("#auth-subtitle");
+  const systemStatusBannerEl = qs("#system-status-banner");
 
   const loginEmailEl = qs("#login-email");
   const loginPasswordEl = qs("#login-password");
+  const loginBtn = qs("#login-btn");
 
   const signupNameEl = qs("#signup-name");
   const signupEmailEl = qs("#signup-email");
@@ -961,6 +1184,7 @@
   const signupEventLocationEl = qs("#signup-event-location");
   const signupEventStartEl = qs("#signup-event-start");
   const signupEventEndEl = qs("#signup-event-end");
+  const signupBtn = qs("#signup-btn");
 
   // -----------------------------
   // APP DOM
@@ -971,6 +1195,8 @@
   const topbarSubtitleEl = qs("#topbar-sub");
   const eventSelectEl = qs("#event-select");
   const dateFilterContainer = qs("#date-filter");
+  const roleBadgeEl = qs("#role-badge");
+  const navAdminEl = qs("#nav-admin");
 
   // Overview KPIs
   const kpiTotalRevenueEl = qs("#kpi-total-revenue");
@@ -1017,6 +1243,21 @@
   const ordersTableWrapperEl = qs("#orders-table-wrapper");
   const btnExportOrders = qs("#btn-export-orders");
 
+  // Super admin
+  const adminTotalEventsEl = qs("#admin-total-events");
+  const adminTotalVendorsEl = qs("#admin-total-vendors");
+  const adminTotalOrdersEl = qs("#admin-total-orders");
+  const adminTotalRevenueEl = qs("#admin-total-revenue");
+  const adminEventsTableWrapperEl = qs("#admin-events-table-wrapper");
+  const adminVendorSummaryEl = qs("#admin-vendor-summary");
+  const sysMaintenanceToggleEl = qs("#sys-maintenance-toggle");
+  const sysOwnerSignupToggleEl = qs("#sys-owner-signup-toggle");
+  const sysBrandSignupToggleEl = qs("#sys-brand-signup-toggle");
+  const sysVendorSignupToggleEl = qs("#sys-vendor-signup-toggle");
+  const sysPosLoginToggleEl = qs("#sys-pos-login-toggle");
+  const sysMaintenanceMessageEl = qs("#sys-maintenance-message");
+  const btnSaveSystemSettings = qs("#btn-save-system-settings");
+
   // Settings
   const setEventNameEl = qs("#set-event-name");
   const setEventLocationEl = qs("#set-event-location");
@@ -1038,6 +1279,9 @@
   // -----------------------------
   let currentUser = null;
   let ownerProfile = null;
+  let superAdminProfile = null;
+  let isSuperAdmin = false;
+  let systemStatus = {};
 
   let eventsList = [];
   let currentEventId = null;
@@ -1046,6 +1290,9 @@
   let vendors = [];
   let ordersAll = []; // all orders for eventId
   let brandMap = {};  // brandId -> brand data (logo, status, etc.)
+
+  let adminVendorsAll = [];
+  let adminOrdersAll = [];
 
   let vendorStatusFilter = "all";
   let vendorSearchTerm = "";
@@ -1057,6 +1304,9 @@
 
   let unsubVendors = null;
   let unsubOrders = null;
+  let unsubAdminVendors = null;
+  let unsubAdminOrders = null;
+  let unsubSystemSettings = null;
 
   // Chart instances
   let chartRevenueTimeline = null;
@@ -1077,6 +1327,58 @@
   }
   function clearAuthAlert() {
     authAlertContainer.innerHTML = "";
+  }
+
+  // -----------------------------
+  // SYSTEM SETTINGS
+  // -----------------------------
+  function applySystemStatus() {
+    const maintenanceMode = !!systemStatus.maintenanceMode;
+    const maintenanceMessage = systemStatus.maintenanceMessage || "Maintenance in progress. Please check back soon.";
+    const ownerSignupDisabled = !!systemStatus.ownerSignupDisabled;
+
+    if (systemStatusBannerEl) {
+      if (maintenanceMode) {
+        systemStatusBannerEl.style.display = "block";
+        systemStatusBannerEl.textContent = maintenanceMessage;
+      } else {
+        systemStatusBannerEl.style.display = "none";
+        systemStatusBannerEl.textContent = "";
+      }
+    }
+
+    if (signupBtn) signupBtn.disabled = maintenanceMode || ownerSignupDisabled;
+    if (signupForm && loginForm && tabSignup && tabLogin && authSubtitle && (maintenanceMode || ownerSignupDisabled)) {
+      signupForm.style.display = "none";
+      tabSignup.classList.remove("active");
+      tabLogin.classList.add("active");
+      loginForm.style.display = "";
+      authSubtitle.textContent = maintenanceMode
+        ? "Sign in to manage events. Signups are temporarily unavailable."
+        : "Sign in to manage your events and analytics.";
+    }
+
+    if (sysMaintenanceToggleEl) sysMaintenanceToggleEl.checked = maintenanceMode;
+    if (sysOwnerSignupToggleEl) sysOwnerSignupToggleEl.checked = ownerSignupDisabled;
+    if (sysBrandSignupToggleEl) sysBrandSignupToggleEl.checked = !!systemStatus.brandSignupDisabled;
+    if (sysVendorSignupToggleEl) sysVendorSignupToggleEl.checked = !!systemStatus.vendorSignupDisabled;
+    if (sysPosLoginToggleEl) sysPosLoginToggleEl.checked = !!systemStatus.posLoginDisabled;
+    if (sysMaintenanceMessageEl && document.activeElement !== sysMaintenanceMessageEl) {
+      sysMaintenanceMessageEl.value = systemStatus.maintenanceMessage || "";
+    }
+
+    if (maintenanceMode && currentUser && !isSuperAdmin) {
+      showAuthAlert(maintenanceMessage, "info");
+      signOut(auth).catch(() => {});
+    }
+  }
+
+  function startSystemSettingsListener() {
+    if (unsubSystemSettings) unsubSystemSettings();
+    unsubSystemSettings = onSnapshot(doc(db, "systemSettings", "production"), (snap) => {
+      systemStatus = snap.exists() ? snap.data() : {};
+      applySystemStatus();
+    });
   }
 
   // -----------------------------
@@ -1220,13 +1522,13 @@
   });
 
   // -----------------------------
-  // LOAD EVENTS FOR OWNER
+  // LOAD EVENTS
   // -----------------------------
-  async function loadEventsForOwner(uid) {
-    const qEv = query(
-      collection(db, "events"),
-      where("ownerUserId", "==", uid)
-    );
+  async function loadEventsForUser(uid) {
+    const qEv = isSuperAdmin
+      ? query(collection(db, "events"))
+      : query(collection(db, "events"), where("ownerUserId", "==", uid));
+
     const snap = await getDocs(qEv);
     eventsList = [];
     snap.forEach((d) => {
@@ -1237,6 +1539,12 @@
   function renderEventSwitcher() {
     if (!eventSelectEl) return;
     eventSelectEl.innerHTML = "";
+    if (isSuperAdmin) {
+      const opt = document.createElement("option");
+      opt.value = "all";
+      opt.textContent = "All events";
+      eventSelectEl.appendChild(opt);
+    }
     eventsList.forEach((ev) => {
       const opt = document.createElement("option");
       opt.value = ev.id;
@@ -1252,7 +1560,7 @@
       if (!val) return;
       currentEventId = val;
 
-      if (currentUser) {
+      if (currentUser && !isSuperAdmin) {
         const ownerEventsRef = doc(db, "ownerEvents", currentUser.uid);
         const existingSnap = await getDoc(ownerEventsRef);
         const existing = existingSnap.exists() ? existingSnap.data() : {};
@@ -1334,11 +1642,65 @@
     updateActiveChip();
   }
 
+  function applyEventContext(eventData, eventId) {
+    const isAllEvents = eventId === "all";
+    const name = isAllEvents ? "All Events" : eventData?.name || "Event";
+    const location = isAllEvents ? "" : eventData?.location || "";
+    const startDate = isAllEvents ? "" : eventData?.startDate || "";
+    const endDate = isAllEvents ? "" : eventData?.endDate || "";
+
+    if (sidebarEventNameEl) sidebarEventNameEl.textContent = name;
+    if (sidebarEventLogoEl) {
+      sidebarEventLogoEl.textContent = (name[0] || "E").toUpperCase();
+    }
+
+    if (topbarTitleEl) topbarTitleEl.textContent = "Event Overview";
+    if (topbarSubtitleEl) {
+      if (isAllEvents) {
+        topbarSubtitleEl.textContent = "Global view across every event.";
+      } else {
+        const parts = [name];
+        if (startDate && endDate) parts.push(`${startDate} → ${endDate}`);
+        if (location) parts.push(location);
+        topbarSubtitleEl.textContent = parts.filter(Boolean).join(" • ");
+      }
+    }
+
+    if (setEventNameEl) setEventNameEl.value = name;
+    if (setEventLocationEl) setEventLocationEl.value = location;
+    if (setEventStartEl) setEventStartEl.value = startDate || "";
+    if (setEventEndEl) setEventEndEl.value = endDate || "";
+
+    const disableSettings = isAllEvents;
+    [setEventNameEl, setEventLocationEl, setEventStartEl, setEventEndEl].forEach((el) => {
+      if (el) el.disabled = disableSettings;
+    });
+    if (btnSaveEventSettings) btnSaveEventSettings.disabled = disableSettings;
+
+    if (btnManualVendor) btnManualVendor.disabled = isAllEvents;
+    if (btnCopyVendorLink) btnCopyVendorLink.disabled = isAllEvents;
+
+    buildDateFilterChips();
+  }
+
   // -----------------------------
   // SELECT EVENT
   // -----------------------------
   async function selectEvent(eventId) {
     if (!eventId) return;
+
+    currentEventId = eventId;
+
+    if (isSuperAdmin) {
+      currentEventData = eventId === "all" ? null : eventsList.find((ev) => ev.id === eventId) || null;
+      if (eventId !== "all" && !currentEventData) {
+        const evSnap = await getDoc(doc(db, "events", eventId));
+        if (evSnap.exists()) currentEventData = { id: eventId, ...evSnap.data() };
+      }
+      applyEventContext(currentEventData, eventId);
+      applySuperAdminFilters();
+      return;
+    }
 
     if (unsubVendors) unsubVendors();
     if (unsubOrders) unsubOrders();
@@ -1353,38 +1715,14 @@
     if (!evSnap.exists()) return;
     currentEventData = { id: eventId, ...evSnap.data() };
 
-    const name = currentEventData.name || "Event";
-    const location = currentEventData.location || "";
-    const startDate = currentEventData.startDate || "";
-    const endDate = currentEventData.endDate || "";
-
-    if (sidebarEventNameEl) sidebarEventNameEl.textContent = name;
-    if (sidebarEventLogoEl) {
-      sidebarEventLogoEl.textContent = (name[0] || "E").toUpperCase();
-    }
-
-    if (topbarTitleEl) topbarTitleEl.textContent = "Event Overview";
-    if (topbarSubtitleEl) {
-      const parts = [name];
-      if (startDate && endDate) parts.push(`${startDate} → ${endDate}`);
-      if (location) parts.push(location);
-      topbarSubtitleEl.textContent = parts.filter(Boolean).join(" • ");
-    }
-
-    // settings fields
-    if (setEventNameEl) setEventNameEl.value = name;
-    if (setEventLocationEl) setEventLocationEl.value = location;
-    if (setEventStartEl) setEventStartEl.value = startDate || "";
-    if (setEventEndEl) setEventEndEl.value = endDate || "";
-
-    buildDateFilterChips();
+    applyEventContext(currentEventData, eventId);
 
     // vendors listener
     const vendorsRef = collection(db, "events", eventId, "vendors");
     const qVendors = query(vendorsRef);
     unsubVendors = onSnapshot(qVendors, async (snap) => {
       vendors = [];
-      snap.forEach((d) => vendors.push({ id: d.id, ...d.data() }));
+      snap.forEach((d) => vendors.push({ id: d.id, eventId, ...d.data() }));
       await ensureBrandDocsLoaded();
       renderVendorsSection();
       recomputeAllAnalytics(); // active brands etc depend on vendors + orders
@@ -1399,7 +1737,7 @@
       qOrders,
       async (snap) => {
         ordersAll = [];
-        snap.forEach((d) => ordersAll.push({ id: d.id, ...d.data() }));
+        snap.forEach((d) => ordersAll.push({ id: d.id, eventId, ...d.data() }));
         await ensureBrandDocsLoaded();
         recomputeAllAnalytics();
       },
@@ -1408,6 +1746,177 @@
       }
     );
   }
+
+  async function applySuperAdminFilters() {
+    const isAllEvents = currentEventId === "all";
+    vendors = isAllEvents
+      ? [...adminVendorsAll]
+      : adminVendorsAll.filter((v) => v.eventId === currentEventId);
+    ordersAll = isAllEvents
+      ? [...adminOrdersAll]
+      : adminOrdersAll.filter((o) => o.eventId === currentEventId);
+
+    await ensureBrandDocsLoaded();
+    renderVendorsSection();
+    recomputeAllAnalytics();
+    renderAdminDashboard();
+  }
+
+  function startSuperAdminListeners() {
+    if (unsubAdminVendors) unsubAdminVendors();
+    if (unsubAdminOrders) unsubAdminOrders();
+    unsubAdminVendors = null;
+    unsubAdminOrders = null;
+
+    unsubAdminVendors = onSnapshot(collectionGroup(db, "vendors"), async (snap) => {
+      adminVendorsAll = [];
+      snap.forEach((d) => {
+        const eventId = getEventIdFromRef(d.ref);
+        adminVendorsAll.push({ id: d.id, eventId, ...d.data() });
+      });
+      await applySuperAdminFilters();
+    });
+
+    unsubAdminOrders = onSnapshot(
+      collectionGroup(db, "orders"),
+      async (snap) => {
+        adminOrdersAll = [];
+        snap.forEach((d) => {
+          const data = d.data();
+          const eventId = data.eventId || getEventIdFromRef(d.ref);
+          adminOrdersAll.push({ id: d.id, eventId, ...data });
+        });
+        await applySuperAdminFilters();
+      },
+      (err) => {
+        console.error("Admin orders listener error:", err);
+      }
+    );
+  }
+
+  function renderAdminDashboard() {
+    if (!isSuperAdmin) return;
+
+    if (adminTotalEventsEl) adminTotalEventsEl.textContent = String(eventsList.length || 0);
+    if (adminTotalVendorsEl) adminTotalVendorsEl.textContent = String(adminVendorsAll.length || 0);
+    if (adminTotalOrdersEl) adminTotalOrdersEl.textContent = String(adminOrdersAll.length || 0);
+
+    const totalRevenue = adminOrdersAll.reduce((sum, o) => {
+      const total = Number(o.total) || 0;
+      return o.isReturn ? sum - Math.abs(total) : sum + total;
+    }, 0);
+    if (adminTotalRevenueEl) adminTotalRevenueEl.textContent = formatCurrency(totalRevenue);
+
+    if (adminVendorSummaryEl) {
+      const pending = adminVendorsAll.filter((v) => (v.status || "pending") === "pending").length;
+      const suspended = adminVendorsAll.filter((v) => (v.status || "pending") === "suspended").length;
+      const rejected = adminVendorsAll.filter((v) => (v.status || "pending") === "rejected").length;
+      adminVendorSummaryEl.innerHTML = `
+        <div><strong>Pending:</strong> ${pending}</div>
+        <div><strong>Suspended:</strong> ${suspended}</div>
+        <div><strong>Rejected:</strong> ${rejected}</div>
+      `;
+    }
+
+    if (!adminEventsTableWrapperEl) return;
+    if (!eventsList.length) {
+      adminEventsTableWrapperEl.innerHTML = `<div class="table-empty">No events found.</div>`;
+      return;
+    }
+
+    const orderTotalsByEvent = {};
+    adminOrdersAll.forEach((o) => {
+      if (!o.eventId) return;
+      const total = Number(o.total) || 0;
+      const value = o.isReturn ? -Math.abs(total) : total;
+      orderTotalsByEvent[o.eventId] = (orderTotalsByEvent[o.eventId] || 0) + value;
+    });
+
+    let html = `
+      <table>
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Status</th>
+            <th>Owner</th>
+            <th>Dates</th>
+            <th>Revenue</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    eventsList.forEach((ev) => {
+      const status = ev.status || "active";
+      const ownerId = ev.ownerUserId || "—";
+      const start = ev.startDate || "";
+      const end = ev.endDate || "";
+      const revenue = orderTotalsByEvent[ev.id] || 0;
+      const actionLabel = status === "active" ? "Suspend" : "Activate";
+
+      html += `
+        <tr data-event-id="${ev.id}">
+          <td>${ev.name || "Untitled event"}</td>
+          <td>${status}</td>
+          <td>${ownerId}</td>
+          <td>${start && end ? `${start} → ${end}` : "—"}</td>
+          <td>${formatCurrency(revenue)}</td>
+          <td>
+            <button class="btn btn-ghost" data-action="toggle-status" data-id="${ev.id}" style="padding:4px 8px;font-size:10px;">
+              ${actionLabel}
+            </button>
+          </td>
+        </tr>
+      `;
+    });
+
+    html += `</tbody></table>`;
+    adminEventsTableWrapperEl.innerHTML = html;
+
+    adminEventsTableWrapperEl.querySelectorAll("button[data-action='toggle-status']").forEach((btn) => {
+      btn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute("data-id");
+        const ev = eventsList.find((item) => item.id === id);
+        if (!ev) return;
+        const nextStatus = (ev.status || "active") === "active" ? "suspended" : "active";
+        try {
+          await updateDoc(doc(db, "events", id), { status: nextStatus });
+          ev.status = nextStatus;
+          renderAdminDashboard();
+        } catch (err) {
+          console.error("Failed to update event status:", err);
+          alert("Failed to update event status.");
+        }
+      });
+    });
+  }
+
+  btnSaveSystemSettings?.addEventListener("click", async () => {
+    if (!isSuperAdmin) {
+      alert("Super admin access required.");
+      return;
+    }
+    try {
+      await setDoc(
+        doc(db, "systemSettings", "production"),
+        {
+          maintenanceMode: !!sysMaintenanceToggleEl?.checked,
+          maintenanceMessage: sysMaintenanceMessageEl?.value.trim() || "",
+          ownerSignupDisabled: !!sysOwnerSignupToggleEl?.checked,
+          brandSignupDisabled: !!sysBrandSignupToggleEl?.checked,
+          vendorSignupDisabled: !!sysVendorSignupToggleEl?.checked,
+          posLoginDisabled: !!sysPosLoginToggleEl?.checked
+        },
+        { merge: true }
+      );
+      alert("System settings saved.");
+    } catch (err) {
+      console.error("Failed to save system settings:", err);
+      alert("Failed to save system settings.");
+    }
+  });
 
   async function ensureBrandDocsLoaded() {
     // gather all brandIds from vendors + orders
@@ -1931,6 +2440,7 @@
     if (!vendorsTableWrapperEl) return;
 
     let list = [...vendors];
+    const showEventColumn = isSuperAdmin || currentEventId === "all";
 
     // filter by status pill
     if (vendorStatusFilter !== "all") {
@@ -1966,6 +2476,7 @@
         <thead>
           <tr>
             <th>Brand Name</th>
+            ${showEventColumn ? "<th>Event</th>" : ""}
             <th>Owner Name</th>
             <th>Phone</th>
             <th>Email</th>
@@ -1980,6 +2491,7 @@
     list.forEach((v) => {
       const status = v.status || "pending";
       const brandName = v.brandName || v.vendorName || "Vendor";
+      const eventLabel = v.eventId ? getEventNameById(v.eventId) : currentEventData?.name || "Event";
       const ownerName = v.ownerName || v.contactName || "";
       const phone = v.phone || "";
       const email = v.email || "";
@@ -2001,6 +2513,7 @@
       html += `
         <tr data-vendor-id="${v.id}">
           <td>${brandName}</td>
+          ${showEventColumn ? `<td>${eventLabel}</td>` : ""}
           <td>${ownerName}</td>
           <td>${phone}</td>
           <td>${email}</td>
@@ -2051,9 +2564,10 @@
   }
 
   async function updateVendorStatus(vendor, status, rejectionReason = null) {
-    if (!currentEventId) return;
+    const eventId = vendor.eventId || currentEventId;
+    if (!eventId) return;
     try {
-      const vendorRef = doc(db, "events", currentEventId, "vendors", vendor.id);
+      const vendorRef = doc(db, "events", eventId, "vendors", vendor.id);
       const updates = { status };
       if (status === "rejected") {
         updates.rejectionReason = rejectionReason || "No reason provided";
@@ -2104,6 +2618,7 @@
   function openVendorDetailsModal(vendor) {
     const status = vendor.status || "pending";
     const brandName = vendor.brandName || vendor.vendorName || "Vendor";
+    const eventLabel = vendor.eventId ? getEventNameById(vendor.eventId) : currentEventData?.name || "Event";
     const ownerName = vendor.ownerName || vendor.contactName || "";
     const phone = vendor.phone || "";
     const email = vendor.email || "";
@@ -2116,6 +2631,7 @@
         <strong>${brandName}</strong>
       </div>
       <div style="font-size:12px;margin-bottom:10px;">
+        ${(isSuperAdmin || currentEventId === "all") ? `<div><strong>Event:</strong> ${eventLabel}</div>` : ""}
         <div><strong>Owner:</strong> ${ownerName || "—"}</div>
         <div><strong>Phone:</strong> ${phone || "—"}</div>
         <div><strong>Email:</strong> ${email || "—"}</div>
@@ -2156,7 +2672,8 @@
   }
 
   function openVendorPOS(vendor) {
-    if (!currentEventId) return;
+    const eventId = vendor.eventId || currentEventId;
+    if (!eventId) return;
     const brandId = vendor.brandId;
     const branchId = vendor.branchId || "";
     if (!brandId) {
@@ -2166,13 +2683,17 @@
     const url = new URL(window.location.origin + "/pos.html");
     url.searchParams.set("brandId", brandId);
     if (branchId) url.searchParams.set("branchId", branchId);
-    url.searchParams.set("eventId", currentEventId);
+    url.searchParams.set("eventId", eventId);
     window.open(url.toString(), "_blank");
   }
 
   btnManualVendor?.addEventListener("click", () => {
     if (!currentEventId) {
       alert("No event selected.");
+      return;
+    }
+    if (currentEventId === "all") {
+      alert("Select a specific event before adding a vendor.");
       return;
     }
     openModal(`
@@ -2275,7 +2796,7 @@
   });
 
   function buildVendorSignupUrl() {
-    if (!currentEventData) return "";
+    if (!currentEventData || currentEventId === "all") return "";
     const eid = currentEventData.id;
     const token = currentEventData.vendorSignupToken || "";
     const url = new URL(VENDOR_SIGNUP_BASE_URL);
@@ -2333,16 +2854,25 @@
       alert("No vendors to export.");
       return;
     }
-    const rows = [["brandName","ownerName","phone","email","category","status"]];
+    const includeEvent = isSuperAdmin || currentEventId === "all";
+    const rows = [includeEvent
+      ? ["eventId","eventName","brandName","ownerName","phone","email","category","status"]
+      : ["brandName","ownerName","phone","email","category","status"]
+    ];
     vendors.forEach((v) => {
-      rows.push([
+      const row = [
         v.brandName || v.vendorName || "",
         v.ownerName || v.contactName || "",
         v.phone || "",
         v.email || "",
         v.category || v.segment || "",
         v.status || "pending"
-      ]);
+      ];
+      if (includeEvent) {
+        const eventName = v.eventId ? getEventNameById(v.eventId) : "";
+        row.unshift(v.eventId || "", eventName);
+      }
+      rows.push(row);
     });
     downloadCsv("vendors.csv", rows);
   });
@@ -2358,11 +2888,13 @@
     }
 
     const list = [...filteredOrders].sort((a,b) => parseOrderDate(b) - parseOrderDate(a));
+    const showEventColumn = isSuperAdmin || currentEventId === "all";
 
     let html = `
       <table>
         <thead>
           <tr>
+            ${showEventColumn ? "<th>Event</th>" : ""}
             <th>Order ID</th>
             <th>Brand</th>
             <th>Total</th>
@@ -2378,8 +2910,10 @@
       const dateStr = d.toLocaleString("en-EG", { day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit" });
       const brandName = o.brandName || (brandMap[o.brandId]?.name) || "Brand";
       const isReturn = !!o.isReturn;
+      const eventLabel = o.eventId ? getEventNameById(o.eventId) : currentEventData?.name || "Event";
       html += `
         <tr>
+          ${showEventColumn ? `<td>${eventLabel}</td>` : ""}
           <td>${o.orderId || o.id}</td>
           <td>${brandName}</td>
           <td>${formatCurrency(o.total)}</td>
@@ -2401,17 +2935,26 @@
       alert("No orders to export.");
       return;
     }
-    const rows = [["orderId","brand","total","paymentMethod","type","createdAt"]];
+    const includeEvent = isSuperAdmin || currentEventId === "all";
+    const rows = [includeEvent
+      ? ["eventId","eventName","orderId","brand","total","paymentMethod","type","createdAt"]
+      : ["orderId","brand","total","paymentMethod","type","createdAt"]
+    ];
     list.forEach((o) => {
       const d = parseOrderDate(o);
-      rows.push([
+      const row = [
         o.orderId || o.id,
         o.brandName || (brandMap[o.brandId]?.name) || "",
         o.total || 0,
         o.paymentMethod || "",
         o.isReturn ? "refund" : "sale",
         d.toISOString()
-      ]);
+      ];
+      if (includeEvent) {
+        const eventName = o.eventId ? getEventNameById(o.eventId) : "";
+        row.unshift(o.eventId || "", eventName);
+      }
+      rows.push(row);
     });
     downloadCsv("event_orders.csv", rows);
   });
@@ -2451,6 +2994,10 @@
   btnSaveEventSettings?.addEventListener("click", async () => {
     if (!currentEventId) {
       alert("No event selected.");
+      return;
+    }
+    if (currentEventId === "all") {
+      alert("Select a specific event before editing settings.");
       return;
     }
     const name = setEventNameEl?.value.trim() || null;
@@ -2595,6 +3142,7 @@
       if (pageId === "page-products" && topbarTitleEl) topbarTitleEl.textContent = "Products & Returns";
       if (pageId === "page-customers" && topbarTitleEl) topbarTitleEl.textContent = "Customers";
       if (pageId === "page-sales" && topbarTitleEl) topbarTitleEl.textContent = "Sales & POS";
+      if (pageId === "page-admin" && topbarTitleEl) topbarTitleEl.textContent = "Super Admin";
       if (pageId === "page-settings" && topbarTitleEl) topbarTitleEl.textContent = "Event Settings";
     });
   });
@@ -2622,6 +3170,9 @@
     if (unsubVendors) unsubVendors();
     if (unsubOrders) unsubOrders();
     unsubVendors = unsubOrders = null;
+    if (unsubAdminVendors) unsubAdminVendors();
+    if (unsubAdminOrders) unsubAdminOrders();
+    unsubAdminVendors = unsubAdminOrders = null;
     await signOut(auth);
     showAuthView();
   });
@@ -2629,19 +3180,29 @@
   // -----------------------------
   // AUTH STATE
   // -----------------------------
+  startSystemSettingsListener();
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
       currentUser = null;
       ownerProfile = null;
+      superAdminProfile = null;
+      isSuperAdmin = false;
       eventsList = [];
       currentEventId = null;
       currentEventData = null;
       vendors = [];
       ordersAll = [];
       brandMap = {};
+      adminVendorsAll = [];
+      adminOrdersAll = [];
       if (unsubVendors) unsubVendors();
       if (unsubOrders) unsubOrders();
       unsubVendors = unsubOrders = null;
+      if (unsubAdminVendors) unsubAdminVendors();
+      if (unsubAdminOrders) unsubAdminOrders();
+      unsubAdminVendors = unsubAdminOrders = null;
+      if (roleBadgeEl) roleBadgeEl.style.display = "none";
+      if (navAdminEl) navAdminEl.style.display = "none";
       showAuthView();
       return;
     }
@@ -2654,23 +3215,41 @@
     const ownerSnap = await getDoc(ownerRef);
     ownerProfile = ownerSnap.exists() ? ownerSnap.data() : null;
 
-    await loadEventsForOwner(user.uid);
+    // super admin profile (optional)
+    const adminRef = doc(db, "lumaAdmins", user.uid);
+    const adminSnap = await getDoc(adminRef);
+    superAdminProfile = adminSnap.exists() ? adminSnap.data() : null;
+    isSuperAdmin = !!(superAdminProfile && (superAdminProfile.role === "super_admin" || superAdminProfile.isSuperAdmin));
 
-    // pick primary event
-    const ownerEventsRef = doc(db, "ownerEvents", user.uid);
-    const ownSnap = await getDoc(ownerEventsRef);
-    if (ownSnap.exists()) {
-      const data = ownSnap.data();
-      if (data.primaryEventId) currentEventId = data.primaryEventId;
+    if (roleBadgeEl) roleBadgeEl.style.display = isSuperAdmin ? "inline-flex" : "none";
+    if (navAdminEl) navAdminEl.style.display = isSuperAdmin ? "block" : "none";
+
+    if (isSuperAdmin) {
+      startSuperAdminListeners();
     }
-    if (!currentEventId && eventsList.length) {
-      currentEventId = eventsList[0].id;
+
+    await loadEventsForUser(user.uid);
+
+    if (isSuperAdmin) {
+      currentEventId = "all";
+    } else {
+      // pick primary event
+      const ownerEventsRef = doc(db, "ownerEvents", user.uid);
+      const ownSnap = await getDoc(ownerEventsRef);
+      if (ownSnap.exists()) {
+        const data = ownSnap.data();
+        if (data.primaryEventId) currentEventId = data.primaryEventId;
+      }
+      if (!currentEventId && eventsList.length) {
+        currentEventId = eventsList[0].id;
+      }
     }
 
     renderEventSwitcher();
     if (currentEventId) {
       await selectEvent(currentEventId);
     }
+    if (isSuperAdmin) renderAdminDashboard();
   });
 
   // start on auth
