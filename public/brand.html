@@ -304,6 +304,16 @@
       color:#991b1b;
       border-color:#fecaca;
     }
+    .system-banner{
+      display:none;
+      margin:0 0 10px;
+      padding:8px 12px;
+      border-radius:10px;
+      background:#eff6ff;
+      color:#1d4ed8;
+      border:1px solid #bfdbfe;
+      font-size:11px;
+    }
 
     /* REJECTED FULL STATE */
     #rejected-state{
@@ -405,7 +415,9 @@
       </div>
     </div>
 
-    <div id="auth-alert-container"></div>
+    <div id="system-status-banner" class="system-banner" aria-live="polite"></div>
+
+    <div id="auth-alert-container" aria-live="polite"></div>
 
     <div class="auth-tabs">
       <button type="button" id="tab-login" class="auth-tab active">Sign in</button>
@@ -416,11 +428,11 @@
     <form id="login-form">
       <div class="field">
         <div class="field-label">Email</div>
-        <input id="login-email" class="field-input" type="email" placeholder="you@example.com"/>
+        <input id="login-email" class="field-input" type="email" placeholder="you@example.com" autocomplete="email" required/>
       </div>
       <div class="field">
         <div class="field-label">Password</div>
-        <input id="login-password" class="field-input" type="password" placeholder="Your password"/>
+        <input id="login-password" class="field-input" type="password" placeholder="Your password" autocomplete="current-password" required/>
       </div>
       <button type="submit" id="login-btn" class="btn btn-primary" style="width:100%;">Sign in</button>
     </form>
@@ -429,23 +441,23 @@
     <form id="create-form" style="display:none;">
       <div class="field">
         <div class="field-label">Brand name</div>
-        <input id="brand-name" class="field-input" placeholder="Example: Luma Coffee"/>
+        <input id="brand-name" class="field-input" placeholder="Example: Luma Coffee" autocomplete="organization" required/>
       </div>
       <div class="field">
         <div class="field-label">Country (optional)</div>
-        <input id="brand-country" class="field-input" placeholder="Egypt, UAE, Germany…"/>
+        <input id="brand-country" class="field-input" placeholder="Egypt, UAE, Germany…" autocomplete="country-name"/>
       </div>
       <div class="field">
         <div class="field-label">Your full name</div>
-        <input id="owner-name" class="field-input" placeholder="Owner / manager name"/>
+        <input id="owner-name" class="field-input" placeholder="Owner / manager name" autocomplete="name" required/>
       </div>
       <div class="field">
         <div class="field-label">Email</div>
-        <input id="owner-email" class="field-input" type="email" placeholder="owner@example.com"/>
+        <input id="owner-email" class="field-input" type="email" placeholder="owner@example.com" autocomplete="email" required/>
       </div>
       <div class="field">
         <div class="field-label">Password</div>
-        <input id="owner-password" class="field-input" type="password" placeholder="Minimum 6 characters"/>
+        <input id="owner-password" class="field-input" type="password" placeholder="Minimum 6 characters" minlength="6" autocomplete="new-password" required/>
       </div>
       <button type="submit" id="create-btn" class="btn btn-primary" style="width:100%;">Create brand for this event</button>
       <div class="field-hint">
@@ -873,7 +885,8 @@
     serverTimestamp,
     query,
     where,
-    limit
+    limit,
+    onSnapshot
   } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
   import {
     getAuth,
@@ -932,12 +945,14 @@
 
   // banner
   const statusBanner = qs("#status-banner");
+  const systemStatusBanner = qs("#system-status-banner");
 
   // auth
   const authAlertBox   = qs("#auth-alert-container");
   const authEventChip  = qs("#auth-event-chip");
   const tabLogin       = qs("#tab-login");
   const tabCreate      = qs("#tab-create");
+  const createBtn      = qs("#create-btn");
   const loginForm      = qs("#login-form");
   const createForm     = qs("#create-form");
 
@@ -1027,6 +1042,8 @@
   let currentEventId   = null;
   let currentEventName = null;
   let effectiveStatus  = "pending"; // "pending" | "approved" | "suspended" | "rejected"
+  let systemStatus     = {};
+  let unsubSystemSettings = null;
 
   let orders     = [];
   let products   = [];
@@ -1057,6 +1074,38 @@
     if (appView) appView.style.display = "flex";   // keep shell (sidebar/topbar)
     if (rejectedView) rejectedView.style.display = "flex";
     if (appMain) appMain.style.display = "none";   // hide normal pages
+  }
+
+  function applySystemStatus() {
+    const maintenanceMode = !!systemStatus.maintenanceMode;
+    const message = systemStatus.maintenanceMessage || "Maintenance in progress. Please check back soon.";
+    const brandSignupDisabled = !!systemStatus.brandSignupDisabled;
+
+    if (systemStatusBanner) {
+      if (maintenanceMode) {
+        systemStatusBanner.style.display = "block";
+        systemStatusBanner.textContent = message;
+      } else {
+        systemStatusBanner.style.display = "none";
+        systemStatusBanner.textContent = "";
+      }
+    }
+
+    if (createBtn) createBtn.disabled = maintenanceMode || brandSignupDisabled;
+    if (brandSignupDisabled && tabCreate && tabLogin && loginForm && createForm) {
+      tabCreate.classList.remove("active");
+      tabLogin.classList.add("active");
+      createForm.style.display = "none";
+      loginForm.style.display = "";
+    }
+  }
+
+  function startSystemSettingsListener() {
+    if (unsubSystemSettings) unsubSystemSettings();
+    unsubSystemSettings = onSnapshot(doc(db, "systemSettings", "production"), (snap) => {
+      systemStatus = snap.exists() ? snap.data() : {};
+      applySystemStatus();
+    });
   }
 
   function setAuthAlert(msg, type = "error") {
@@ -2360,6 +2409,7 @@
   /* ------------------------------
      AUTH STATE
   ------------------------------ */
+  startSystemSettingsListener();
   onAuthStateChanged(auth, async user => {
     currentUser = user || null;
 
@@ -2485,4 +2535,3 @@
 </script>
 </body>
 </html>
-

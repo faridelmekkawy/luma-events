@@ -150,6 +150,16 @@
       color:#b91c1c;
       border:1px solid #fecaca;
     }
+    .system-banner{
+      display:none;
+      margin-bottom:10px;
+      padding:8px 10px;
+      border-radius:10px;
+      background:#eff6ff;
+      color:#1d4ed8;
+      border:1px solid #bfdbfe;
+      font-size:12px;
+    }
 
     /* SHELL */
     #pos-shell{
@@ -712,16 +722,17 @@
         </div>
       </div>
 
-      <div id="auth-alert"></div>
+      <div id="auth-alert" aria-live="polite"></div>
+      <div id="system-status-banner" class="system-banner" aria-live="polite"></div>
 
       <form id="pos-login-form">
         <div class="auth-field">
           <div class="auth-label">Username</div>
-          <input id="pos-login-username" class="auth-input" autocomplete="username" placeholder="e.g. lokamania01"/>
+          <input id="pos-login-username" class="auth-input" autocomplete="username" placeholder="e.g. lokamania01" required/>
         </div>
         <div class="auth-field">
           <div class="auth-label">PIN</div>
-          <input id="pos-login-pin" class="auth-input" type="password" autocomplete="current-password" placeholder="4–6 digits"/>
+          <input id="pos-login-pin" class="auth-input" type="password" autocomplete="current-password" placeholder="4–6 digits" required/>
         </div>
         <div class="auth-actions">
           <button id="pos-login-btn" type="submit" class="btn btn-primary btn-small">Log in</button>
@@ -1049,7 +1060,8 @@
     runTransaction,
     serverTimestamp,
     updateDoc,
-    collectionGroup
+    collectionGroup,
+    onSnapshot
   } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
   import {
     getAuth,
@@ -1080,8 +1092,10 @@
   // LOGIN DOM
   const authWrapper = qs("#pos-auth-wrapper");
   const authAlertEl = qs("#auth-alert");
+  const systemStatusBanner = qs("#system-status-banner");
   const loginForm = qs("#pos-login-form");
   const loginUsernameEl = qs("#pos-login-username");
+  const posLoginBtn = qs("#pos-login-btn");
   const loginPinEl = qs("#pos-login-pin");
   const loginBtn = qs("#pos-login-btn");
 
@@ -1201,6 +1215,8 @@
 
   let bogoActive = false;
   let bogoName = "";
+  let systemStatus = {};
+  let unsubSystemSettings = null;
 
   // Discount state
   let appliedDiscount = null; // { id, code, percent, scope }
@@ -1219,6 +1235,37 @@
   function getOfflineKeyForBrand() {
     return `${OFFLINE_KEY_PREFIX}_${brandId || "noBrand"}`;
   }
+
+  function applySystemStatus() {
+    const maintenanceMode = !!systemStatus.maintenanceMode;
+    const message = systemStatus.maintenanceMessage || "Maintenance in progress. Please check back soon.";
+    const posLoginDisabled = !!systemStatus.posLoginDisabled;
+
+    if (systemStatusBanner) {
+      if (maintenanceMode) {
+        systemStatusBanner.style.display = "block";
+        systemStatusBanner.textContent = message;
+      } else {
+        systemStatusBanner.style.display = "none";
+        systemStatusBanner.textContent = "";
+      }
+    }
+
+    const disableLogin = maintenanceMode || posLoginDisabled;
+    if (loginUsernameEl) loginUsernameEl.disabled = disableLogin;
+    if (loginPinEl) loginPinEl.disabled = disableLogin;
+    if (posLoginBtn) posLoginBtn.disabled = disableLogin;
+  }
+
+  function startSystemSettingsListener() {
+    if (unsubSystemSettings) unsubSystemSettings();
+    unsubSystemSettings = onSnapshot(doc(db, "systemSettings", "production"), (snap) => {
+      systemStatus = snap.exists() ? snap.data() : {};
+      applySystemStatus();
+    });
+  }
+
+  startSystemSettingsListener();
 
   function showAuthAlert(msg){
     authAlertEl.innerHTML = `<div class="auth-alert auth-alert-error">${msg}</div>`;
