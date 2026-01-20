@@ -15,16 +15,24 @@ const rulesPath = path.join(__dirname, "..", "..", "firestore.rules");
 let testEnv;
 
 before(async () => {
+  const emulatorHost = process.env.FIRESTORE_EMULATOR_HOST || "127.0.0.1:8080";
+  const [host, portRaw] = emulatorHost.split(":");
+  const port = Number(portRaw) || 8080;
+
   testEnv = await initializeTestEnvironment({
     projectId: "luma-events-test",
     firestore: {
-      rules: fs.readFileSync(rulesPath, "utf8")
+      rules: fs.readFileSync(rulesPath, "utf8"),
+      host,
+      port
     }
   });
 });
 
 after(async () => {
-  await testEnv.cleanup();
+  if (testEnv) {
+    await testEnv.cleanup();
+  }
 });
 
 test("signed-in users can read system settings", async () => {

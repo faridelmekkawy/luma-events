@@ -33,6 +33,7 @@ npm run start
 cd server
 npm run test
 ```
+This uses the Firestore emulator via `firebase emulators:exec` and requires the Firebase CLI (included as a dev dependency).
 
 The server serves the client from `public/` and exposes:
 - `GET /healthz`
