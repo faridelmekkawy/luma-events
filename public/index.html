@@ -1128,7 +1128,9 @@
     });
     if (!res.ok) {
       const message = await res.text();
-      throw new Error(message || `Request failed (${res.status})`);
+      const err = new Error(message || `Request failed (${res.status})`);
+      err.status = res.status;
+      throw err;
     }
     return res.json();
   }
@@ -2253,12 +2255,14 @@
       const brandName = o.brandName || (brandMap[brandId]?.name) || "Brand";
       items.forEach((it) => {
         const name = it.name || "Product";
+        const productLabel = `${brandName} — ${name}`;
         const qty = Number(it.qty) || 0;
         const lineTotal = Number(it.lineTotal) || 0;
         const key = `${brandId || "none"}::${name}`;
         if (!prodMap[key]) {
           prodMap[key] = {
             productName: name,
+            productLabel,
             brandId,
             brandName,
             qtySold: 0,
@@ -2282,7 +2286,7 @@
 
     // top products chart
     const topByRevenue = [...allProducts].sort((a,b) => b.revenue - a.revenue).slice(0, 8);
-    const labels = topByRevenue.map((p) => p.productName);
+    const labels = topByRevenue.map((p) => p.productLabel || p.productName);
     const data = topByRevenue.map((p) => p.revenue);
     updateBarChart(chartTopProducts, "chart-top-products", labels, data, "Revenue");
 
@@ -2307,8 +2311,7 @@
         <table>
           <thead>
             <tr>
-              <th>Product</th>
-              <th>Brand</th>
+              <th>Brand &amp; Product</th>
               <th>Returns</th>
               <th>Return %</th>
             </tr>
@@ -2319,8 +2322,7 @@
         const pctStr = (p.returnPct * 100).toFixed(1) + "%";
         html += `
           <tr>
-            <td>${p.productName}</td>
-            <td>${p.brandName}</td>
+            <td>${p.productLabel || `${p.brandName} — ${p.productName}`}</td>
             <td>${p.returnsQty}</td>
             <td style="color:#b91c1c;font-weight:600;">${pctStr}</td>
           </tr>
@@ -2610,7 +2612,11 @@
       });
     } catch (err) {
       console.error("Error updating vendor status:", err);
-      alert("Failed to update vendor status.");
+      if (err?.status === 404) {
+        alert("Vendor status API not found. Ensure the server is running and /api routes are configured.");
+      } else {
+        alert("Failed to update vendor status.");
+      }
     }
   }
 

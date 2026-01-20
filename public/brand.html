@@ -600,6 +600,8 @@
                 </div>
               </div>
               <div class="page-actions">
+                <button id="btn-import-products" class="btn btn-ghost">Import by Excel</button>
+                <input id="import-products-file" type="file" accept=".xlsx,.xls,.csv" style="display:none;"/>
                 <button id="btn-add-product" class="btn btn-primary">Add product</button>
               </div>
             </div>
@@ -871,6 +873,7 @@
       </div>
     </div>
   </div>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import {
@@ -990,6 +993,8 @@
   const productsSortSelect  = qs("#products-sort");
   const productsTableWrapper= qs("#products-table-wrapper");
   const btnAddProduct       = qs("#btn-add-product");
+  const btnImportProducts   = qs("#btn-import-products");
+  const importProductsInput = qs("#import-products-file");
   const lowStockPanel       = qs("#lowStockPanel");
   const lowStockTitle       = qs("#lowStockPanelTitle");
   const lowStockList        = qs("#lowStockList");
@@ -1136,6 +1141,28 @@
     return n.toFixed(2);
   }
 
+  async function copyToClipboard(text) {
+    if (!text) return false;
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch (err) {
+        console.warn("Clipboard write failed, falling back.", err);
+      }
+    }
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "absolute";
+    textarea.style.left = "-9999px";
+    document.body.appendChild(textarea);
+    textarea.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(textarea);
+    return ok;
+  }
+
   function getDateKeyFromDate(d) {
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -1183,6 +1210,96 @@
       .slice(0,3) || "BRD";
     const randomPart = Math.floor(1000 + Math.random()*9000);
     return `${letters}-${datePart}-${randomPart}`;
+  }
+
+  function normalizeRowKeys(row) {
+    const normalized = {};
+    Object.entries(row || {}).forEach(([key, value]) => {
+      const cleanKey = String(key).trim().toLowerCase();
+      normalized[cleanKey] = value;
+    });
+    return normalized;
+  }
+
+  function pickRowValue(row, keys) {
+    for (const key of keys) {
+      if (Object.prototype.hasOwnProperty.call(row, key)) {
+        const val = row[key];
+        if (val !== undefined && val !== null && String(val).trim() !== "") {
+          return val;
+        }
+      }
+    }
+    return null;
+  }
+
+  function parseBoolean(value, defaultValue = true) {
+    if (value === null || value === undefined || value === "") return defaultValue;
+    if (typeof value === "boolean") return value;
+    const text = String(value).trim().toLowerCase();
+    if (["false", "no", "n", "inactive", "0"].includes(text)) return false;
+    if (["true", "yes", "y", "active", "1"].includes(text)) return true;
+    return defaultValue;
+  }
+
+  async function importProductsFromFile(file) {
+    if (!file) return;
+    if (!window.XLSX) {
+      alert("Excel import library failed to load. Refresh and try again.");
+      return;
+    }
+    const data = await file.arrayBuffer();
+    const workbook = window.XLSX.read(data, { type: "array" });
+    const sheetName = workbook.SheetNames[0];
+    if (!sheetName) {
+      alert("No worksheet found in the Excel file.");
+      return;
+    }
+    const sheet = workbook.Sheets[sheetName];
+    const rows = window.XLSX.utils.sheet_to_json(sheet, { defval: "" });
+    if (!rows.length) {
+      alert("No rows found in the Excel file.");
+      return;
+    }
+
+    const prodsRef = collection(doc(db, "brands", brandId), "products");
+    let created = 0;
+
+    for (const rawRow of rows) {
+      const row = normalizeRowKeys(rawRow);
+      const name = pickRowValue(row, ["name", "product", "product name", "title"]);
+      if (!name) continue;
+
+      const priceVal = pickRowValue(row, ["price", "unit price", "amount"]);
+      const stockVal = pickRowValue(row, ["stock", "qty", "quantity", "inventory"]);
+      const skuVal = pickRowValue(row, ["sku"]);
+      const codeVal = pickRowValue(row, ["code", "barcode"]);
+      const imageVal = pickRowValue(row, ["image", "image url", "imageurl", "photo", "photo url"]);
+      const activeVal = pickRowValue(row, ["active", "status", "isactive"]);
+
+      const sku = skuVal && String(skuVal).trim() ? String(skuVal).trim() : generateSku();
+      const price = Number(priceVal);
+      const stock = Number(stockVal);
+      const isActive = parseBoolean(activeVal, true);
+
+      const payload = {
+        name: String(name).trim(),
+        price: Number.isFinite(price) ? price : 0,
+        stock: Number.isFinite(stock) ? stock : 0,
+        sku,
+        code: codeVal ? String(codeVal).trim() : null,
+        isActive,
+        updatedAt: serverTimestamp(),
+        createdAt: serverTimestamp()
+      };
+      if (imageVal) payload.imageUrl = String(imageVal).trim();
+
+      await addDoc(prodsRef, payload);
+      created += 1;
+    }
+
+    await loadProducts();
+    alert(`Imported ${created} product${created === 1 ? "" : "s"} from Excel.`);
   }
 
   async function uploadFileToStorage(file, path) {
@@ -1825,6 +1942,19 @@
 
       if (!name || !username) {
         alert("Enter name and username.");
+        return;
+      }
+
+      const nameLower = name.toLowerCase();
+      const usernameLower = username.toLowerCase();
+      const duplicate = staff.find((s) => {
+        if (user && s.id === user.id) return false;
+        const staffName = (s.name || "").toLowerCase();
+        const staffUsername = (s.username || "").toLowerCase();
+        return staffName === nameLower || staffUsername === usernameLower;
+      });
+      if (duplicate) {
+        alert("Choose another user name; it’s already taken.");
         return;
       }
 
@@ -2483,10 +2613,10 @@
   if (btnCopyPosLink && posLinkUrlEl) {
     btnCopyPosLink.addEventListener("click", async () => {
       const text = posLinkUrlEl.textContent || "";
-      try {
-        await navigator.clipboard.writeText(text);
+      const ok = await copyToClipboard(text);
+      if (ok) {
         if (posStatusHintEl) posStatusHintEl.textContent = "POS link copied.";
-      } catch {
+      } else {
         alert("Copy failed. You can copy the link manually.");
       }
     });
@@ -2500,6 +2630,28 @@
   }
   if (btnAddProduct) {
     btnAddProduct.addEventListener("click", () => openProductModal(null));
+  }
+  if (btnImportProducts && importProductsInput) {
+    btnImportProducts.addEventListener("click", () => {
+      importProductsInput.value = "";
+      importProductsInput.click();
+    });
+    importProductsInput.addEventListener("change", async () => {
+      if (!brandId) {
+        alert("Load your brand before importing products.");
+        return;
+      }
+      const file = importProductsInput.files?.[0];
+      if (!file) return;
+      try {
+        await importProductsFromFile(file);
+      } catch (err) {
+        console.error("Import failed", err);
+        alert("Failed to import products. Check the file format and try again.");
+      } finally {
+        importProductsInput.value = "";
+      }
+    });
   }
 
   if (staffSearchInput) {
