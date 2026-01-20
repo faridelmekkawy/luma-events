@@ -42,7 +42,7 @@ app.use(
   })
 );
 
-app.get("/super-admin", (_req, res) => {
+app.get(["/super-admin", "/super-admin/*"], (_req, res) => {
   res.sendFile(path.join(publicDir, "index.html"));
 });
 
