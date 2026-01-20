@@ -1298,7 +1298,7 @@
   const btnCreateEvent = qs("#btn-create-event");
 
   // Nav
-  const navItems = qsa(".nav-item[data-page]");
+  const navItems = Array.from(qsa(".nav-item[data-page]"));
   const pages = qsa(".page");
 
   // Modal
