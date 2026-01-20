@@ -949,6 +949,9 @@
               <div class="page-title">Event Settings</div>
               <div class="page-sub">Edit event name, dates &amp; basic settings.</div>
             </div>
+            <div class="page-actions">
+              <button id="btn-create-event" class="btn btn-primary">Create new event</button>
+            </div>
           </div>
           <div class="cards-grid">
             <div class="card">
@@ -1288,6 +1291,7 @@
   const setEventStartEl = qs("#set-event-start");
   const setEventEndEl = qs("#set-event-end");
   const btnSaveEventSettings = qs("#btn-save-event");
+  const btnCreateEvent = qs("#btn-create-event");
 
   // Nav
   const navItems = qsa(".nav-item[data-page]");
@@ -3039,6 +3043,88 @@
       console.error("Error saving settings:", err);
       alert("Failed to save event settings.");
     }
+  });
+
+  btnCreateEvent?.addEventListener("click", () => {
+    if (!currentUser) {
+      alert("Sign in to create an event.");
+      return;
+    }
+    if (isSuperAdmin) {
+      alert("Super admins cannot create events here.");
+      return;
+    }
+    openModal(`
+      <div class="modal-title" style="font-weight:700;margin-bottom:8px;font-size:16px;">Create new event</div>
+      <div class="field">
+        <div class="field-label">Event name</div>
+        <input id="new-event-name" class="field-input" placeholder="Event name"/>
+      </div>
+      <div class="field">
+        <div class="field-label">Location</div>
+        <input id="new-event-location" class="field-input" placeholder="City, venue"/>
+      </div>
+      <div class="field">
+        <div class="field-label">Start date</div>
+        <input id="new-event-start" class="field-input" type="date"/>
+      </div>
+      <div class="field">
+        <div class="field-label">End date</div>
+        <input id="new-event-end" class="field-input" type="date"/>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">
+        <button onclick="closeModal()" class="btn btn-ghost">Cancel</button>
+        <button id="btn-confirm-create-event" class="btn btn-primary">Create event</button>
+      </div>
+    `);
+
+    const btnConfirm = qs("#btn-confirm-create-event");
+    btnConfirm?.addEventListener("click", async () => {
+      const name = qs("#new-event-name")?.value.trim();
+      const location = qs("#new-event-location")?.value.trim() || null;
+      const startDate = qs("#new-event-start")?.value.trim() || null;
+      const endDate = qs("#new-event-end")?.value.trim() || null;
+      if (!name) {
+        alert("Event name is required.");
+        return;
+      }
+      try {
+        const vendorToken = Math.random().toString(36).substring(2, 10).toUpperCase();
+        const evRef = await addDoc(collection(db, "events"), {
+          name,
+          location,
+          startDate,
+          endDate,
+          ownerUserId: currentUser.uid,
+          status: "active",
+          vendorSignupToken: vendorToken,
+          createdAt: serverTimestamp()
+        });
+        const eventId = evRef.id;
+        const ownerEventsRef = doc(db, "ownerEvents", currentUser.uid);
+        const existingSnap = await getDoc(ownerEventsRef);
+        const existing = existingSnap.exists() ? existingSnap.data() : {};
+        const ids = Array.isArray(existing.eventIds) ? existing.eventIds : [];
+        if (!ids.includes(eventId)) ids.push(eventId);
+        await setDoc(
+          ownerEventsRef,
+          {
+            primaryEventId: eventId,
+            eventIds: ids
+          },
+          { merge: true }
+        );
+        await loadEventsForUser(currentUser.uid);
+        currentEventId = eventId;
+        renderEventSwitcher();
+        await selectEvent(eventId);
+        closeModal();
+        alert("Event created.");
+      } catch (err) {
+        console.error("Failed to create event:", err);
+        alert("Failed to create event.");
+      }
+    });
   });
 
   // -----------------------------

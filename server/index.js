@@ -42,6 +42,10 @@ app.use(
   })
 );
 
+app.get("/super-admin", (_req, res) => {
+  res.sendFile(path.join(publicDir, "index.html"));
+});
+
 function getAuthToken(req) {
   const header = req.headers.authorization || "";
   if (header.startsWith("Bearer ")) {
