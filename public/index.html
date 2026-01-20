@@ -1070,9 +1070,11 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
   const auth = getAuth(app);
-  const API_BASE = window.location.origin;
+  const API_BASE = window.LUMA_API_BASE
+    || localStorage.getItem("lumaApiBase")
+    || window.location.origin;
 
-  const VENDOR_SIGNUP_BASE_URL = window.location.origin + "/vendor-signup.html";
+  const VENDOR_SIGNUP_BASE_URL = window.location.origin + "/vendor-signup";
 
   // -----------------------------
   // DOM HELPERS
@@ -1128,7 +1130,9 @@
     });
     if (!res.ok) {
       const message = await res.text();
-      throw new Error(message || `Request failed (${res.status})`);
+      const err = new Error(message || `Request failed (${res.status})`);
+      err.status = res.status;
+      throw err;
     }
     return res.json();
   }
@@ -1294,7 +1298,7 @@
   const btnCreateEvent = qs("#btn-create-event");
 
   // Nav
-  const navItems = qsa(".nav-item[data-page]");
+  const navItems = Array.from(qsa(".nav-item[data-page]"));
   const pages = qsa(".page");
 
   // Modal
@@ -2253,12 +2257,14 @@
       const brandName = o.brandName || (brandMap[brandId]?.name) || "Brand";
       items.forEach((it) => {
         const name = it.name || "Product";
+        const productLabel = `${brandName} — ${name}`;
         const qty = Number(it.qty) || 0;
         const lineTotal = Number(it.lineTotal) || 0;
         const key = `${brandId || "none"}::${name}`;
         if (!prodMap[key]) {
           prodMap[key] = {
             productName: name,
+            productLabel,
             brandId,
             brandName,
             qtySold: 0,
@@ -2282,7 +2288,7 @@
 
     // top products chart
     const topByRevenue = [...allProducts].sort((a,b) => b.revenue - a.revenue).slice(0, 8);
-    const labels = topByRevenue.map((p) => p.productName);
+    const labels = topByRevenue.map((p) => p.productLabel || p.productName);
     const data = topByRevenue.map((p) => p.revenue);
     updateBarChart(chartTopProducts, "chart-top-products", labels, data, "Revenue");
 
@@ -2307,8 +2313,7 @@
         <table>
           <thead>
             <tr>
-              <th>Product</th>
-              <th>Brand</th>
+              <th>Brand &amp; Product</th>
               <th>Returns</th>
               <th>Return %</th>
             </tr>
@@ -2319,8 +2324,7 @@
         const pctStr = (p.returnPct * 100).toFixed(1) + "%";
         html += `
           <tr>
-            <td>${p.productName}</td>
-            <td>${p.brandName}</td>
+            <td>${p.productLabel || `${p.brandName} — ${p.productName}`}</td>
             <td>${p.returnsQty}</td>
             <td style="color:#b91c1c;font-weight:600;">${pctStr}</td>
           </tr>
@@ -2610,7 +2614,11 @@
       });
     } catch (err) {
       console.error("Error updating vendor status:", err);
-      alert("Failed to update vendor status.");
+      if (err?.status === 404) {
+        alert("Vendor status API not found. Ensure the server is running and /api routes are configured.");
+      } else {
+        alert("Failed to update vendor status.");
+      }
     }
   }
 
@@ -2704,7 +2712,7 @@
       alert("No brand linked for this vendor.");
       return;
     }
-    const url = new URL(window.location.origin + "/pos.html");
+    const url = new URL(window.location.origin + "/pos");
     url.searchParams.set("brandId", brandId);
     if (branchId) url.searchParams.set("branchId", branchId);
     url.searchParams.set("eventId", eventId);
@@ -3233,25 +3241,40 @@
   // -----------------------------
   // NAVIGATION
   // -----------------------------
+  function setActivePage(pageId, { updateHash = true } = {}) {
+    if (!pageId) return;
+    navItems.forEach((b) => b.classList.remove("active"));
+    pages.forEach((p) => p.classList.remove("active"));
+    const btn = navItems.find((b) => b.dataset.page === pageId);
+    if (btn) btn.classList.add("active");
+    const pageEl = qs("#" + pageId);
+    if (pageEl) pageEl.classList.add("active");
+
+    if (pageId === "page-overview" && topbarTitleEl) topbarTitleEl.textContent = "Event Overview";
+    if (pageId === "page-vendors" && topbarTitleEl) topbarTitleEl.textContent = "Vendors";
+    if (pageId === "page-products" && topbarTitleEl) topbarTitleEl.textContent = "Products & Returns";
+    if (pageId === "page-customers" && topbarTitleEl) topbarTitleEl.textContent = "Customers";
+    if (pageId === "page-sales" && topbarTitleEl) topbarTitleEl.textContent = "Sales & POS";
+    if (pageId === "page-admin" && topbarTitleEl) topbarTitleEl.textContent = "Super Admin";
+    if (pageId === "page-settings" && topbarTitleEl) topbarTitleEl.textContent = "Event Settings";
+
+    if (updateHash) {
+      window.location.hash = pageId;
+    }
+  }
+
   navItems.forEach((btn) => {
     btn.addEventListener("click", () => {
       const pageId = btn.dataset.page;
       if (!pageId) return;
-      navItems.forEach((b) => b.classList.remove("active"));
-      pages.forEach((p) => p.classList.remove("active"));
-      btn.classList.add("active");
-      const pageEl = qs("#" + pageId);
-      if (pageEl) pageEl.classList.add("active");
-
-      if (pageId === "page-overview" && topbarTitleEl) topbarTitleEl.textContent = "Event Overview";
-      if (pageId === "page-vendors" && topbarTitleEl) topbarTitleEl.textContent = "Vendors";
-      if (pageId === "page-products" && topbarTitleEl) topbarTitleEl.textContent = "Products & Returns";
-      if (pageId === "page-customers" && topbarTitleEl) topbarTitleEl.textContent = "Customers";
-      if (pageId === "page-sales" && topbarTitleEl) topbarTitleEl.textContent = "Sales & POS";
-      if (pageId === "page-admin" && topbarTitleEl) topbarTitleEl.textContent = "Super Admin";
-      if (pageId === "page-settings" && topbarTitleEl) topbarTitleEl.textContent = "Event Settings";
+      setActivePage(pageId);
     });
   });
+
+  const initialPage = window.location.hash.replace("#", "");
+  if (initialPage) {
+    setActivePage(initialPage, { updateHash: false });
+  }
 
   // timeline mode pills
   function setTimelineMode(mode) {

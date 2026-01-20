@@ -574,7 +574,7 @@
                 Share this POS link with your cashiers. They will log in with their username & PIN.
               </div>
               <div style="margin-top:8px;font-size:12px;word-break:break-all;">
-                <span id="pos-link-text">https://luma-events.vercel.app/pos.html</span>
+                <span id="pos-link-text">https://luma-events.vercel.app/pos</span>
               </div>
               <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                 <button id="btn-copy-pos-link" class="btn btn-ghost">Copy POS link</button>
@@ -600,6 +600,9 @@
                 </div>
               </div>
               <div class="page-actions">
+                <button id="btn-import-products" class="btn btn-ghost">Import by Excel</button>
+                <a class="btn btn-ghost" href="/sample-products.csv" download>Download sample</a>
+                <input id="import-products-file" type="file" accept=".xlsx,.xls,.csv" style="display:none;"/>
                 <button id="btn-add-product" class="btn btn-primary">Add product</button>
               </div>
             </div>
@@ -871,6 +874,7 @@
       </div>
     </div>
   </div>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import {
@@ -990,6 +994,8 @@
   const productsSortSelect  = qs("#products-sort");
   const productsTableWrapper= qs("#products-table-wrapper");
   const btnAddProduct       = qs("#btn-add-product");
+  const btnImportProducts   = qs("#btn-import-products");
+  const importProductsInput = qs("#import-products-file");
   const lowStockPanel       = qs("#lowStockPanel");
   const lowStockTitle       = qs("#lowStockPanelTitle");
   const lowStockList        = qs("#lowStockList");
@@ -1136,6 +1142,28 @@
     return n.toFixed(2);
   }
 
+  async function copyToClipboard(text) {
+    if (!text) return false;
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch (err) {
+        console.warn("Clipboard write failed, falling back.", err);
+      }
+    }
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "absolute";
+    textarea.style.left = "-9999px";
+    document.body.appendChild(textarea);
+    textarea.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(textarea);
+    return ok;
+  }
+
   function getDateKeyFromDate(d) {
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -1185,6 +1213,96 @@
     return `${letters}-${datePart}-${randomPart}`;
   }
 
+  function normalizeRowKeys(row) {
+    const normalized = {};
+    Object.entries(row || {}).forEach(([key, value]) => {
+      const cleanKey = String(key).trim().toLowerCase();
+      normalized[cleanKey] = value;
+    });
+    return normalized;
+  }
+
+  function pickRowValue(row, keys) {
+    for (const key of keys) {
+      if (Object.prototype.hasOwnProperty.call(row, key)) {
+        const val = row[key];
+        if (val !== undefined && val !== null && String(val).trim() !== "") {
+          return val;
+        }
+      }
+    }
+    return null;
+  }
+
+  function parseBoolean(value, defaultValue = true) {
+    if (value === null || value === undefined || value === "") return defaultValue;
+    if (typeof value === "boolean") return value;
+    const text = String(value).trim().toLowerCase();
+    if (["false", "no", "n", "inactive", "0"].includes(text)) return false;
+    if (["true", "yes", "y", "active", "1"].includes(text)) return true;
+    return defaultValue;
+  }
+
+  async function importProductsFromFile(file) {
+    if (!file) return;
+    if (!window.XLSX) {
+      alert("Excel import library failed to load. Refresh and try again.");
+      return;
+    }
+    const data = await file.arrayBuffer();
+    const workbook = window.XLSX.read(data, { type: "array" });
+    const sheetName = workbook.SheetNames[0];
+    if (!sheetName) {
+      alert("No worksheet found in the Excel file.");
+      return;
+    }
+    const sheet = workbook.Sheets[sheetName];
+    const rows = window.XLSX.utils.sheet_to_json(sheet, { defval: "" });
+    if (!rows.length) {
+      alert("No rows found in the Excel file.");
+      return;
+    }
+
+    const prodsRef = collection(doc(db, "brands", brandId), "products");
+    let created = 0;
+
+    for (const rawRow of rows) {
+      const row = normalizeRowKeys(rawRow);
+      const name = pickRowValue(row, ["name", "product", "product name", "title"]);
+      if (!name) continue;
+
+      const priceVal = pickRowValue(row, ["price", "unit price", "amount"]);
+      const stockVal = pickRowValue(row, ["stock", "qty", "quantity", "inventory"]);
+      const skuVal = pickRowValue(row, ["sku"]);
+      const codeVal = pickRowValue(row, ["code", "barcode"]);
+      const imageVal = pickRowValue(row, ["image", "image url", "imageurl", "photo", "photo url"]);
+      const activeVal = pickRowValue(row, ["active", "status", "isactive"]);
+
+      const sku = skuVal && String(skuVal).trim() ? String(skuVal).trim() : generateSku();
+      const price = Number(priceVal);
+      const stock = Number(stockVal);
+      const isActive = parseBoolean(activeVal, true);
+
+      const payload = {
+        name: String(name).trim(),
+        price: Number.isFinite(price) ? price : 0,
+        stock: Number.isFinite(stock) ? stock : 0,
+        sku,
+        code: codeVal ? String(codeVal).trim() : null,
+        isActive,
+        updatedAt: serverTimestamp(),
+        createdAt: serverTimestamp()
+      };
+      if (imageVal) payload.imageUrl = String(imageVal).trim();
+
+      await addDoc(prodsRef, payload);
+      created += 1;
+    }
+
+    await loadProducts();
+    alert(`Imported ${created} product${created === 1 ? "" : "s"} from Excel.`);
+  }
+
   async function uploadFileToStorage(file, path) {
     if (!file) return null;
     const storageRef = ref(storage, path);
@@ -1193,7 +1311,7 @@
     return url;
   }
 
-  function applyNav(pageId) {
+  function applyNav(pageId, { updateHash = true } = {}) {
     navButtons.forEach(btn => {
       const id = btn.getAttribute("data-page");
       if (id === pageId) btn.classList.add("active");
@@ -1203,6 +1321,15 @@
       if (p.id === pageId) p.classList.add("active");
       else p.classList.remove("active");
     });
+    if (updateHash) {
+      window.location.hash = pageId;
+    }
+  }
+
+  function getInitialPageId() {
+    const hash = window.location.hash.replace("#", "");
+    const valid = pages.find(p => p.id === hash);
+    return valid ? hash : "page-dashboard";
   }
 
   /* ------------------------------
@@ -1234,7 +1361,7 @@
     }
 
     // POS link (static URL for now)
-    const posUrl = "https://luma-events.vercel.app/pos.html";
+    const posUrl = `${window.location.origin}/pos`;
     if (posLinkUrlEl) posLinkUrlEl.textContent = posUrl;
 
     if (btnCopyPosLink) {
@@ -1553,7 +1680,19 @@
       ? product.variants[0].name
       : "";
     const vLabels = Array.isArray(product?.variants) && product.variants[0]?.labels
-      ? product.variants[0].labels.join(", ")
+      ? product.variants[0].labels.map((lbl) =>
+          typeof lbl === "string" ? lbl : (lbl.label || lbl.name || "")
+        ).join(", ")
+      : "";
+    const vStocks = Array.isArray(product?.variants) && product.variants[0]?.labels
+      ? product.variants[0].labels.map((lbl) => {
+          if (typeof lbl === "string") return "";
+          const val = typeof lbl.stockQty === "number" ? lbl.stockQty
+            : (typeof lbl.quantity === "number" ? lbl.quantity
+            : (typeof lbl.qty === "number" ? lbl.qty
+            : (typeof lbl.stock === "number" ? lbl.stock : "")));
+          return val;
+        }).join(", ")
       : "";
 
     openModal(`
@@ -1582,8 +1721,12 @@
         <div class="field">
           <div class="field-label">Variants (optional)</div>
           <div class="field-hint">Example: Name = Size, Options = S,M,L</div>
-          <input id="prod-variant-name" class="field-input" placeholder="Group name (e.g. Size)" value="${vName}"/>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input id="prod-variant-name" class="field-input" placeholder="Group name (e.g. Size)" value="${vName}"/>
+            <button type="button" id="btn-size-presets" class="btn btn-ghost" style="padding:6px 10px;">Size presets</button>
+          </div>
           <input id="prod-variant-labels" class="field-input" placeholder="Comma separated options" value="${vLabels}"/>
+          <input id="prod-variant-stocks" class="field-input" placeholder="Optional stocks (match options, e.g. 10,8,5)" value="${vStocks}"/>
         </div>
         <div class="field">
           <div class="field-label">Product image</div>
@@ -1604,6 +1747,14 @@
 
     const form      = qs("#product-form");
     const fileInput = qs("#prod-image");
+    const sizePresetBtn = qs("#btn-size-presets");
+
+    sizePresetBtn?.addEventListener("click", () => {
+      const nameEl = qs("#prod-variant-name");
+      const labelsEl = qs("#prod-variant-labels");
+      if (nameEl) nameEl.value = "Size";
+      if (labelsEl) labelsEl.value = "XS,S,M,L,XL";
+    });
 
     form.addEventListener("submit", async e => {
       e.preventDefault();
@@ -1611,11 +1762,12 @@
 
       const name        = qs("#prod-name").value.trim();
       const price       = Number(qs("#prod-price").value || 0);
-      const stock       = Number(qs("#prod-stock").value || 0);
+      let   stock       = Number(qs("#prod-stock").value || 0);
       let   sku         = qs("#prod-sku").value.trim();
       const code        = qs("#prod-code").value.trim() || null;
       const vNameVal    = qs("#prod-variant-name").value.trim();
       const vLabelsVal  = qs("#prod-variant-labels").value.trim();
+      const vStocksVal  = qs("#prod-variant-stocks").value.trim();
       const isActive    = qs("#prod-active").checked;
 
       if (!name) {
@@ -1638,7 +1790,28 @@
           .map(x => x.trim())
           .filter(Boolean);
         if (labelsArr.length) {
-          variants.push({ name: vNameVal, labels: labelsArr });
+          const stockArr = vStocksVal
+            ? vStocksVal.split(",").map(x => Number(x.trim()))
+            : [];
+          const hasStock = stockArr.some((val) => Number.isFinite(val));
+          let stockSum = 0;
+          const labels = labelsArr.map((label, idx) => {
+            if (!hasStock) return label;
+            const raw = stockArr[idx];
+            const safe = Number.isFinite(raw) ? raw : 0;
+            stockSum += safe;
+            return {
+              label,
+              stockQty: safe,
+              quantity: safe,
+              qty: safe,
+              stock: safe
+            };
+          });
+          if (hasStock) {
+            stock = stockSum;
+          }
+          variants.push({ name: vNameVal, labels });
         }
       }
 
@@ -1825,6 +1998,19 @@
 
       if (!name || !username) {
         alert("Enter name and username.");
+        return;
+      }
+
+      const nameLower = name.toLowerCase();
+      const usernameLower = username.toLowerCase();
+      const duplicate = staff.find((s) => {
+        if (user && s.id === user.id) return false;
+        const staffName = (s.name || "").toLowerCase();
+        const staffUsername = (s.username || "").toLowerCase();
+        return staffName === nameLower || staffUsername === usernameLower;
+      });
+      if (duplicate) {
+        alert("Choose another user name; it’s already taken.");
         return;
       }
 
@@ -2451,6 +2637,7 @@
       await loadStaff();
       await loadOrders();
 
+      applyNav(getInitialPageId(), { updateHash: false });
       showAppView();
     } catch (err) {
       console.error("Error loading dashboard", err);
@@ -2483,10 +2670,10 @@
   if (btnCopyPosLink && posLinkUrlEl) {
     btnCopyPosLink.addEventListener("click", async () => {
       const text = posLinkUrlEl.textContent || "";
-      try {
-        await navigator.clipboard.writeText(text);
-        if (posStatusHintEl) posStatusHintEl.textContent = "POS link copied.";
-      } catch {
+      const ok = await copyToClipboard(text);
+      if (ok) {
+        if (posStatusHintEl) posStatusHintEl.textContent = "Successfully copied.";
+      } else {
         alert("Copy failed. You can copy the link manually.");
       }
     });
@@ -2500,6 +2687,28 @@
   }
   if (btnAddProduct) {
     btnAddProduct.addEventListener("click", () => openProductModal(null));
+  }
+  if (btnImportProducts && importProductsInput) {
+    btnImportProducts.addEventListener("click", () => {
+      importProductsInput.value = "";
+      importProductsInput.click();
+    });
+    importProductsInput.addEventListener("change", async () => {
+      if (!brandId) {
+        alert("Load your brand before importing products.");
+        return;
+      }
+      const file = importProductsInput.files?.[0];
+      if (!file) return;
+      try {
+        await importProductsFromFile(file);
+      } catch (err) {
+        console.error("Import failed", err);
+        alert("Failed to import products. Check the file format and try again.");
+      } finally {
+        importProductsInput.value = "";
+      }
+    });
   }
 
   if (staffSearchInput) {

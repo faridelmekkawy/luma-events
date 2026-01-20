@@ -1,0 +1,4 @@
+Name,Price,Stock,SKU,Code,Image URL,Active
+Sample T-Shirt,150,20,TS-001,TSHIRT-001,https://via.placeholder.com/300,TRUE
+Sample Hoodie,250,15,HD-002,HOODIE-002,https://via.placeholder.com/300,TRUE
+Sample Hat,80,30,HAT-003,HAT-003,https://via.placeholder.com/300,TRUE

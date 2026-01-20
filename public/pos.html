@@ -1612,16 +1612,20 @@
   function getBaseStockForProduct(product){
     if (Array.isArray(product.variants) && product.variants.length){
       let sum = 0;
+      let hasVariantStock = false;
       product.variants.forEach(v => {
         if (!v) return;
         const q =
           typeof v.stockQty === "number" ? v.stockQty :
           (typeof v.quantity === "number" ? v.quantity :
           (typeof v.qty === "number" ? v.qty :
-          (typeof v.stock === "number" ? v.stock : 0)));
-        sum += q;
+          (typeof v.stock === "number" ? v.stock : null)));
+        if (typeof q === "number" && !Number.isNaN(q)) {
+          hasVariantStock = true;
+          sum += q;
+        }
       });
-      return sum;
+      if (hasVariantStock) return sum;
     }
 
     if (typeof product.stockQty === "number") return product.stockQty;
@@ -2678,14 +2682,25 @@
 
           let baseStock;
           if(variantsArr){
-            baseStock = variantsArr.reduce((sum,v)=>{
+            let sum = 0;
+            let hasVariantStock = false;
+            variantsArr.forEach((v)=>{
               const vs =
-                typeof v.stockQty === "number" ? v.stockQty :
-                (typeof v.quantity === "number" ? v.quantity :
-                (typeof v.qty === "number" ? v.qty :
-                (typeof v.stock === "number" ? v.stock : 0)));
-              return sum + vs;
-            },0);
+                typeof v?.stockQty === "number" ? v.stockQty :
+                (typeof v?.quantity === "number" ? v.quantity :
+                (typeof v?.qty === "number" ? v.qty :
+                (typeof v?.stock === "number" ? v.stock : null)));
+              if (typeof vs === "number" && !Number.isNaN(vs)) {
+                hasVariantStock = true;
+                sum += vs;
+              }
+            });
+            baseStock = hasVariantStock
+              ? sum
+              : (typeof data.stockQty === "number" ? data.stockQty :
+                (typeof data.stock === "number" ? data.stock :
+                (typeof data.quantity === "number" ? data.quantity :
+                (typeof data.qty === "number" ? data.qty : 0))));
           }else{
             baseStock =
               typeof data.stockQty === "number" ? data.stockQty :
