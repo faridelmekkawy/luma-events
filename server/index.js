@@ -46,6 +46,18 @@ app.get("/super-admin", (_req, res) => {
   res.sendFile(path.join(publicDir, "index.html"));
 });
 
+app.get("/brand", (_req, res) => {
+  res.sendFile(path.join(publicDir, "brand.html"));
+});
+
+app.get("/pos", (_req, res) => {
+  res.sendFile(path.join(publicDir, "pos.html"));
+});
+
+app.get("/vendor-signup", (_req, res) => {
+  res.sendFile(path.join(publicDir, "vendor-signup.html"));
+});
+
 function getAuthToken(req) {
   const header = req.headers.authorization || "";
   if (header.startsWith("Bearer ")) {

@@ -1070,9 +1070,11 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
   const auth = getAuth(app);
-  const API_BASE = window.location.origin;
+  const API_BASE = window.LUMA_API_BASE
+    || localStorage.getItem("lumaApiBase")
+    || window.location.origin;
 
-  const VENDOR_SIGNUP_BASE_URL = window.location.origin + "/vendor-signup.html";
+  const VENDOR_SIGNUP_BASE_URL = window.location.origin + "/vendor-signup";
 
   // -----------------------------
   // DOM HELPERS
@@ -2710,7 +2712,7 @@
       alert("No brand linked for this vendor.");
       return;
     }
-    const url = new URL(window.location.origin + "/pos.html");
+    const url = new URL(window.location.origin + "/pos");
     url.searchParams.set("brandId", brandId);
     if (branchId) url.searchParams.set("branchId", branchId);
     url.searchParams.set("eventId", eventId);
@@ -3239,25 +3241,40 @@
   // -----------------------------
   // NAVIGATION
   // -----------------------------
+  function setActivePage(pageId, { updateHash = true } = {}) {
+    if (!pageId) return;
+    navItems.forEach((b) => b.classList.remove("active"));
+    pages.forEach((p) => p.classList.remove("active"));
+    const btn = navItems.find((b) => b.dataset.page === pageId);
+    if (btn) btn.classList.add("active");
+    const pageEl = qs("#" + pageId);
+    if (pageEl) pageEl.classList.add("active");
+
+    if (pageId === "page-overview" && topbarTitleEl) topbarTitleEl.textContent = "Event Overview";
+    if (pageId === "page-vendors" && topbarTitleEl) topbarTitleEl.textContent = "Vendors";
+    if (pageId === "page-products" && topbarTitleEl) topbarTitleEl.textContent = "Products & Returns";
+    if (pageId === "page-customers" && topbarTitleEl) topbarTitleEl.textContent = "Customers";
+    if (pageId === "page-sales" && topbarTitleEl) topbarTitleEl.textContent = "Sales & POS";
+    if (pageId === "page-admin" && topbarTitleEl) topbarTitleEl.textContent = "Super Admin";
+    if (pageId === "page-settings" && topbarTitleEl) topbarTitleEl.textContent = "Event Settings";
+
+    if (updateHash) {
+      window.location.hash = pageId;
+    }
+  }
+
   navItems.forEach((btn) => {
     btn.addEventListener("click", () => {
       const pageId = btn.dataset.page;
       if (!pageId) return;
-      navItems.forEach((b) => b.classList.remove("active"));
-      pages.forEach((p) => p.classList.remove("active"));
-      btn.classList.add("active");
-      const pageEl = qs("#" + pageId);
-      if (pageEl) pageEl.classList.add("active");
-
-      if (pageId === "page-overview" && topbarTitleEl) topbarTitleEl.textContent = "Event Overview";
-      if (pageId === "page-vendors" && topbarTitleEl) topbarTitleEl.textContent = "Vendors";
-      if (pageId === "page-products" && topbarTitleEl) topbarTitleEl.textContent = "Products & Returns";
-      if (pageId === "page-customers" && topbarTitleEl) topbarTitleEl.textContent = "Customers";
-      if (pageId === "page-sales" && topbarTitleEl) topbarTitleEl.textContent = "Sales & POS";
-      if (pageId === "page-admin" && topbarTitleEl) topbarTitleEl.textContent = "Super Admin";
-      if (pageId === "page-settings" && topbarTitleEl) topbarTitleEl.textContent = "Event Settings";
+      setActivePage(pageId);
     });
   });
+
+  const initialPage = window.location.hash.replace("#", "");
+  if (initialPage) {
+    setActivePage(initialPage, { updateHash: false });
+  }
 
   // timeline mode pills
   function setTimelineMode(mode) {

@@ -574,7 +574,7 @@
                 Share this POS link with your cashiers. They will log in with their username & PIN.
               </div>
               <div style="margin-top:8px;font-size:12px;word-break:break-all;">
-                <span id="pos-link-text">https://luma-events.vercel.app/pos.html</span>
+                <span id="pos-link-text">https://luma-events.vercel.app/pos</span>
               </div>
               <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                 <button id="btn-copy-pos-link" class="btn btn-ghost">Copy POS link</button>
@@ -601,6 +601,7 @@
               </div>
               <div class="page-actions">
                 <button id="btn-import-products" class="btn btn-ghost">Import by Excel</button>
+                <a class="btn btn-ghost" href="/sample-products.csv" download>Download sample</a>
                 <input id="import-products-file" type="file" accept=".xlsx,.xls,.csv" style="display:none;"/>
                 <button id="btn-add-product" class="btn btn-primary">Add product</button>
               </div>
@@ -1310,7 +1311,7 @@
     return url;
   }
 
-  function applyNav(pageId) {
+  function applyNav(pageId, { updateHash = true } = {}) {
     navButtons.forEach(btn => {
       const id = btn.getAttribute("data-page");
       if (id === pageId) btn.classList.add("active");
@@ -1320,6 +1321,15 @@
       if (p.id === pageId) p.classList.add("active");
       else p.classList.remove("active");
     });
+    if (updateHash) {
+      window.location.hash = pageId;
+    }
+  }
+
+  function getInitialPageId() {
+    const hash = window.location.hash.replace("#", "");
+    const valid = pages.find(p => p.id === hash);
+    return valid ? hash : "page-dashboard";
   }
 
   /* ------------------------------
@@ -1351,7 +1361,7 @@
     }
 
     // POS link (static URL for now)
-    const posUrl = "https://luma-events.vercel.app/pos.html";
+    const posUrl = `${window.location.origin}/pos`;
     if (posLinkUrlEl) posLinkUrlEl.textContent = posUrl;
 
     if (btnCopyPosLink) {
@@ -1670,7 +1680,19 @@
       ? product.variants[0].name
       : "";
     const vLabels = Array.isArray(product?.variants) && product.variants[0]?.labels
-      ? product.variants[0].labels.join(", ")
+      ? product.variants[0].labels.map((lbl) =>
+          typeof lbl === "string" ? lbl : (lbl.label || lbl.name || "")
+        ).join(", ")
+      : "";
+    const vStocks = Array.isArray(product?.variants) && product.variants[0]?.labels
+      ? product.variants[0].labels.map((lbl) => {
+          if (typeof lbl === "string") return "";
+          const val = typeof lbl.stockQty === "number" ? lbl.stockQty
+            : (typeof lbl.quantity === "number" ? lbl.quantity
+            : (typeof lbl.qty === "number" ? lbl.qty
+            : (typeof lbl.stock === "number" ? lbl.stock : "")));
+          return val;
+        }).join(", ")
       : "";
 
     openModal(`
@@ -1699,8 +1721,12 @@
         <div class="field">
           <div class="field-label">Variants (optional)</div>
           <div class="field-hint">Example: Name = Size, Options = S,M,L</div>
-          <input id="prod-variant-name" class="field-input" placeholder="Group name (e.g. Size)" value="${vName}"/>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input id="prod-variant-name" class="field-input" placeholder="Group name (e.g. Size)" value="${vName}"/>
+            <button type="button" id="btn-size-presets" class="btn btn-ghost" style="padding:6px 10px;">Size presets</button>
+          </div>
           <input id="prod-variant-labels" class="field-input" placeholder="Comma separated options" value="${vLabels}"/>
+          <input id="prod-variant-stocks" class="field-input" placeholder="Optional stocks (match options, e.g. 10,8,5)" value="${vStocks}"/>
         </div>
         <div class="field">
           <div class="field-label">Product image</div>
@@ -1721,6 +1747,14 @@
 
     const form      = qs("#product-form");
     const fileInput = qs("#prod-image");
+    const sizePresetBtn = qs("#btn-size-presets");
+
+    sizePresetBtn?.addEventListener("click", () => {
+      const nameEl = qs("#prod-variant-name");
+      const labelsEl = qs("#prod-variant-labels");
+      if (nameEl) nameEl.value = "Size";
+      if (labelsEl) labelsEl.value = "XS,S,M,L,XL";
+    });
 
     form.addEventListener("submit", async e => {
       e.preventDefault();
@@ -1728,11 +1762,12 @@
 
       const name        = qs("#prod-name").value.trim();
       const price       = Number(qs("#prod-price").value || 0);
-      const stock       = Number(qs("#prod-stock").value || 0);
+      let   stock       = Number(qs("#prod-stock").value || 0);
       let   sku         = qs("#prod-sku").value.trim();
       const code        = qs("#prod-code").value.trim() || null;
       const vNameVal    = qs("#prod-variant-name").value.trim();
       const vLabelsVal  = qs("#prod-variant-labels").value.trim();
+      const vStocksVal  = qs("#prod-variant-stocks").value.trim();
       const isActive    = qs("#prod-active").checked;
 
       if (!name) {
@@ -1755,7 +1790,28 @@
           .map(x => x.trim())
           .filter(Boolean);
         if (labelsArr.length) {
-          variants.push({ name: vNameVal, labels: labelsArr });
+          const stockArr = vStocksVal
+            ? vStocksVal.split(",").map(x => Number(x.trim()))
+            : [];
+          const hasStock = stockArr.some((val) => Number.isFinite(val));
+          let stockSum = 0;
+          const labels = labelsArr.map((label, idx) => {
+            if (!hasStock) return label;
+            const raw = stockArr[idx];
+            const safe = Number.isFinite(raw) ? raw : 0;
+            stockSum += safe;
+            return {
+              label,
+              stockQty: safe,
+              quantity: safe,
+              qty: safe,
+              stock: safe
+            };
+          });
+          if (hasStock) {
+            stock = stockSum;
+          }
+          variants.push({ name: vNameVal, labels });
         }
       }
 
@@ -2581,6 +2637,7 @@
       await loadStaff();
       await loadOrders();
 
+      applyNav(getInitialPageId(), { updateHash: false });
       showAppView();
     } catch (err) {
       console.error("Error loading dashboard", err);
@@ -2615,7 +2672,7 @@
       const text = posLinkUrlEl.textContent || "";
       const ok = await copyToClipboard(text);
       if (ok) {
-        if (posStatusHintEl) posStatusHintEl.textContent = "POS link copied.";
+        if (posStatusHintEl) posStatusHintEl.textContent = "Successfully copied.";
       } else {
         alert("Copy failed. You can copy the link manually.");
       }
